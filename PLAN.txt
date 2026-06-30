@@ -1,0 +1,12 @@
+Plan:
+Backend:
+- backend/requirements.txt + ldclient-py
+- main.py: import ldclient; ld_client = ldclient.get(os.getenv('LD_SDK_KEY')); app.state.ld_client = ld_client
+- dep: get_ld_client = lambda: app.state.ld_client
+- util: ld_utils.get_flag(ctx, key, default) = ld_client.variation(key, ctx, default)
+- eg: articles router: if ld_utils.get_flag(user_ctx, 'new_feature', False): ...
+Frontend:
+- frontend/package.json + ldclient-js
+- index.js: import { LDProvider } from 'ldclient-react'; ldClient = LDClient.init(process.env.REACT_APP_LD_CLIENT_SIDE_ID); wrap <App> in <LDProvider client={ldClient}>
+- hook: const useLDFlag = (key, def) => { const [v, s] = useState(def); useEffect(() => { ldClient.on('ready', () => s(ldClient.variation(key, {}, def))); ldClient.on('change', (m) => { if(m.key===key) s(ldClient.variation(key,{},def)); }); }, [k,d]); return v;
+- use: const showNewFeature = useLDFlag('new_feature', false);

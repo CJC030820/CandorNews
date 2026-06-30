@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - NewsWise AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#fbf8fc",
+                        "primary": "#031635",
+                        "surface-container": "#efedf0",
+                        "on-secondary-fixed": "#23005c",
+                        "on-tertiary-fixed-variant": "#004e5c",
+                        "primary-fixed-dim": "#b6c6ef",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f5f3f6",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#8293b8",
+                        "surface-bright": "#fbf8fc",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e4e2e5",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "secondary-fixed": "#e9ddff",
+                        "on-primary-fixed-variant": "#364768",
+                        "surface-variant": "#e4e2e5",
+                        "on-tertiary-container": "#00a0bb",
+                        "surface-container-high": "#e9e7eb",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c5c6cf",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#6b38d4",
+                        "surface": "#fbf8fc",
+                        "inverse-primary": "#b6c6ef",
+                        "tertiary": "#001a20",
+                        "surface-dim": "#dbd9dc",
+                        "tertiary-fixed": "#acedff",
+                        "primary-container": "#1a2b4b",
+                        "inverse-surface": "#303033",
+                        "on-surface": "#1b1b1e",
+                        "surface-tint": "#4e5e81",
+                        "tertiary-container": "#00303a",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "on-tertiary-fixed": "#001f26",
+                        "on-primary-fixed": "#081b3a",
+                        "on-background": "#1b1b1e",
+                        "secondary-container": "#8455ef",
+                        "outline": "#75777f",
+                        "on-secondary-container": "#fffbff",
+                        "tertiary-fixed-dim": "#4cd7f6",
+                        "inverse-on-surface": "#f2f0f3",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#44474e",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "sm": "8px",
+                        "xxl": "48px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "container-max": "1440px",
+                        "md": "16px",
+                        "gutter": "24px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-label": ["monospace"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .bg-pattern {
+            background-color: #031635;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+<link href="../shared-dashboard.css" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden">
+<main class="min-h-screen w-full flex flex-col lg:flex-row">
+<!-- Left Side: Visual/Branding Section -->
+<div class="hidden lg:flex lg:w-7/12 lg:min-h-screen relative bg-primary overflow-hidden items-center justify-center p-xl">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0">
+<img alt="Abstract news connectivity" class="w-full h-full object-cover opacity-40 mix-blend-luminosity" data-alt="A cinematic, high-detail digital visualization of a global news network, featuring glowing interconnected nodes and shimmering data streams flowing across a dark navy blue background. The aesthetic is sophisticated and corporate, with intricate geometric lines forming a neural-like map of information. The lighting is low-key with sharp, vibrant cyan and deep purple highlights that emphasize a sense of real-time artificial intelligence processing. The atmosphere is professional, intelligent, and technologically advanced." src="https://lh3.googleusercontent.com/aida/AP1WRLuUJYc4ds4CPtYXLwOKBL-jnbos_zbklAtdpTGkIgIpWdMAAmMMqP85CGs1HG9Y5iqkqv1M-1mIuuGXrrs0qDVGND2l7qMbZcLXRjmlpQoNDpDw8txZ6nIaexC69VsNJrRo7WuInG7K8bc1EGHV7j1mgZbwdFfdaOJITRikeF1DjNWxbdzQKqgLybwjo0nPMWIrDpEDvVVle-eJB0i5qfRiHDVDf3nPRlgPWyKbL8lKFx8Pxbw4Ib4cudaq"/>
+<div class="absolute inset-0 bg-gradient-to-tr from-primary via-primary/80 to-transparent"></div>
+</div>
+<!-- Content Overlay -->
+<div class="relative z-10 max-w-lg">
+<div class="mb-lg">
+<span class="inline-flex items-center gap-sm px-md py-xs rounded-full bg-secondary/20 text-tertiary-fixed-dim font-label-md text-label-md mb-md">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+                        Enterprise Grade Intelligence
+                    </span>
+<h1 class="font-display-lg text-display-lg text-white mb-md">
+                        Decode the <br/><span class="text-tertiary-fixed-dim">Signal</span> from the Noise.
+                    </h1>
+<p class="font-body-lg text-body-lg text-primary-fixed-dim/80">
+                        Advanced AI-driven news verification and sentiment analysis for world-class decision making.
+                    </p>
+</div>
+<!-- Feature Mini Cards -->
+<div class="grid grid-cols-2 gap-md">
+<div class="p-md rounded-xl glass-effect bg-white/5 border border-white/10">
+<span class="material-symbols-outlined text-tertiary-fixed-dim mb-sm">fact_check</span>
+<h3 class="font-label-md text-label-md text-white">Veracity Analysis</h3>
+</div>
+<div class="p-md rounded-xl glass-effect bg-white/5 border border-white/10">
+<span class="material-symbols-outlined text-tertiary-fixed-dim mb-sm">psychology</span>
+<h3 class="font-label-md text-label-md text-white">Sentiment Scoring</h3>
+</div>
+</div>
+</div>
+<!-- Footer Logo Anchor -->
+<div class="absolute bottom-xl left-xl flex items-center gap-sm">
+<div class="w-8 h-8 rounded-lg bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold text-white tracking-tight">NewsWise AI</span>
+</div>
+</div>
+<!-- Right Side: Login Form Section -->
+<div class="w-full lg:w-5/12 flex flex-col justify-center bg-white px-margin-mobile md:px-xxl relative min-h-screen py-16 sm:py-20 lg:py-0 overflow-y-auto">
+<!-- Mobile Header Only -->
+<div class="lg:hidden absolute top-md left-margin-mobile flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[24px]">insights</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">NewsWise AI</span>
+</div>
+<div class="max-w-md w-full mx-auto">
+<div class="mb-xl">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-xs">Welcome Back</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Sign in to your intelligence dashboard.</p>
+</div>
+<!-- Social Login Options -->
+<div class="flex flex-col gap-md mb-xl">
+<button class="w-full flex items-center justify-center gap-md py-md px-lg border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all duration-200">
+<img alt="Google" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida/AP1WRLsqrMM0gocBE3uNF21l9LAXIZMd2CvpQEIa8ii0j4YNaPgj6nM77C_k7oGpbpuqexCz0yWdSRfYAXvFUWqDHIgCegaj5PGQbqO7LBmkPYr9XpYXAJ6_HbhPZ3iOZ_Dd6H06Vk9G-oquqBQZ-zQJGlRIgbor7rDHfYQSTXKa4oVVUVWiiQihih9PchBvtLZZbCWyKJ6OrktYm5KWGUUfq2RV7bsUTio982DvMHZ2wn_b7pfZcDFNPf3K4Gs"/>
+                        Continue with Google
+                    </button>
+<button class="w-full flex items-center justify-center gap-md py-md px-lg border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all duration-200">
+<span class="material-symbols-outlined text-[#1877F2]" style="font-variation-settings: 'FILL' 1;">face_nod</span>
+                        Continue with Facebook
+                    </button>
+</div>
+<div class="relative flex py-md items-center mb-xl">
+<div class="flex-grow border-t border-outline-variant"></div>
+<span class="flex-shrink mx-4 font-label-md text-label-md text-on-surface-variant">OR EMAIL</span>
+<div class="flex-grow border-t border-outline-variant"></div>
+</div>
+<!-- Login Form -->
+<form class="space-y-lg" id="loginForm">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant" for="email">EMAIL ADDRESS</label>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[20px]">mail</span>
+<input class="w-full pl-xl pr-md py-md bg-surface-container-low border-transparent focus:border-tertiary-container focus:ring-0 rounded-xl font-body-md transition-all placeholder:text-outline" id="email" name="email" placeholder="name@company.com" required="" type="email"/>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between">
+<label class="font-label-md text-label-md text-on-surface-variant" for="password">PASSWORD</label>
+<a class="font-label-md text-label-md text-secondary hover:underline" href="javascript:alert('Password reset functionality would be implemented here');" >Forgot password?</a>
+</div>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[20px]">lock</span>
+<input class="w-full pl-xl pr-xl py-md bg-surface-container-low border-transparent focus:border-tertiary-container focus:ring-0 rounded-xl font-body-md transition-all placeholder:text-outline" id="password" name="password" placeholder="Enter your password" required="" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[20px] hover:text-primary" type="button">visibility</button>
+</div>
+</div>
+<div class="flex items-center gap-sm py-xs">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" id="remember" type="checkbox"/>
+<label class="font-body-sm text-body-sm text-on-surface-variant" for="remember">Keep me logged in for 30 days</label>
+</div>
+<button class="w-full py-md bg-primary text-white font-label-md text-label-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md" type="submit">
+                        Sign In to NewsWise
+                    </button>
+</form>
+<p class="mt-xl text-center font-body-sm text-body-sm text-on-surface-variant">
+                    Don't have an account? 
+                    <a class="font-label-md text-secondary font-bold hover:underline" href="javascript:document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='block';">Create an account</a>
+</p>
+<!-- Footer Links -->
+<div class="mt-xxl flex justify-center gap-xl opacity-60">
+<a class="font-label-md text-label-md hover:text-primary" href="javascript:alert('Privacy Policy would open here');">Privacy Policy</a>
+<a class="font-label-md text-label-md hover:text-primary" href="javascript:alert('Terms of Service would open here');">Terms of Service</a>
+<a class="font-label-md text-label-md hover:text-primary" href="../select_interests/code.html">Support</a>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="flex items-center justify-center gap-sm"><span class="animate-spin material-symbols-outlined text-[18px]">progress_activity</span> Authenticating...</span>';
+            
+            // Simulate API delay
+            setTimeout(() => {
+                window.localStorage.setItem('newswiseAuthenticated', '1');
+                btn.innerHTML = '<span class="flex items-center justify-center gap-sm"><span class="material-symbols-outlined text-[18px]">check_circle</span> Success</span>';
+                btn.classList.replace('bg-primary', 'bg-tertiary-container');
+                btn.classList.add('text-on-tertiary-container');
+                window.location.href = '../select_interests/code.html';
+            }, 1500);
+        });
+
+        // Toggle Password Visibility
+        const togglePass = document.querySelector('button[type="button"].absolute');
+        togglePass.addEventListener('click', function() {
+            const input = document.getElementById('password');
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'visibility' : 'visibility_off';
+        });
+    </script>
+</body></html>

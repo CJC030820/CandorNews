@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NewsWise AI | Personalize Your Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#fbf8fc",
+                    "primary": "#031635",
+                    "surface-container": "#efedf0",
+                    "on-secondary-fixed": "#23005c",
+                    "on-tertiary-fixed-variant": "#004e5c",
+                    "primary-fixed-dim": "#b6c6ef",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f5f3f6",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#8293b8",
+                    "surface-bright": "#fbf8fc",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e4e2e5",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary-fixed-dim": "#d0bcff",
+                    "secondary-fixed": "#e9ddff",
+                    "on-primary-fixed-variant": "#364768",
+                    "surface-variant": "#e4e2e5",
+                    "on-tertiary-container": "#00a0bb",
+                    "surface-bright": "#fbf8fc",
+                    "outline-variant": "#c5c6cf",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "secondary": "#6b38d4",
+                    "surface": "#fbf8fc",
+                    "inverse-primary": "#b6c6ef",
+                    "tertiary": "#001a20",
+                    "surface-dim": "#dbd9dc",
+                    "tertiary-fixed": "#acedff",
+                    "primary-container": "#1a2b4b",
+                    "inverse-surface": "#303033",
+                    "on-surface": "#1b1b1e",
+                    "surface-tint": "#4e5e81",
+                    "tertiary-container": "#00303a",
+                    "on-secondary-fixed-variant": "#5516be",
+                    "on-tertiary-fixed": "#001f26",
+                    "on-primary-fixed": "#081b3a",
+                    "on-background": "#1b1b1e",
+                    "secondary-container": "#8455ef",
+                    "outline": "#75777f",
+                    "on-secondary-container": "#fffbff",
+                    "tertiary-fixed-dim": "#4cd7f6",
+                    "inverse-on-surface": "#f2f0f3",
+                    "on-error-container": "#93000a",
+                    "on-surface-variant": "#44474e",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "sm": "8px",
+                    "xxl": "48px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "container-max": "1440px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "base": "4px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "mono-label": ["monospace"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .category-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .category-card.selected {
+            background-color: #031635; /* primary */
+            color: white;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(3, 22, 53, 0.3);
+        }
+        .category-card.selected .icon-container {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #b6c6ef; /* primary-fixed-dim */
+        }
+        .category-card.selected .check-indicator {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .progress-glow {
+            box-shadow: 0 0 12px rgba(107, 56, 212, 0.4);
+        }
+    </style>
+<link href="../shared-dashboard.css" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col items-center">
+<!-- Progress Bar Anchor -->
+<div class="fixed top-0 left-0 w-full h-1.5 bg-surface-container z-50">
+<div class="h-full bg-secondary progress-glow transition-all duration-700 ease-out" id="progress-bar" style="width: 65%;"></div>
+</div>
+<!-- Onboarding Container -->
+<main class="w-full max-w-[1200px] px-margin-mobile md:px-margin-desktop py-xl mt-sm mb-xxl flex flex-col items-center">
+<!-- Header Section -->
+<header class="text-center mb-xl max-w-2xl">
+<div class="inline-flex items-center gap-sm mb-md px-md py-xs rounded-full bg-surface-container-high border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Step 3 of 4: Personalize</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-sm">Tailor Your News Intelligence</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Select the categories that matter most to your decision-making. Our AI will prioritize high-veracity insights within these domains.</p>
+</header>
+<!-- Category Bento Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-lg w-full">
+<!-- Category Item 1 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="terminal">terminal</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Technology</h3>
+<p class="font-body-sm text-body-sm opacity-70">AI, cybersecurity, and deep-tech trends.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 2 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="account_balance">account_balance</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Finance</h3>
+<p class="font-body-sm text-body-sm opacity-70">Global markets, crypto, and fiscal policy.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 3 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="public">public</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Politics</h3>
+<p class="font-body-sm text-body-sm opacity-70">Geopolitics, legislative updates, and elections.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 4 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="science">science</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Science</h3>
+<p class="font-body-sm text-body-sm opacity-70">Healthcare, space exploration, and climate.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 5 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="stadium">stadium</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Entertainment</h3>
+<p class="font-body-sm text-body-sm opacity-70">Culture, streaming, and global media events.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 6 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="business_center">business_center</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Business</h3>
+<p class="font-body-sm text-body-sm opacity-70">Corporate strategy, M&amp;A, and trade reports.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 7 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="health_and_safety">health_and_safety</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Health</h3>
+<p class="font-body-sm text-body-sm opacity-70">Biotech, wellness, and medical breakthroughs.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+<!-- Category Item 8 -->
+<button class="category-card group relative flex flex-col items-start p-lg bg-white rounded-xl shadow-sm border border-outline-variant text-left hover:border-primary" onclick="toggleSelection(this)">
+<div class="icon-container mb-md p-sm rounded-lg bg-surface-container-low text-primary transition-colors group-hover:bg-primary-fixed">
+<span class="material-symbols-outlined text-[32px]" data-icon="forest">forest</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm mb-xs">Environment</h3>
+<p class="font-body-sm text-body-sm opacity-70">Sustainability, energy, and policy shifts.</p>
+<div class="check-indicator absolute top-4 right-4 opacity-0 transform scale-50 transition-all">
+<span class="material-symbols-outlined text-on-secondary">check_circle</span>
+</div>
+</button>
+</div>
+<!-- Footer Actions -->
+<footer class="w-full mt-xxl pt-xl border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-lg">
+<div class="flex items-center gap-md">
+<div class="flex -space-x-2">
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="Close-up professional headshot of a diverse male intelligence analyst in a modern office, soft neutral lighting, high-end corporate photography style with a focus on trust and clarity." src="https://lh3.googleusercontent.com/aida/AP1WRLuoUqjJYDxReAJyLFMV6fYcIyDhW7mUq8GlyZec2zBOsu1SWG_ZTWzc9p6bf9mRCxrDD9C2R_ForuA_ptjdYOgnkrdlhCyZlWwa4Md41BjXdLqBBiWRj-6-bEaJB2yKOq9C7YauFKbVEkvyOebZJYyT7p2iyemGL6T42HXFQSPpW5rYtF5m3snyFgu1IxzmGadM8PmiQXQS1G0PRYtibzhEgvrUAu0Du5J9hTkX5NMuwxp7dofKFvyVfLI"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-secondary-fixed">
+<img class="w-full h-full object-cover" data-alt="Detailed portrait of a female journalist looking confidently into the camera, warm natural lighting, minimalist professional aesthetic, reflecting expertise and authority in a clean white-themed studio environment." src="https://lh3.googleusercontent.com/aida/AP1WRLu5cQorW7_7rAe6VBKPsZsxnr_W0nk9pR0c49qNnz4DkRnqx5RL-psXJYTLM1IPV4NDlSXotSGzeKewXb5esO7IVfZDhG5jvjUwUxYw4xItlGe8PkNBjHFOcbGAyNPUjjCihld-L9EXnF64Nqy7Ots7lZ4rRlOzIbRI7HQ8fvLNWP3UQ58NtysPE4roQMc-6HluGIjRgahfqELQ58bcrMr_LiPnLi8cgs3MdOOy9BlpCgaRsGY2MNsDaKQ"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-tertiary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Join 12k+ analysts tailoring their feed.</p>
+</div>
+<div class="flex items-center gap-lg">
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors py-md px-lg" onclick="location.href='../newswise_home/code.html';">Skip for now</button>
+<button class="relative overflow-hidden group bg-primary text-white font-label-md text-label-md py-md px-[48px] rounded-lg shadow-lg hover:shadow-xl hover:bg-primary/95 transition-all flex items-center gap-sm" onclick="finishSetup(this)">
+<span class="relative z-10">Finish Setup</span>
+<span class="material-symbols-outlined relative z-10 text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+<!-- Subtle AI Glow Overlay -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
+</button>
+</div>
+</footer>
+</main>
+<!-- AI Intelligence Visual Decoration -->
+<div class="fixed bottom-0 left-0 p-lg opacity-20 pointer-events-none hidden lg:block">
+<div class="flex flex-col gap-sm">
+<div class="h-1 w-24 bg-primary-fixed-dim rounded-full"></div>
+<div class="h-1 w-16 bg-primary-fixed-dim rounded-full"></div>
+<div class="h-1 w-32 bg-primary-fixed-dim rounded-full opacity-50"></div>
+</div>
+</div>
+<script>
+        function toggleSelection(element) {
+            element.classList.toggle('selected');
+            
+            // Subtle feedback: update progress bar slightly
+            const selectedCount = document.querySelectorAll('.category-card.selected').length;
+            const progressBar = document.getElementById('progress-bar');
+            const baseProgress = 65;
+            const bonusProgress = Math.min(selectedCount * 4, 35);
+            progressBar.style.width = (baseProgress + bonusProgress) + '%';
+        }
+
+        function finishSetup(button) {
+            const selectedCount = document.querySelectorAll('.category-card.selected').length;
+            if (selectedCount === 0) {
+                alert('Please select at least one interest to personalize your feed.');
+                return;
+            }
+            
+            // Animate transition
+            const btn = button;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Processing...';
+            btn.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    const selectedInterests = [...document.querySelectorAll('.category-card.selected h3')].map((item) => item.textContent.trim());
+                    window.localStorage.setItem('newswiseInterests', JSON.stringify(selectedInterests));
+                    window.localStorage.setItem('newswiseSetupComplete', '1');
+                    document.body.style.opacity = '0';
+                    document.body.style.transition = 'opacity 0.5s ease-out';
+                    window.location.href = '../newswise_home/code.html';
+                }, 400);
+            }, 1200);
+        }
+    </script>
+</body></html>

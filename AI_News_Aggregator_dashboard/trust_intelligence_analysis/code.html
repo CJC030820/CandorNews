@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trust Analysis | NewsWise AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .trust-gradient-text {
+            background: linear-gradient(135deg, #00a0bb 0%, #6b38d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ai-border-gradient {
+            border-left: 4px solid;
+            border-image: linear-gradient(to bottom, #6b38d4, #00a0bb) 1;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        .animate-gauge {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            animation: dash 1.5s ease-out forwards;
+        }
+    </style>
+<link href="../shared-dashboard.css" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#fbf8fc",
+                        "primary": "#031635",
+                        "surface-container": "#efedf0",
+                        "on-secondary-fixed": "#23005c",
+                        "on-tertiary-fixed-variant": "#004e5c",
+                        "primary-fixed-dim": "#b6c6ef",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f5f3f6",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#8293b8",
+                        "surface-bright": "#fbf8fc",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e4e2e5",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "secondary-fixed": "#e9ddff",
+                        "on-primary-fixed-variant": "#364768",
+                        "surface-variant": "#e4e2e5",
+                        "on-tertiary-container": "#00a0bb",
+                        "surface-container-high": "#e9e7eb",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c5c6cf",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#6b38d4",
+                        "surface": "#fbf8fc",
+                        "inverse-primary": "#b6c6ef",
+                        "tertiary": "#001a20",
+                        "surface-dim": "#dbd9dc",
+                        "tertiary-fixed": "#acedff",
+                        "primary-container": "#1a2b4b",
+                        "inverse-surface": "#303033",
+                        "on-surface": "#1b1b1e",
+                        "surface-tint": "#4e5e81",
+                        "tertiary-container": "#00303a",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "on-tertiary-fixed": "#001f26",
+                        "on-primary-fixed": "#081b3a",
+                        "on-background": "#1b1b1e",
+                        "secondary-container": "#8455ef",
+                        "outline": "#75777f",
+                        "on-secondary-container": "#fffbff",
+                        "tertiary-fixed-dim": "#4cd7f6",
+                        "inverse-on-surface": "#f2f0f3",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#44474e",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "sm": "8px",
+                        "xxl": "48px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "container-max": "1440px",
+                        "md": "16px",
+                        "gutter": "24px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-label": ["monospace"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-x-hidden">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-[280px] bg-white dark:bg-inverse-surface hidden lg:flex flex-col border-r border-outline-variant z-50">
+<div class="p-lg">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-on-primary-fixed">NewsWise AI</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-70">Intelligence Dashboard</p>
+</div>
+<nav class="flex-1 px-md space-y-xs">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../newswise_home/code.html">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg opacity-90 transition-all" href="../explore_search_news/code.html">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-label-md text-label-md">Explore</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../ai_intelligence_chatbot/code.html">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-md text-label-md">Chatbot</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../article_intelligence_summary/code.html">
+<span class="material-symbols-outlined" data-icon="bookmark">bookmark</span>
+<span class="font-label-md text-label-md">Saved</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../profile_preferences/code.html">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<div class="p-md space-y-xs">
+<button onclick="location.href='../select_interests/code.html'" class="w-full py-sm px-md bg-secondary text-white rounded-lg font-label-md hover:opacity-90 transition-all mb-lg">
+                Upgrade to Pro
+            </button>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../profile_preferences/code.html">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../select_interests/code.html">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md text-label-md">Help</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-[280px] min-h-screen w-full">
+<!-- TopAppBar Shell -->
+<header class="flex justify-between items-center w-full px-4 sm:px-6 lg:px-margin-desktop py-md sticky top-0 z-40 bg-white/80 backdrop-blur-md dark:bg-surface/80 shadow-sm">
+<div class="flex items-center gap-md">
+<div class="bg-surface-container p-xs px-sm rounded-lg flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-full max-w-xs" placeholder="Search analysis..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-md text-on-surface-variant">
+<button class="hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<button class="hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged analyst with a confident expression, set against a clean, corporate background with soft, cool-toned studio lighting. The person is wearing a modern charcoal suit, embodying authority and intelligence in a data-driven environment. The overall aesthetic is minimalist and high-end, aligned with a corporate intelligence platform." src="https://lh3.googleusercontent.com/aida/AP1WRLvNJbXecxB5FEJGYkrFnfhETLp0my-XGlyT0-jG6IE4nhWi6Bgbr4ia3lmh1dNM6_GwSRH3x1fYXpQchA-gL6j0eQ_TEYtamkQub1vC-WR8h-JHAddsJRoLgGImynsA5XYQ8fk9EEys9IT_ZFxCxKMcOu_wZMxWJ4ATgm5GoNvTOlUWuVJt0RbFknaiDB3_mAJT7bpnEOPtGxmOqCbyu69_6HPjmyGkvpEL47ppOqIMHvhrSx1IK4Ogwagz"/>
+</div>
+</div>
+</header>
+<section class="max-w-container-max mx-auto p-margin-desktop">
+<!-- Breadcrumb & Header -->
+<div class="mb-xl">
+<div class="flex items-center gap-xs text-on-surface-variant font-label-md mb-xs">
+<span>Analysis</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary font-bold">Trust Verification</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Explainable Trust Analysis</h2>
+<p class="font-body-md text-on-surface-variant max-w-2xl">Deep-dive into the veracity of "Global Economic Shift: New Policy Framework Announced" - Internal ID: NW-8842-X</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Main Trust Score Column -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter">
+<!-- Large Circular Gauge Card -->
+<div class="bg-white rounded-xl p-xl shadow-sm border border-outline-variant flex flex-col items-center justify-center text-center relative overflow-hidden">
+
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase mb-lg">Aggregate Trust Score</h3>
+<div class="relative w-56 h-56 sm:w-64 sm:h-64 mb-lg">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container" cx="128" cy="128" fill="transparent" r="120" stroke="currentColor" stroke-width="12"></circle>
+<circle class="animate-gauge" cx="128" cy="128" fill="transparent" r="120" stroke="url(#trustGradient)" stroke-width="12" style="stroke-dasharray: 754; stroke-dashoffset: 113;"></circle>
+<defs>
+<lineargradient id="trustGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#6b38d4; stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#00a0bb; stop-opacity:1"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-display-lg text-display-lg trust-gradient-text">85%</span>
+<span class="font-label-md text-label-md text-on-surface-variant">HIGH TRUST</span>
+</div>
+</div>
+<div class="flex gap-md w-full">
+<div class="flex-1 p-sm bg-surface-container-low rounded-lg">
+<p class="font-label-md text-label-md text-on-surface-variant">Precision</p>
+<p class="font-headline-sm text-headline-sm text-primary">92%</p>
+</div>
+<div class="flex-1 p-sm bg-surface-container-low rounded-lg">
+<p class="font-label-md text-label-md text-on-surface-variant">Recall</p>
+<p class="font-headline-sm text-headline-sm text-primary">78%</p>
+</div>
+</div>
+</div>
+<!-- Why is this trustworthy? List -->
+<div class="bg-white rounded-xl p-lg shadow-sm border border-outline-variant">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="verified_user">verified_user</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Trust Factor Breakdown</h3>
+</div>
+<ul class="space-y-md">
+<li class="flex items-start gap-md p-sm hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-tertiary-container mt-xs" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="font-body-md font-semibold text-primary group-hover:text-secondary transition-colors">Multiple High-Credibility Citations</p>
+<p class="font-body-sm text-on-surface-variant">Referenced by Bloomberg and Financial Times within 4 minutes.</p>
+</div>
+</li>
+<li class="flex items-start gap-md p-sm hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-tertiary-container mt-xs" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="font-body-md font-semibold text-primary group-hover:text-secondary transition-colors">Neutral Narrative Framing</p>
+<p class="font-body-sm text-on-surface-variant">Score of 0.89 on the objectivity scale, avoiding hyperbole.</p>
+</div>
+</li>
+<li class="flex items-start gap-md p-sm hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-error mt-xs bg-error rounded-full p-[2px] text-[16px]" data-icon="priority_high" style="font-variation-settings: 'FILL' 1;">priority_high</span>
+<div>
+<p class="font-body-md font-semibold text-primary group-hover:text-secondary transition-colors">Inconsistent Metadata</p>
+<p class="font-body-sm text-on-surface-variant">The publisher's server location contradicts the reported bureau.</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- Analysis Details Column -->
+<div class="col-span-12 lg:col-span-8 space-y-gutter">
+<!-- AI Insight Banner -->
+<div class="glass-card ai-border-gradient p-lg rounded-xl flex items-center gap-lg">
+<div class="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+</div>
+<div>
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-label-md text-secondary uppercase tracking-widest">AI Intelligence Insight</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed px-sm py-xs rounded-full text-[10px] font-bold">GENERATED BY CORE-4</span>
+</div>
+<p class="font-body-md text-primary mt-xs">Analysis suggests this report originates from a verified press release, showing a 94% alignment with official policy documents but notes a slight "Bullish" sentiment skew in the concluding paragraph.</p>
+</div>
+</div>
+<!-- Technical Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Source Credibility -->
+<div class="bg-white rounded-xl p-lg shadow-sm border border-outline-variant">
+<div class="flex justify-between items-start mb-md">
+<h4 class="font-headline-sm text-headline-sm text-primary">Source Credibility</h4>
+<span class="text-on-tertiary-container bg-tertiary-container/10 px-md py-xs rounded-full font-label-md">EXCELLENT</span>
+</div>
+<div class="space-y-md">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-on-surface-variant">Historical Veracity</span>
+<span class="font-mono-label text-primary">98.2%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 98%"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-on-surface-variant">Fact-Check Frequency</span>
+<span class="font-mono-label text-primary">12/mo</span>
+</div>
+</div>
+</div>
+<!-- Cross-Source Verification -->
+<div class="bg-white rounded-xl p-lg shadow-sm border border-outline-variant">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-md">Cross-Source Verification</h4>
+<div class="flex flex-wrap gap-sm">
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+<div class="w-4 h-4 rounded-full bg-[#004e5c]"></div>
+<span class="font-label-md text-on-surface">Reuters</span>
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" data-icon="verified">verified</span>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+<div class="w-4 h-4 rounded-full bg-[#364768]"></div>
+<span class="font-label-md text-on-surface">WSJ</span>
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" data-icon="verified">verified</span>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+<div class="w-4 h-4 rounded-full bg-[#ba1a1a]"></div>
+<span class="font-label-md text-on-surface">Associated Press</span>
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" data-icon="verified">verified</span>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-low px-sm py-xs rounded border border-outline-variant opacity-50">
+<span class="font-label-md text-on-surface">+4 others pending</span>
+</div>
+</div>
+</div>
+<!-- Metadata & Consistency -->
+<div class="bg-white rounded-xl p-lg shadow-sm border border-outline-variant">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-md">Integrity Signals</h4>
+<div class="space-y-sm">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="database">database</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="font-body-sm font-semibold text-primary">Metadata Completeness</span>
+<span class="font-mono-label text-on-tertiary-container">92%</span>
+</div>
+<div class="w-full bg-surface-container h-1 mt-xs overflow-hidden rounded-full">
+<div class="bg-primary h-full" style="width: 92%"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="edit_note">edit_note</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="font-body-sm font-semibold text-primary">Headline Consistency</span>
+<span class="font-mono-label text-on-tertiary-container">100%</span>
+</div>
+<div class="w-full bg-surface-container h-1 mt-xs overflow-hidden rounded-full">
+<div class="bg-primary h-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sentiment Analysis -->
+<div class="bg-white rounded-xl p-lg shadow-sm border border-outline-variant overflow-hidden">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-md">Sentiment Neutrality</h4>
+<div class="h-24 flex items-end gap-xs">
+<div class="flex-1 bg-surface-container-high h-[40%] rounded-t-sm hover:bg-secondary transition-all cursor-help" title="Negative: 12%"></div>
+<div class="flex-1 bg-surface-container-high h-[25%] rounded-t-sm hover:bg-secondary transition-all cursor-help" title="Neutral-Negative: 8%"></div>
+<div class="flex-1 bg-primary h-[85%] rounded-t-sm hover:bg-secondary transition-all cursor-help" title="Pure Neutral: 65%"></div>
+<div class="flex-1 bg-surface-container-high h-[30%] rounded-t-sm hover:bg-secondary transition-all cursor-help" title="Neutral-Positive: 10%"></div>
+<div class="flex-1 bg-surface-container-high h-[15%] rounded-t-sm hover:bg-secondary transition-all cursor-help" title="Positive: 5%"></div>
+</div>
+<div class="flex justify-between mt-sm text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">
+<span>Hostile</span>
+<span>Neutral</span>
+<span>Promotional</span>
+</div>
+</div>
+</div>
+<!-- Historical Trend Graph -->
+<div class="bg-white rounded-xl p-lg shadow-sm border border-outline-variant">
+<div class="flex justify-between items-center mb-xl">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary">Trust Momentum</h4>
+<p class="font-body-sm text-on-surface-variant">Verification velocity over the last 24 hours</p>
+</div>
+<div class="flex gap-xs">
+<button class="px-md py-xs bg-surface-container-high rounded text-label-md text-primary font-bold">24H</button>
+<button class="px-md py-xs hover:bg-surface-container-low rounded text-label-md text-on-surface-variant">7D</button>
+</div>
+</div>
+<div class="h-[200px] w-full relative">
+<!-- Visual placeholder for a line graph -->
+<svg class="w-full h-full" preserveaspectratio="none">
+<path d="M0 150 Q 50 140, 100 120 T 200 80 T 300 100 T 400 40 T 500 60 T 600 30 T 700 50 L 800 20" fill="none" stroke="url(#lineGradient)" stroke-linecap="round" stroke-width="3"></path>
+<lineargradient id="lineGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" style="stop-color:#6b38d4; stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#00a0bb; stop-opacity:1"></stop>
+</lineargradient>
+</svg>
+<div class="absolute inset-0 flex justify-between items-end text-[10px] text-on-surface-variant px-sm opacity-50">
+<span>08:00</span>
+<span>12:00</span>
+<span>16:00</span>
+<span>20:00</span>
+<span>00:00</span>
+<span>04:00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Navigation Shell (Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant flex justify-around p-sm z-50">
+<a class="flex flex-col items-center gap-xs text-on-surface-variant" href="../newswise_home/code.html">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] font-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center gap-xs text-primary font-bold" href="../explore_search_news/code.html">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="text-[10px] font-label-md">Explore</span>
+</a>
+<a class="flex flex-col items-center gap-xs text-on-surface-variant" href="../ai_intelligence_chatbot/code.html">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="text-[10px] font-label-md">AI Chat</span>
+</a>
+<a class="flex flex-col items-center gap-xs text-on-surface-variant" href="../profile_preferences/code.html">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-[10px] font-label-md">Profile</span>
+</a>
+</nav>
+</main>
+<script>
+        // Simple interactivity for demonstration
+        document.querySelectorAll('.group').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                // Future logic for detail tooltips
+            });
+        });
+    </script>
+</body></html>

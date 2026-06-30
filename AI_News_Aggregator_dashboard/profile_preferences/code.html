@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile &amp; Preferences | NewsWise AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .ai-gradient-text {
+            background: linear-gradient(90deg, #6b38d4, #00a0bb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e4e2e5;
+            border-radius: 10px;
+        }
+    </style>
+<link href="../shared-dashboard.css" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#fbf8fc",
+                      "primary": "#031635",
+                      "surface-container": "#efedf0",
+                      "on-secondary-fixed": "#23005c",
+                      "on-tertiary-fixed-variant": "#004e5c",
+                      "primary-fixed-dim": "#b6c6ef",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f5f3f6",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-container": "#8293b8",
+                      "surface-bright": "#fbf8fc",
+                      "on-primary": "#ffffff",
+                      "surface-container-highest": "#e4e2e5",
+                      "primary-fixed": "#d8e2ff",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "secondary-fixed": "#e9ddff",
+                      "on-primary-fixed-variant": "#364768",
+                      "surface-variant": "#e4e2e5",
+                      "on-tertiary-container": "#00a0bb",
+                      "surface-bright": "#fbf8fc",
+                      "on-surface": "#1b1b1e",
+                      "outline": "#75777f",
+                      "outline-variant": "#c5c6cf",
+                      "secondary": "#6b38d4",
+                      "tertiary-container": "#00303a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "32px",
+                      "sm": "8px",
+                      "xxl": "48px",
+                      "xs": "4px",
+                      "xl": "32px",
+                      "container-max": "1440px",
+                      "md": "16px",
+                      "gutter": "24px",
+                      "lg": "24px",
+                      "base": "4px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col overflow-x-hidden">
+<!-- SideNavBar (JSON Derived) -->
+<aside class="fixed left-0 top-0 h-full w-[280px] hidden lg:flex flex-col border-r border-outline-variant bg-white dark:bg-inverse-surface z-50">
+<div class="p-lg flex flex-col gap-sm">
+<div class="flex items-center gap-md mb-xl">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-on-primary-fixed">NewsWise AI</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Intelligence Dashboard</p>
+</div>
+</div>
+<nav class="flex flex-col gap-xs">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../newswise_home/code.html">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../explore_search_news/code.html">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-md text-label-md">Explore</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../ai_intelligence_chatbot/code.html">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-label-md text-label-md">Chatbot</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../article_intelligence_summary/code.html">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-label-md text-label-md">Saved</span>
+</a>
+<!-- Active Tab: Profile -->
+<a class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg opacity-90 transition-all" href="../profile_preferences/code.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-lg border-t border-outline-variant">
+<button onclick="location.href='../select_interests/code.html'" class="w-full py-md bg-secondary text-white rounded-lg font-label-md mb-lg hover:opacity-90 transition-opacity">
+                Upgrade to Pro
+            </button>
+<nav class="flex flex-col gap-xs">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../profile_preferences/code.html">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-lg" href="../select_interests/code.html">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Help</span>
+</a>
+</nav>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-[280px] min-h-screen overflow-y-auto custom-scrollbar w-full">
+<!-- TopNavBar (JSON Derived) -->
+<header class="flex justify-between items-center w-full px-4 sm:px-6 lg:px-margin-desktop py-md sticky top-0 z-40 bg-white/80 backdrop-blur-md dark:bg-surface/80">
+<div class="flex items-center gap-lg">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Profile &amp; Preferences</h2>
+<div class="hidden md:flex bg-surface-container-low px-md py-sm rounded-full w-full max-w-md items-center gap-sm border border-outline-variant focus-within:ring-2 focus-within:ring-on-tertiary-container transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-full" placeholder="Search settings or saved articles..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-sm hover:text-primary transition-all rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-sm hover:text-primary transition-all rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-sm hover:text-primary transition-all rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined">tune</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-xs"></div>
+<img alt="User profile" class="w-10 h-10 rounded-full border border-outline-variant object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLskEr-kx4oy5Bc6kEgQS2MC5E24bqbY5ULV1tXiGJt5cePC8XMuDmO2GlKAbDPGPxRY8n-TEKLLJhTSI_tCMq8fFWzpPoXgteQijDZ83Znfz2hzgA4HVBqGHcFuyzHLD8b7WFhfWMHHtoh1GU2q8TvJ1eZZwmFHnhUpZWUVqZrw-kRRKpJaoEusHzl7j-IPd7COmrI5edhDhFC0lBNRoLxFae5b_jk9GVviHtqFBeG7kIzRTZYE-65Rd_Fc"/>
+</div>
+</header>
+<div class="max-w-container-max mx-auto px-4 sm:px-6 lg:p-margin-desktop py-6 sm:py-8 space-y-gutter">
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Profile Card -->
+<div class="col-span-12 lg:col-span-4 bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden flex flex-col">
+<div class="h-32 bg-primary relative">
+<div class="absolute -bottom-12 left-md">
+<img class="w-24 h-24 rounded-xl border-4 border-white shadow-md object-cover" data-alt="A professional headshot of a middle-aged male analyst with a friendly and intelligent expression. He is wearing a dark navy suit and standing against a minimalist, high-key white background. The lighting is soft and corporate, creating a clean and modern aesthetic with sharp focus and subtle depth of field." src="https://lh3.googleusercontent.com/aida/AP1WRLuTO7fiIXsEL2g9cQWpRHEzWrOcJ6w3Q9ZStrfh8gd9H6o7Xda4RI03gGukiKO7zTNey9WgrBgk72qFgnH8hX2-U2a_l-R7Hh8SmZ1_URaLpdXUP6RNZdD6V2op5biUtUY8CfY-8NBwAF1ryiWhF2RO9GYtO_sUxeDvmTkXZPMauseAKosUFSZX2vjS5EDvDhT6iOiSxbs9qMSCXPYOz3r1Ny-dh5VwKYq4pSESyWNRKl3-gTAVENQ4nr0"/>
+</div>
+</div>
+<div class="pt-16 px-lg pb-lg space-y-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm">Alexander Sterling</h3>
+<p class="font-body-sm text-on-surface-variant">Senior Intelligence Analyst • Enterprise Plan</p>
+</div>
+<div class="space-y-sm">
+<button class="w-full flex items-center justify-between px-md py-sm bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-all group">
+<span class="font-label-md">Edit Profile</span>
+<span class="material-symbols-outlined text-body-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between px-md py-sm bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-all group">
+<span class="font-label-md">Security &amp; Password</span>
+<span class="material-symbols-outlined text-body-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Intelligence Tuning (AI Feature) -->
+<div class="col-span-12 lg:col-span-8 glass-panel rounded-xl shadow-sm border border-outline-variant p-lg flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined ai-gradient-text" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<h3 class="font-headline-sm text-headline-sm">Intelligence Tuning</h3>
+</div>
+<p class="font-body-md text-on-surface-variant mb-xl max-w-2xl">Adjust how the NewsWise AI engine prioritizes metadata for your custom intelligence feed. These weights affect your 'Top Insights' and automated summaries.</p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-xl">
+<!-- Tuning Item 1 -->
+<div class="space-y-md">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-primary">Trust Factor</label>
+<span class="font-mono-label bg-surface-container-highest px-sm py-xs rounded">85%</span>
+</div>
+<input class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-secondary" type="range" value="85"/>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Source Veracity</p>
+</div>
+<!-- Tuning Item 2 -->
+<div class="space-y-md">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-primary">Sentiment Analysis</label>
+<span class="font-mono-label bg-surface-container-highest px-sm py-xs rounded">40%</span>
+</div>
+<input class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-on-tertiary-container" type="range" value="40"/>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Emotional Weighting</p>
+</div>
+<!-- Tuning Item 3 -->
+<div class="space-y-md">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-primary">Match Precision</label>
+<span class="font-mono-label bg-surface-container-highest px-sm py-xs rounded">92%</span>
+</div>
+<input class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary" type="range" value="92"/>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Topical Relevance</p>
+</div>
+</div>
+</div>
+<div class="mt-xl flex items-center justify-between border-t border-outline-variant pt-lg">
+<span class="font-label-md text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-body-sm">info</span>
+                            Changes apply to real-time feed processing.
+                        </span>
+<button class="px-lg py-sm bg-primary text-white rounded-lg font-label-md hover:opacity-90 transition-opacity">
+                            Apply Configuration
+                        </button>
+</div>
+</div>
+<!-- Theme & Privacy (Toggles) -->
+<div class="col-span-12 lg:col-span-5 bg-white rounded-xl shadow-sm border border-outline-variant p-lg space-y-xl">
+<h3 class="font-headline-sm text-headline-sm border-b border-outline-variant pb-md">System Preferences</h3>
+<!-- Theme Toggle -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">dark_mode</span>
+</div>
+<div>
+<h4 class="font-label-md text-primary">Dashboard Theme</h4>
+<p class="font-body-sm text-on-surface-variant">Switch between Light and Dark mode</p>
+</div>
+</div>
+<button class="w-12 h-6 bg-surface-container-highest rounded-full relative transition-colors duration-300 focus:outline-none dark:bg-secondary" onclick="document.documentElement.classList.toggle('dark')">
+<div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform dark:translate-x-6"></div>
+</button>
+</div>
+<!-- Privacy Toggles -->
+<div class="space-y-lg">
+<div class="flex items-center justify-between">
+<div>
+<h4 class="font-label-md text-primary">Anonymous Data Collection</h4>
+<p class="font-body-sm text-on-surface-variant">Help improve AI model accuracy</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<h4 class="font-label-md text-primary">Share Intelligence Reports</h4>
+<p class="font-body-sm text-on-surface-variant">Allow team visibility on insights</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Saved for Later -->
+<div class="col-span-12 lg:col-span-7 bg-white rounded-xl shadow-sm border border-outline-variant p-lg flex flex-col overflow-hidden">
+<div class="flex items-center justify-between mb-lg">
+<h3 class="font-headline-sm text-headline-sm">Saved for Later</h3>
+<button class="text-secondary font-label-md hover:underline">View All (24)</button>
+</div>
+<div class="space-y-sm overflow-y-auto max-h-[300px] pr-sm custom-scrollbar">
+<!-- Saved Article 1 -->
+<div class="p-md rounded-lg hover:bg-surface-container-low border border-transparent hover:border-outline-variant transition-all flex gap-md items-start group">
+<div class="w-20 h-20 rounded bg-surface-container flex-shrink-0 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A futuristic digital representation of the earth glowing with neon blue and cyan data points against a dark, cosmic background. The style is tech-oriented and sleek, featuring a grid of interconnected nodes representing a global information network. Soft glows and crystalline textures create a high-end AI aesthetic." src="https://lh3.googleusercontent.com/aida/AP1WRLtIhOFMrWBLELz8iqW1H_FqPzyEiRnmL3NsbWsHmrLl8MjcoLTQVAo6-Kbq53BE6kWa3PVOp3q4jIkY5pic5oKgARzCdJpAOCgX0dNKWN--CDGZwdruAyNjf6fFa0LZyuNyFTc7FzGTjIw9jIv5D2fII-XQ2jM3g7QrEUR23KmOk_X5hoTxnBG-8I-qrqINCdQuF3Hpo1XtsnbWUBHuFsoeMQCswYro1JWG0xLJ1ToUQ28xeJi0E261IfGg"/>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-label-md text-primary group-hover:text-secondary transition-colors">Quantum Supremacy: Implications for Global Cyber-Defense Systems</h4>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-body-sm">delete</span>
+</button>
+</div>
+<p class="text-body-sm text-on-surface-variant line-clamp-2">Recent breakthroughs in quantum computing are forcing a re-evaluation of current encryption standards across major financial and military networks...</p>
+<div class="flex items-center gap-md pt-xs">
+<span class="text-[10px] font-bold px-sm py-xs bg-green-100 text-green-800 rounded">98% TRUST</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-medium">Saved 2h ago</span>
+</div>
+</div>
+</div>
+<!-- Saved Article 2 -->
+<div class="p-md rounded-lg hover:bg-surface-container-low border border-transparent hover:border-outline-variant transition-all flex gap-md items-start group">
+<div class="w-20 h-20 rounded bg-surface-container flex-shrink-0 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A sterile, ultra-modern laboratory setting with white surfaces and clean lines. An array of glass test tubes is illuminated by a cold blue light, suggesting cutting-edge scientific research. The image is minimalist and high-contrast, perfectly fitting a corporate news aesthetic centered on biotechnology and innovation." src="https://lh3.googleusercontent.com/aida/AP1WRLshzavT0FKs3Hc7-WyfsBdq10er--DGesOmSsxn7uqjI5iMrL5kH46m581uLN1DuDBFyAUOJtEJ5hiIMWH5hpD3vWroid6VKpa-8nM_Q5J4tTKUVCwg7-TZPY2xzNwPX1n0Kk2RzcoQ2hZjD_uCVzJJP6wtCz4V9-AyGodzHNYQ5u7SdlIw-J2LI4jI9VgYpr1k9uIYgjea166QVqEt_qYcg6CRpkCbtfYPQpSny6qq-S0R6wQteOLqbqwh"/>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-label-md text-primary group-hover:text-secondary transition-colors">Bio-Engineering Policy Shift in European Markets</h4>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-body-sm">delete</span>
+</button>
+</div>
+<p class="text-body-sm text-on-surface-variant line-clamp-2">New regulatory frameworks proposed by the Commission could accelerate the approval process for synthetic protein production...</p>
+<div class="flex items-center gap-md pt-xs">
+<span class="text-[10px] font-bold px-sm py-xs bg-yellow-100 text-yellow-800 rounded">72% TRUST</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-medium">Saved Yesterday</span>
+</div>
+</div>
+</div>
+<!-- Saved Article 3 -->
+<div class="p-md rounded-lg hover:bg-surface-container-low border border-transparent hover:border-outline-variant transition-all flex gap-md items-start group">
+<div class="w-20 h-20 rounded bg-surface-container flex-shrink-0 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A close-up shot of a sleek tablet displaying complex financial graphs and data visualizations in a dimly lit, high-end office environment. The screen glow casts a soft cyan light on a dark wooden desk surface. The overall mood is serious and professional, emphasizing market intelligence and data-driven decision making." src="https://lh3.googleusercontent.com/aida/AP1WRLvopb5FpF4ajuPuhw0JCys42gdw9D8HQC1v0zZ41uPOnmcNfls52P7mq4iBtgr2YZFewsnMsEwIGrnm_ONWwf3_E2kQUEyFKZfQWbBSsJjzCVNaeQsLM0QDiBEtG8MKx0uw-ewRL6TFnQLbC8rA7o0ZUlF0Rr2bLTJ2DAm3E-cE9rsA9TOHR-3EFQ1Kv7oUkdGZdDyb_FFQMPbtZ62Yt10OCY_H2z12Bbe2-lQz9EnlUVIlP26Er0n_4Zkm"/>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-label-md text-primary group-hover:text-secondary transition-colors">Global Interest Rates: Sentiment Analysis of G7 Banks</h4>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-body-sm">delete</span>
+</button>
+</div>
+<p class="text-body-sm text-on-surface-variant line-clamp-2">AI-driven sentiment tracking of recent central bank transcripts suggests a dovish pivot earlier than analysts previously predicted...</p>
+<div class="flex items-center gap-md pt-xs">
+<span class="text-[10px] font-bold px-sm py-xs bg-green-100 text-green-800 rounded">89% TRUST</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-medium">Saved 2 days ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Smooth transition for tuning sliders and labels
+        const sliders = document.querySelectorAll('input[type="range"]');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const label = e.target.parentElement.querySelector('.font-mono-label');
+                label.textContent = `${e.target.value}%`;
+                
+                // Add a subtle glow effect to the label on change
+                label.style.transition = 'all 0.2s ease';
+                label.classList.add('bg-primary-container', 'text-white');
+                setTimeout(() => {
+                    label.classList.remove('bg-primary-container', 'text-white');
+                }, 500);
+            });
+        });
+
+        // Toggle effect for privacy switches (UI only)
+        const toggleButtons = document.querySelectorAll('.peer');
+        toggleButtons.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const parent = this.closest('.flex');
+                if(this.checked) {
+                    parent.classList.add('opacity-100');
+                } else {
+                    parent.classList.add('opacity-70');
+                }
+            });
+        });
+    </script>
+</body></html>
