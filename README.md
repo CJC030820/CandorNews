@@ -98,14 +98,14 @@ The system can be easily deployed using Docker Compose:
    ```
 
 The services will be available at:
-- Backend API: http://localhost:8000
+- Backend API: http://localhost:8080
 - Frontend: http://localhost
 - MongoDB: localhost:27017 (exposed for debugging)
 
 ### Health Check
 
 A health check endpoint is available at:
-- http://localhost:8000/health
+- http://localhost:8080/health
 
 ## Testing
 
@@ -145,8 +145,8 @@ npm test
 ## API Documentation
 
 Once the server is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:8080/docs
+- ReDoc: http://localhost:8080/redoc
 
 ## License
 

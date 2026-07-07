@@ -87,10 +87,10 @@ The system is designed for easy deployment using Docker Compose:
 2. Create frontend `.env` with `REACT_APP_LD_CLIENT_SIDE_ID`
 3. Run: `docker-compose up --build`
 4. Access services:
-   - Backend API: http://localhost:8000
+   - Backend API: http://localhost:8080
    - Frontend: http://localhost
-   - Health check: http://localhost:8000/health
-   - API docs: http://localhost:8000/docs
+   - Health check: http://localhost:8080/health
+   - API docs: http://localhost:8080/docs
 
 ### Environment Variables
 - `LD_SDK_KEY`: LaunchDarkly SDK key (server-side)

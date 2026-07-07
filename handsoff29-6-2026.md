@@ -84,8 +84,8 @@ Enhanced the NewsCollectBot system to production readiness by implementing prope
 2. Install dependencies: `pip install -r requirements.txt` (backend) and `npm install` (frontend)
 3. Start MongoDB (or use Docker: `docker-compose up -d mongodb`)
 4. Run the application: `uvicorn app.main:app --reload`
-5. Verify health endpoint: `http://localhost:8000/health`
-6. Test API documentation: `http://localhost:8000/docs`
+5. Verify health endpoint: `http://localhost:8080/health`
+6. Test API documentation: `http://localhost:8080/docs`
 
 ## Environment Status
 - Backend: Python environment ready (requires Visual C++ Build Tools for full dependencies)

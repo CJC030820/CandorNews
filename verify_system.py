@@ -78,7 +78,7 @@ def main():
         print("2. Install dependencies: pip install -r requirements.txt")
         print("3. Start MongoDB (or use Docker: docker-compose up -d mongodb)")
         print("4. Run the application: uvicorn app.main:app --reload")
-        print("5. Check health endpoint: http://localhost:8000/health")
+        print("5. Check health endpoint: http://localhost:8080/health")
     else:
         print("\n[FAILED] Verification failed! Please check the errors above.")
         sys.exit(1)
