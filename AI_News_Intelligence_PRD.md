@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD)
+    # Product Requirements Document (PRD)
 
 # Trust-Aware Personalized AI News Intelligence System
 
