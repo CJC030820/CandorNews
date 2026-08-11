@@ -11,6 +11,9 @@ class TokenData(BaseModel):
 class UserBase(BaseModel):
     name: str
     email: EmailStr
+    preferred_topics: Optional[list] = []
+    email_notifications_enabled: bool = False
+    email_notification_schedule: str = "morning"
 
 class UserCreate(UserBase):
     password: str

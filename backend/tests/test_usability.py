@@ -349,7 +349,7 @@ async def test_recommender_service(storage_service):
 @pytest.mark.asyncio
 async def test_bookmarking_and_interaction(storage_service):
     # Create a user and an article
-    user_in = UserCreate(name="Bookmarker", email="book@example.com", pass="pass", preferred_topics=[])
+    user_in = UserCreate(name="Bookmarker", email="book@example.com", password="pass", preferred_topics=[])
     user = await storage_service.create_user(user_in)
     article_in = ArticleCreate(
         title="Bookmark Test",

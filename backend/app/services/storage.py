@@ -19,6 +19,13 @@ class StorageService:
         self.interactions = self.db.interactions
         self.source_credibility = self.db.source_credibility
 
+    async def ensure_indexes(self):
+        """Create indexes needed for data integrity (safe to call repeatedly)."""
+        try:
+            await self.users.create_index("email", unique=True)
+        except Exception as exc:
+            logger.warning(f"Could not ensure users.email unique index: {exc}")
+
     # User methods
     async def create_user(self, user: UserCreate) -> UserInDB:
         from app.core.security import get_password_hash
@@ -44,6 +51,19 @@ class StorageService:
             user_doc["_id"] = str(user_doc["_id"])
             return UserInDB(**user_doc)
         return None
+
+    async def update_user_by_email(self, email: str, update_data: dict) -> Optional[UserInDB]:
+        update_data["updated_at"] = datetime.utcnow()
+        await self.users.update_one(
+            {"email": email},
+            {"$set": update_data}
+        )
+        return await self.get_user_by_email(email)
+
+    async def delete_user_by_email(self, email: str) -> bool:
+        """Permanently delete a user account. Returns True if a document was deleted."""
+        result = await self.users.delete_one({"email": email})
+        return result.deleted_count > 0
 
     # Article methods
     async def create_article(self, article: ArticleCreate) -> ArticleInDB:
@@ -74,6 +94,36 @@ class StorageService:
             doc["_id"] = str(doc["_id"])
             articles.append(ArticleInDB(**doc))
         return articles
+
+    async def get_latest_articles(self, limit: int = 50, topic: Optional[str] = None) -> List[ArticleInDB]:
+        """Return the most recently published completed articles, newest first."""
+        query = {"processing_status": "completed"}
+        if topic and topic.lower() != "all":
+            query["topic"] = topic
+        cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def get_latest_articles_for_topics(self, topics: List[str], limit: int = 10) -> List[ArticleInDB]:
+        """Return the most recent completed articles matching any of the
+        given topics (case-sensitive match against the stored topic field).
+        If `topics` is empty, falls back to the latest articles overall so
+        callers (e.g. email digests) always have something to send."""
+        query = {"processing_status": "completed"}
+        if topics:
+            query["topic"] = {"$in": topics}
+        cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def count_articles(self) -> int:
+        return await self.articles.count_documents({})
 
     async def update_article_status(self, article_id: str, status: str, processed_at: Optional[datetime] = None):
         from bson import ObjectId

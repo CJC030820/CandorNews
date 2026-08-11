@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.services.worker import news_worker
+from app.worker import news_worker
 from app.core.security import decode_access_token
 from fastapi.security import OAuth2PasswordBearer
+from app.services.storage import storage_service
+from app.schemas.auth import UserResponse
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")

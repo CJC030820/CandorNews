@@ -48,11 +48,14 @@ def test_environment():
     """Test that environment variables are set up correctly"""
     print("\nChecking environment...")
 
-    # Check for .env file
-    if os.path.exists('.env'):
-        print("[OK] .env file found")
+    # Check for .env file (prefer backend/.env, fall back to repo root)
+    backend_env = os.path.join(os.path.dirname(__file__), 'backend', '.env')
+    if os.path.exists(backend_env):
+        print("[OK] backend/.env file found")
+    elif os.path.exists('.env'):
+        print("[OK] .env file found (repo root)")
     else:
-        print("[WARNING] .env file not found (copy from .env.example)")
+        print("[WARNING] .env file not found (copy backend/.env.example to backend/.env)")
 
     # Check for key environment variables
     env_vars = ['LD_SDK_KEY', 'NEWSAPI_KEY', 'GNEWS_API_KEY']

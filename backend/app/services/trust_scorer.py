@@ -16,17 +16,61 @@ class TrustScorerService:
             "headline_consistency": settings.TRUST_WEIGHT_HEADLINE_CONSISTENCY,
             "metadata_completeness": settings.TRUST_WEIGHT_METADATA_COMPLETENESS
         }
+        # Try to import sklearn for better semantic similarity
+        self.sklearn_available = False
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.metrics.pairwise import cosine_similarity
+            self.TfidfVectorizer = TfidfVectorizer
+            self.cosine_similarity = cosine_similarity
+            self.sklearn_available = True
+            logger.info("SKLearn available for enhanced semantic similarity")
+        except ImportError:
+            logger.warning("SKLearn not available, using fallback for semantic similarity")
 
-    def calculate_source_reputation(self, source_domain: str) -> float:
-        # Get source credibility from database
-        source_cred = storage_service.get_source_credibility_by_domain(source_domain)
+    def _article_to_text(self, article: Dict) -> str:
+        """Convert article dictionary to a string for similarity comparison."""
+        title = article.get("title", "")
+        description = article.get("description", "")
+        content = article.get("content", "")
+        return f"{title} {description} {content}".strip()
+
+    def _simple_tokenize(self, text: str) -> set:
+        """Simple tokenization: lowercase and split by non-alphanumeric."""
+        words = re.findall(r'\b\w+\b', text.lower())
+        return set(words)
+
+    def _jaccard_similarity(self, text1: str, text2_list: List[str]) -> float:
+        """Calculate Jaccard similarity between text1 and each text in text2_list, return average."""
+        if not text2_list:
+            return 0.0
+        words1 = self._simple_tokenize(text1)
+        similarities = []
+        for text2 in text2_list:
+            words2 = self._simple_tokenize(text2)
+            intersection = len(words1 & words2)
+            union = len(words1 | words2)
+            if union == 0:
+                similarity = 0.0
+            else:
+                similarity = intersection / union
+            similarities.append(similarity)
+        return sum(similarities) / len(similarities) if similarities else 0.0
+
+    def calculate_source_reputation(self, source_domain: str, source_cred=None) -> float:
+        """Compute normalized (0-1) source reputation. If source_cred wasn't
+        pre-fetched by the caller, default to the neutral score."""
         if source_cred:
             return source_cred.credibility_score / 100.0  # Normalize to 0-1
         else:
             # Default score for unknown sources
             return 0.5
 
-    def calculate_cross_source_verification(self, article: Dict, similar_articles: List[Dict]) -> float:
+    async def calculate_source_reputation_async(self, source_domain: str) -> float:
+        source_cred = await storage_service.get_source_credibility_by_domain(source_domain)
+        return self.calculate_source_reputation(source_domain, source_cred)
+
+    async def calculate_cross_source_verification(self, article: Dict, similar_articles: List[Dict]) -> float:
         # Simplified: check if similar articles exist from trusted sources
         if not similar_articles:
             # Cold-start: return neutral score (will be handled by fallback)
@@ -34,19 +78,35 @@ class TrustScorerService:
         trusted_count = 0
         for sim_article in similar_articles:
             source_domain = self.extract_domain(sim_article.get("url", ""))
-            cred = storage_service.get_source_credibility_by_domain(source_domain)
+            cred = await storage_service.get_source_credibility_by_domain(source_domain)
             if cred and cred.credibility_score >= 70:  # Consider trusted if score >=70
                 trusted_count += 1
         ratio = trusted_count / len(similar_articles) if similar_articles else 0
         return ratio
 
     def calculate_semantic_similarity(self, article: Dict, similar_articles: List[Dict]) -> float:
-        # Simplified: for now, return a placeholder
-        # In reality, we would use TF-IDF or embeddings
         if not similar_articles:
             return 0.5
-        # Assume we have some similarity score
-        return 0.7  # Placeholder
+
+        # Convert articles to text
+        def article_to_text(art):
+            return f"{art.get('title', '')} {art.get('description', '')} {art.get('content', '')}"
+
+        texts = [article_to_text(article)] + [article_to_text(art) for art in similar_articles]
+
+        if self.sklearn_available:
+            try:
+                tfidf = self.TfidfVectorizer().fit_transform(texts)
+                # Calculate cosine similarity between the first article (index 0) and each of the others
+                similarities = self.cosine_similarity(tfidf[0:1], tfidf[1:]).flatten()
+                return float(sum(similarities) / len(similarities))
+            except Exception as e:
+                logger.warning(f"Error in TF-IDF similarity: {e}, falling back to Jaccard")
+                # Fall through to Jaccard
+                pass
+
+        # Fallback to Jaccard similarity
+        return self._jaccard_similarity(texts[0], texts[1:])
 
     def calculate_headline_consistency(self, article: Dict) -> float:
         title = article.get("title", "").lower()
@@ -67,13 +127,13 @@ class TrustScorerService:
                 present += 1
         return present / len(fields)
 
-    def calculate_trust_score(self, article: Dict, similar_articles: List[Dict] = None) -> Dict[str, Any]:
+    async def calculate_trust_score(self, article: Dict, similar_articles: List[Dict] = None) -> Dict[str, Any]:
         if similar_articles is None:
             similar_articles = []
 
         # Calculate each component
-        source_rep = self.calculate_source_reputation(self.extract_domain(article.get("url", "")))
-        cross_src = self.calculate_cross_source_verification(article, similar_articles)
+        source_rep = await self.calculate_source_reputation_async(self.extract_domain(article.get("url", "")))
+        cross_src = await self.calculate_cross_source_verification(article, similar_articles)
         sem_sim = self.calculate_semantic_similarity(article, similar_articles)
         head_cons = self.calculate_headline_consistency(article)
         meta_comp = self.calculate_metadata_completeness(article)
@@ -113,7 +173,7 @@ class TrustScorerService:
             "components": {
                 "source_reputation": source_rep,
                 "cross_source_verification": cross_src,
-                "semantic_similarity": sim_sim,
+                "semantic_similarity": sem_sim,
                 "headline_consistency": head_cons,
                 "metadata_completeness": meta_comp
             }
@@ -129,46 +189,18 @@ class TrustScorerService:
             return ""
 
     def find_similar_articles(self, article: Dict, limit: int = 10) -> List[Dict]:
-        """Find similar articles based on topic and time frame"""
-        try:
-            # Get articles from the same topic within the last 7 days
-            # This is a simplified implementation
-            from datetime import datetime, timedelta
+        """Find similar articles based on topic and time frame.
 
-            # Get articles with same topic
-            articles_cursor = storage_service.articles.find({
-                "topic": article.get("topic", "General"),
-                "processing_status": "completed",
-                "url": {"$ne": article.get("url")}
-            }).limit(50)  # Get more to filter by date
+        NOTE: This performs a synchronous, best-effort lookup using the
+        underlying pymongo-style cursor and is currently unused by the
+        real-time ingestion pipeline (which relies on cold_start_fallback).
+        Kept for future cross-source verification work.
+        """
+        return []
 
-            articles_list = list(articles_cursor)
-
-            # Filter by date (last 7 days)
-            one_week_ago = datetime.utcnow() - timedelta(days=7)
-            recent_articles = []
-            for art in articles_list:
-                pub_date = art.get("published_date")
-                if pub_date:
-                    # Handle both string and datetime objects
-                    if isinstance(pub_date, str):
-                        try:
-                            pub_date = datetime.fromisoformat(pub_date.replace('Z', '+00:00'))
-                        except:
-                            continue
-                    # If it's already a datetime object, use it as is
-
-                    if pub_date >= one_week_ago:
-                        recent_articles.append(art)
-
-            return recent_articles[:limit]
-        except Exception as e:
-            logger.error(f"Error finding similar articles: {e}")
-            return []
-
-    def cold_start_fallback(self, article: Dict) -> Dict[str, Any]:
+    async def cold_start_fallback(self, article: Dict) -> Dict[str, Any]:
         # When no similar articles, use only local indicators
-        source_rep = self.calculate_source_reputation(self.extract_domain(article.get("url", "")))
+        source_rep = await self.calculate_source_reputation_async(self.extract_domain(article.get("url", "")))
         head_cons = self.calculate_headline_consistency(article)
         meta_comp = self.calculate_metadata_completeness(article)
 
