@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import './LoginPage.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -17,50 +18,63 @@ const LoginPage = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        // After login, check if user has selected topics
-        // For now, we'll redirect to topic selection if no topics selected
-        // In a real app, we would check the user's preferences
-        navigate('/topic-selection');
+        navigate('/feed');
       } else {
         setError('Invalid email or password');
       }
     } catch (err) {
-      setError('Login failed');
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-page">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <div className="login-container">
+      <div className="login-box">
+        <div className="login-header">
+          <h1>📰 CandorNews</h1>
+          <p>Trusted Malaysia English News</p>
         </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" disabled={loading} className="login-button">
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+
+        <div className="login-footer">
+          <p>Don't have an account? <Link to="/register">Register here</Link></p>
         </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-      {error && <p className="error">{error}</p>}
-      <p>
-        Don't have an account? <a href="/register">Register here</a>
-      </p>
+      </div>
     </div>
   );
 };

@@ -130,11 +130,17 @@ class NewsFetcherService:
                 content = entry.get("content", [{}])[0].get("value") if entry.get("content") else None
                 raw_description = entry.get("description") or entry.get("summary")
                 image_url = self._extract_rss_image(entry, content, raw_description)
+                link = entry.get("link")
+                if not image_url and link:
+                    # Some feeds (e.g. Bernama) carry no image data at all in
+                    # the RSS entry itself. Fall back to scraping the
+                    # article page's Open Graph / Twitter image meta tag.
+                    image_url = self._fetch_og_image(link)
                 articles.append({
                     "title": _strip_html(entry.get("title")),
                     "author": entry.get("author", None),
                     "source": feed.feed.get("title", "Unknown"),
-                    "url": entry.get("link"),
+                    "url": link,
                     "published_at": entry.get("published"),
                     "description": _strip_html(raw_description),
                     "content": _strip_html(content),
@@ -179,6 +185,34 @@ class NewsFetcherService:
                     return match.group(1)
 
         return None
+
+    def _fetch_og_image(self, article_url: str) -> Optional[str]:
+        """Fetch an article page and extract its Open Graph / Twitter card
+        image URL. Used as a last-resort fallback for RSS feeds (e.g.
+        Bernama) that don't include any image data in the feed itself.
+        Fails silently (returns None) so a slow/broken page never blocks
+        ingestion of the rest of the batch."""
+        try:
+            response = requests.get(
+                article_url,
+                timeout=6,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; CandorNewsBot/1.0)"}
+            )
+            if response.status_code != 200:
+                return None
+            html = response.text
+            for pattern in (
+                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+                r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+            ):
+                match = re.search(pattern, html)
+                if match:
+                    return match.group(1)
+            return None
+        except Exception as e:
+            logger.debug(f"Could not fetch OG image for {article_url}: {e}")
+            return None
 
     def fetch_all_sources(self) -> List[Dict]:
         """Fetch news from all configured sources (NewsAPI, GNews, RSS)"""

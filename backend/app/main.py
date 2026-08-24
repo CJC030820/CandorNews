@@ -72,6 +72,12 @@ async def on_startup():
         print(f"Warning: could not ensure MongoDB indexes: {exc}")
 
     try:
+        await storage_service.seed_source_credibility()
+        print("Source credibility scores seeded (used for trust score calculation).")
+    except Exception as exc:
+        print(f"Warning: could not seed source credibility: {exc}")
+
+    try:
         start_email_scheduler()
         print("Email notification scheduler started (7am and 7pm daily).")
     except Exception as exc:
@@ -279,6 +285,7 @@ def _article_to_feed_dict(article) -> dict:
     """Convert a stored ArticleInDB into the shape the frontend expects."""
     published = article.published_date
     date_str = published.isoformat() if hasattr(published, "isoformat") else str(published)
+    categories = getattr(article, "topics", None) or ([article.topic] if article.topic else [])
     return {
         "id": article.id,
         "title": article.title,
@@ -287,10 +294,12 @@ def _article_to_feed_dict(article) -> dict:
         "date": date_str,
         "trustScore": round(article.trust_score) if article.trust_score is not None else None,
         "category": article.topic,
+        "categories": categories,
         "image": article.image_url or None,
         "url": article.url,
         "author": article.author,
-        "sentiment": article.sentiment
+        "sentiment": article.sentiment,
+        "toneLabel": getattr(article, "tone_label", None)
     }
 
 
@@ -396,22 +405,39 @@ MAX_DIGEST_ARTICLES = 10
 
 async def _send_digest_email_to_user(user, period_label: str = "", custom_message: Optional[str] = None) -> dict:
     """Build and send a personalized news digest email to a single user,
-    using the latest real articles matching their preferred topics (capped
-    at MAX_DIGEST_ARTICLES). Falls back to the latest articles overall if
-    the user has no preferred topics or none match yet."""
+    using exactly 10 latest real articles matching their preferred topics.
+    Falls back to the latest articles overall only if the user has no
+    preferred topics set."""
     preferred_topics = getattr(user, "preferred_topics", None) or []
+    
+    logger.info(f"Preparing email digest for {user.email}, preferred topics: {preferred_topics}")
 
-    articles = await storage_service.get_latest_articles_for_topics(
-        preferred_topics, limit=MAX_DIGEST_ARTICLES
-    )
-
-    # If topic-filtered results came back empty (e.g. topics don't match any
-    # stored article yet) but the user does have topics set, fall back to
-    # the latest articles overall so the digest is never empty.
-    if not articles and preferred_topics:
-        articles = await storage_service.get_latest_articles(limit=MAX_DIGEST_ARTICLES)
-
+    # First try to get articles from user's preferred topics
+    articles = []
+    if preferred_topics:
+        articles = await storage_service.get_latest_articles_for_topics(
+            preferred_topics, limit=MAX_DIGEST_ARTICLES * 2  # Get more to ensure we have 10
+        )
+        logger.info(f"Found {len(articles)} articles from preferred topics for {user.email}")
+    
+    # If not enough articles from preferred topics, fall back to all latest articles
+    if len(articles) < MAX_DIGEST_ARTICLES:
+        all_articles = await storage_service.get_latest_articles(limit=MAX_DIGEST_ARTICLES * 2)
+        # Prioritize articles from user's topics if they exist
+        if preferred_topics:
+            # Add any additional articles from topics that weren't already included
+            for article in all_articles:
+                if article not in articles:
+                    articles.append(article)
+                    if len(articles) >= MAX_DIGEST_ARTICLES:
+                        break
+        else:
+            articles = all_articles
+        logger.info(f"After fallback: {len(articles)} articles for {user.email}")
+    
+    # Ensure exactly 10 articles
     digest_articles = [_article_to_feed_dict(a) for a in articles[:MAX_DIGEST_ARTICLES]]
+    logger.info(f"Sending email digest with {len(digest_articles)} articles to {user.email}")
 
     digest = email_service.build_news_digest_email(user.name, digest_articles, period_label=period_label)
     text_body = digest["text"]
@@ -443,9 +469,19 @@ email_scheduler = AsyncIOScheduler()
 
 async def _run_scheduled_email_job(job_period: str):
     """Send digest emails to every user opted in for this time slot
-    (morning, night, or both)."""
+    (morning, night, or both). Before sending, first triggers a fresh news
+    fetch/refresh so users receive the latest articles at their preferred
+    time instead of whatever was last cached from the periodic background
+    worker run."""
     logger.info(f"Running scheduled email job: {job_period}")
     try:
+        try:
+            logger.info(f"Refreshing news before sending '{job_period}' digest emails...")
+            refresh_stats = await news_worker.fetch_and_process_news()
+            logger.info(f"News refresh before '{job_period}' digest completed: {refresh_stats}")
+        except Exception as refresh_exc:
+            logger.error(f"News refresh before '{job_period}' digest failed, sending with existing articles: {refresh_exc}", exc_info=True)
+
         cursor = storage_service.users.find({
             "email_notifications_enabled": True,
             "email_notification_schedule": {"$in": [job_period, "both"]}
@@ -471,19 +507,44 @@ def start_email_scheduler():
     if email_scheduler.running:
         return
 
+    # Wrap async job in sync function for APScheduler
+    def run_morning_job():
+        logger.info("Executing morning email job via scheduler")
+        import asyncio
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(_run_scheduled_email_job("morning"))
+        except Exception as e:
+            logger.error(f"Morning job failed: {e}", exc_info=True)
+        finally:
+            loop.close()
+    
+    def run_evening_job():
+        logger.info("Executing evening email job via scheduler")
+        import asyncio
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(_run_scheduled_email_job("night"))
+        except Exception as e:
+            logger.error(f"Evening job failed: {e}", exc_info=True)
+        finally:
+            loop.close()
+    
     email_scheduler.add_job(
-        _run_scheduled_email_job,
+        run_morning_job,
         CronTrigger(hour=7, minute=0),
-        args=["morning"],
         id="email_morning_job",
-        replace_existing=True
+        replace_existing=True,
+        name="Morning Email Digest"
     )
     email_scheduler.add_job(
-        _run_scheduled_email_job,
+        run_evening_job,
         CronTrigger(hour=19, minute=0),
-        args=["night"],
         id="email_night_job",
-        replace_existing=True
+        replace_existing=True,
+        name="Evening Email Digest"
     )
     email_scheduler.start()
 

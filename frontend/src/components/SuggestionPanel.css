@@ -1,0 +1,305 @@
+.suggestion-panel {
+  background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.1) 0%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.06) 100%);
+  border: 2px solid var(--accent-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s;
+}
+
+[data-theme="dark"] .suggestion-panel {
+  background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.15) 0%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08) 100%);
+  border-color: var(--accent-color);
+}
+
+.suggestion-header {
+  margin-bottom: 15px;
+}
+
+.suggestion-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.suggestion-header-row .suggestion-header {
+  margin-bottom: 0;
+}
+
+.edit-topics-btn {
+  background: var(--bg-secondary);
+  color: var(--accent-color);
+  border: 2px solid var(--accent-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.edit-topics-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.suggestion-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 5px 0;
+  transition: color 0.3s;
+  line-height: 1;
+}
+
+.heading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.suggestion-header p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  transition: color 0.3s;
+}
+
+.suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.suggestion-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  animation: slideIn 0.3s ease-out forwards;
+  animation-fill-mode: backwards;
+  transition: all 0.3s;
+}
+
+.suggestion-tag:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.suggestion-tag:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.suggestion-tag:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.suggestion-tag:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.suggestion-tag:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.suggestion-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4);
+}
+
+.tag-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tag-label {
+  line-height: 1.2;
+}
+
+.suggestion-message {
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.1);
+  border-left: 4px solid var(--accent-color);
+  padding: 12px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+[data-theme="dark"] .suggestion-message {
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.15);
+}
+
+.suggestion-message p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  transition: color 0.3s;
+}
+
+.topic-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.topic-editor-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  line-height: 1;
+}
+
+.topic-editor-chip:hover {
+  border-color: var(--accent-color);
+  background-color: var(--accent-color);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.topic-editor-chip.selected {
+  background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.topic-editor-chip.selected:hover {
+  background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
+  color: #ffffff;
+}
+
+.topic-editor-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.topic-editor-save,
+.topic-editor-cancel {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.topic-editor-save {
+  background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
+  color: white;
+}
+
+.topic-editor-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4);
+}
+
+.topic-editor-save:disabled,
+.topic-editor-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.topic-editor-cancel {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.topic-editor-cancel:hover:not(:disabled) {
+  background-color: var(--alert-color);
+  color: #ffffff;
+}
+
+.suggestion-error {
+  color: var(--alert-color);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .suggestion-panel {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .suggestion-tags {
+    gap: 8px;
+  }
+
+  .suggestion-tag {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .tag-emoji {
+    font-size: 14px;
+  }
+}

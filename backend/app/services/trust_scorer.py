@@ -71,22 +71,36 @@ class TrustScorerService:
         return self.calculate_source_reputation(source_domain, source_cred)
 
     async def calculate_cross_source_verification(self, article: Dict, similar_articles: List[Dict]) -> float:
-        # Simplified: check if similar articles exist from trusted sources
+        """Score how strongly other independent sources corroborate this
+        story. This is the main "is there evidence this actually happened"
+        signal: zero when the story is single-source/unverified, and
+        climbing toward 1.0 as more (and more reputable) independent outlets
+        are found reporting the same story. Lack of corroboration should
+        genuinely lower the score, not be treated as a neutral non-factor -
+        otherwise unverified articles would outscore verified ones."""
         if not similar_articles:
-            # Cold-start: return neutral score (will be handled by fallback)
-            return 0.5
-        trusted_count = 0
+            return 0.0
+
+        credibility_scores = []
         for sim_article in similar_articles:
             source_domain = self.extract_domain(sim_article.get("url", ""))
             cred = await storage_service.get_source_credibility_by_domain(source_domain)
-            if cred and cred.credibility_score >= 70:  # Consider trusted if score >=70
-                trusted_count += 1
-        ratio = trusted_count / len(similar_articles) if similar_articles else 0
-        return ratio
+            credibility_scores.append(cred.credibility_score / 100.0 if cred else 0.5)
+
+        avg_credibility = sum(credibility_scores) / len(credibility_scores)
+
+        # Reward having *multiple* independent corroborating sources, not
+        # just one. Diminishing returns after ~4 corroborating sources.
+        count_bonus = min(len(similar_articles), 4) / 4.0
+
+        # Blend: mostly driven by how credible the corroborating sources
+        # are, with a boost for having several of them agree.
+        score = (0.7 * avg_credibility) + (0.3 * count_bonus)
+        return min(score, 1.0)
 
     def calculate_semantic_similarity(self, article: Dict, similar_articles: List[Dict]) -> float:
         if not similar_articles:
-            return 0.5
+            return 0.0
 
         # Convert articles to text
         def article_to_text(art):
@@ -109,23 +123,97 @@ class TrustScorerService:
         return self._jaccard_similarity(texts[0], texts[1:])
 
     def calculate_headline_consistency(self, article: Dict) -> float:
+        """Evaluate headline consistency with description/content.
+        Improved scoring to give more credit to well-written articles:
+        - If title is very short or empty, don't penalize heavily
+        - Reward titles that have good keyword overlap (75%+ coverage = 1.0)
+        - Reward titles with partial overlap (50%+ = 0.7+)
+        - Only penalize if title has many unique words not in description"""
         title = article.get("title", "").lower()
         description = article.get("description", "").lower()
-        # Simple check: see if key words from title appear in description
+        
+        # If no title or description, assume good (don't penalize)
+        if not title or not description:
+            return 0.8
+        
         title_words = set(re.findall(r'\w+', title))
         desc_words = set(re.findall(r'\w+', description))
+        
+        # Empty title words - give benefit of the doubt
         if not title_words:
-            return 1.0
+            return 0.9
+        
+        # Calculate overlap percentage
         overlap = len(title_words.intersection(desc_words))
-        return min(overlap / len(title_words), 1.0)
+        coverage = overlap / len(title_words)
+        
+        # More lenient scoring:
+        # 75%+ = 1.0 (very consistent)
+        # 50%+ = 0.8 (good consistency)
+        # 25%+ = 0.6 (moderate consistency)
+        # <25% = 0.4 (low consistency but not penalized heavily)
+        if coverage >= 0.75:
+            return 1.0
+        elif coverage >= 0.50:
+            return 0.85
+        elif coverage >= 0.25:
+            return 0.65
+        else:
+            return 0.45
 
     def calculate_metadata_completeness(self, article: Dict) -> float:
-        fields = ["author", "published_date", "source", "url", "description"]
-        present = 0
-        for field in fields:
+        """Calculate metadata completeness score.
+        Improved to weight critical fields more heavily:
+        - author (0.25) - shows journalistic attribution
+        - published_date (0.25) - critical for news freshness
+        - source (0.15) - outlet identity
+        - description (0.20) - helps with semantic analysis
+        - url (0.15) - allows verification
+        Each field contributes proportionally to total (normalized to 1.0)"""
+        field_weights = {
+            "author": 0.25,
+            "published_date": 0.25,
+            "source": 0.15,
+            "description": 0.20,
+            "url": 0.15
+        }
+        
+        score = 0.0
+        for field, weight in field_weights.items():
             if article.get(field):
-                present += 1
-        return present / len(fields)
+                score += weight
+        
+        return min(score, 1.0)
+
+    def _score_and_label(self, source_rep: float, cross_src: float, sem_sim: float, head_cons: float, meta_comp: float) -> Dict[str, float]:
+        """Shared scoring math used by both calculate_trust_score() and
+        cold_start_fallback(), so cold-start (uncorroborated) articles are
+        scored on the exact same scale as corroborated ones - just with
+        cross_src=0 - instead of a separately renormalized formula that was
+        previously letting unverified articles outscore verified ones."""
+        score = (
+            self.weights["source_reputation"] * source_rep +
+            self.weights["cross_source"] * cross_src +
+            self.weights["semantic_similarity"] * sem_sim +
+            self.weights["headline_consistency"] * head_cons +
+            self.weights["metadata_completeness"] * meta_comp
+        ) * 100  # Convert to 0-100 scale
+
+        # Cap at 95: no automated system should claim absolute (100%)
+        # certainty that a story is true, but well-corroborated articles
+        # from reputable outlets can now score very high.
+        score = min(score, 95.0)
+
+        if score >= 80:
+            label = "High Trust"
+        elif score >= 60:
+            label = "Medium Trust"
+        elif score >= 40:
+            label = "Low Trust"
+        else:
+            label = "Needs Verification"
+
+        return {"score": round(score, 2), "label": label}
 
     async def calculate_trust_score(self, article: Dict, similar_articles: List[Dict] = None) -> Dict[str, Any]:
         if similar_articles is None:
@@ -138,37 +226,20 @@ class TrustScorerService:
         head_cons = self.calculate_headline_consistency(article)
         meta_comp = self.calculate_metadata_completeness(article)
 
-        # Apply weights
-        score = (
-            self.weights["source_reputation"] * source_rep +
-            self.weights["cross_source"] * cross_src +
-            self.weights["semantic_similarity"] * sem_sim +
-            self.weights["headline_consistency"] * head_cons +
-            self.weights["metadata_completeness"] * meta_comp
-        ) * 100  # Convert to 0-100 scale
-
-        # Determine label
-        if score >= 80:
-            label = "High Trust"
-        elif score >= 60:
-            label = "Medium Trust"
-        elif score >= 40:
-            label = "Low Trust"
-        else:
-            label = "Needs Verification"
+        result = self._score_and_label(source_rep, cross_src, sem_sim, head_cons, meta_comp)
 
         # Generate explanation
         explanation = (
             f"Source Reputation: {source_rep:.2f}, "
-            f"Cross-Source Verification: {cross_src:.2f}, "
+            f"Cross-Source Verification: {cross_src:.2f} ({len(similar_articles)} corroborating source(s)), "
             f"Semantic Similarity: {sem_sim:.2f}, "
             f"Headline Consistency: {head_cons:.2f}, "
             f"Metadata Completeness: {meta_comp:.2f}"
         )
 
         return {
-            "trust_score": round(score, 2),
-            "trust_label": label,
+            "trust_score": result["score"],
+            "trust_label": result["label"],
             "trust_explanation": explanation,
             "components": {
                 "source_reputation": source_rep,
@@ -199,49 +270,29 @@ class TrustScorerService:
         return []
 
     async def cold_start_fallback(self, article: Dict) -> Dict[str, Any]:
-        # When no similar articles, use only local indicators
+        """Score an article with no corroborating sources found (yet).
+        Uses the exact same weighted formula as calculate_trust_score(),
+        with cross_source and semantic_similarity explicitly at 0 - so lack
+        of corroboration genuinely caps the achievable score, rather than
+        renormalizing weights across fewer components (which previously let
+        unverified single-source articles outscore verified, corroborated
+        ones)."""
         source_rep = await self.calculate_source_reputation_async(self.extract_domain(article.get("url", "")))
         head_cons = self.calculate_headline_consistency(article)
         meta_comp = self.calculate_metadata_completeness(article)
 
-        # Recalibrate weights: exclude cross-source and semantic similarity
-        # Adjust weights to sum to 1
-        w_source = settings.TRUST_WEIGHT_SOURCE_REPUTATION
-        w_head = settings.TRUST_WEIGHT_HEADLINE_CONSISTENCY
-        w_meta = settings.TRUST_WEIGHT_METADATA_COMPLETENESS
-        total = w_source + w_head + w_meta
-        if total > 0:
-            w_source_norm = w_source / total
-            w_head_norm = w_head / total
-            w_meta_norm = w_meta / total
-        else:
-            w_source_norm = w_head_norm = w_meta_norm = 1/3
-
-        score = (
-            w_source_norm * source_rep +
-            w_head_norm * head_cons +
-            w_meta_norm * meta_comp
-        ) * 100
-
-        if score >= 80:
-            label = "High Trust"
-        elif score >= 60:
-            label = "Medium Trust"
-        elif score >= 40:
-            label = "Low Trust"
-        else:
-            label = "Needs Verification"
+        result = self._score_and_label(source_rep, 0.0, 0.0, head_cons, meta_comp)
 
         explanation = (
-            f"Cold-start fallback: "
+            f"No corroborating sources found yet (single-source/cold-start): "
             f"Source Reputation: {source_rep:.2f}, "
             f"Headline Consistency: {head_cons:.2f}, "
             f"Metadata Completeness: {meta_comp:.2f}"
         )
 
         return {
-            "trust_score": round(score, 2),
-            "trust_label": label,
+            "trust_score": result["score"],
+            "trust_label": result["label"],
             "trust_explanation": explanation,
             "components": {
                 "source_reputation": source_rep,

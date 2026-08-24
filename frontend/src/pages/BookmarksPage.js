@@ -1,59 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import ArticleCard from '../components/ArticleCard';
-import axios from 'axios';
+import { useBookmarks } from '../context/BookmarkContext';
+import BackToTopButton from '../components/BackToTopButton';
+import './BookmarksPage.css';
 
 const BookmarksPage = () => {
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { bookmarks, removeBookmark } = useBookmarks();
 
-  useEffect(() => {
-    const fetchBookmarks = async () => {
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-      setLoading(true);
-      try {
-        const response = await axios.get('/api/bookmarks', {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
-        setArticles(response.data);
-      } catch (err) {
-        console.error('Error fetching bookmarks:', err);
-        setError('Failed to load bookmarks');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleOpenArticle = (article) => {
+    navigate(`/article/${article.id}`, { state: { article } });
+  };
 
-    fetchBookmarks();
-  }, [user]);
-
-  if (loading) {
-    return <div className="bookmarks-page">Loading bookmarks...</div>;
-  }
-
-  if (error) {
-    return <div className="bookmarks-page"><p className="error">{error}</p></div>;
-  }
+  const handleRemove = (e, articleId) => {
+    e.stopPropagation();
+    removeBookmark(articleId);
+  };
 
   return (
     <div className="bookmarks-page">
-      <h2>Bookmarked Articles</h2>
-      {articles.length === 0 ? (
-        <p>You haven't bookmarked any articles yet.</p>
-      ) : (
-        <div className="articles-grid">
-          {articles.map(article => (
-            <ArticleCard key={article.id} article={article} navigate={navigate} />
-          ))}
+      <BackToTopButton />
+      <div className="bookmarks-page-wrapper">
+        <button className="back-btn" onClick={() => navigate('/feed')}>
+          <span className="back-btn-icon">←</span>
+          <span className="back-btn-label">Back to Main Page</span>
+        </button>
+
+        <div className="bookmarks-header">
+          <h1>📑 My Bookmarks</h1>
+          {bookmarks.length > 0 && (
+            <p className="bookmarks-count">{bookmarks.length} article{bookmarks.length !== 1 ? 's' : ''} saved</p>
+          )}
         </div>
-      )}
+
+        <div className="bookmarks-content">
+          {bookmarks.length > 0 ? (
+            <div className="bookmarks-grid">
+              {bookmarks.map(article => (
+                <div
+                  key={article.id}
+                  className="bookmark-item"
+                  onClick={() => handleOpenArticle(article)}
+                >
+                  <div className="bookmark-image">
+                    <img src={article.image} alt={article.title} />
+                    {article.trustScore !== undefined && (
+                      <span className="bookmark-trust-score">{article.trustScore}% Trust</span>
+                    )}
+                  </div>
+                  <h3>{article.title}</h3>
+                  <p>{article.source} • {article.date}</p>
+                  <button
+                    className="remove-btn"
+                    onClick={(e) => handleRemove(e, article.id)}
+                  >
+                    🗑️ Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <span className="empty-icon">📭</span>
+              <p>No bookmarks yet. Start bookmarking articles!</p>
+              <button className="browse-btn" onClick={() => navigate('/feed')}>
+                Browse News Feed
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
