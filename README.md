@@ -19,7 +19,6 @@ The backend is built with FastAPI and uses MongoDB for data storage.
 - Trust scoring system
 - Recommendation engine
 - Bookmarking and interaction tracking
-- View history
 - Feature flags (LaunchDarkly)
 
 ### Running the Backend
@@ -67,9 +66,7 @@ The frontend is built with React and React Router.
 - Personalized Feed
 - Article Detail
 - Bookmarks
-- History
 - Profile
-
 
 ### Running the Frontend
 
