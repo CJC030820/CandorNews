@@ -315,7 +315,7 @@ axios.get(`${API_URL}/api/...`)  // Environment-based
 ### Configuration Changes
 ```bash
 # BEFORE
-SMTP_PASSWORD=utguaelednjjdicy  # Exposed in repo!
+SMTP_PASSWORD=<placeholder>     # Never commit credentials
 Backend Dockerfile: no health check
 Frontend: hardcoded localhost
 
