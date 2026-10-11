@@ -11,8 +11,12 @@ FROM nginx:alpine
 # Remove default nginx configuration
 RUN rm /etc/nginx/conf.d/default.conf
 # Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy build output
 COPY --from=build /app/build /usr/share/nginx/html
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD wget -q -O - http://localhost:80 || exit 1
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

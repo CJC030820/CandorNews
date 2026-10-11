@@ -410,24 +410,38 @@
 }
 
 .danger-zone {
+  width: 100%;
   margin-top: 20px;
-  padding: 20px;
-  border: 2px dashed var(--alert-color);
-  border-radius: 10px;
-  background-color: var(--bg-secondary);
+  padding: 12px;
+  background-color: var(--error-bg);
+  border: 2px solid var(--alert-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
   transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.danger-zone:hover {
+  box-shadow: 0 4px 12px var(--shadow-dark);
+  transform: translateY(-2px);
 }
 
 .danger-zone h2 {
   font-size: 16px;
   color: var(--alert-color);
-  margin: 0 0 8px 0;
+  margin: 0;
+  font-weight: 600;
 }
 
 .danger-zone-desc {
   font-size: 13px;
   color: var(--text-secondary);
-  margin: 0 0 15px 0;
+  margin: 0;
   line-height: 1.5;
 }
 

@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { BookmarkProvider } from './context/BookmarkContext';
 import { ReadArticlesProvider } from './context/ReadArticlesContext';
 import { TrustedPlatformsProvider } from './context/TrustedPlatformsContext';
+import PageTransition from './components/PageTransition';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import TopicSelectionPage from './pages/TopicSelectionPage';
@@ -14,7 +15,9 @@ import ArticleDetailPage from './pages/ArticleDetailPage';
 import BookmarksPage from './pages/BookmarksPage';
 import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
+import HelpPage from './pages/HelpPage';
 import NavBar from './components/NavBar';
+
 
 function AppRoutes({ searchQuery, onSearchChange }) {
   const { user, topicsCompleted, loading } = useAuth();
@@ -48,31 +51,26 @@ function AppRoutes({ searchQuery, onSearchChange }) {
     );
   }
 
-  // If user is logged in but hasn't completed topic selection
-  if (!topicsCompleted) {
+  // If the user is logged in, allow full app access.
+  if (user) {
     return (
       <Routes>
-        <Route path="/topic-selection" element={<TopicSelectionPage />} />
-        <Route path="*" element={<Navigate to="/topic-selection" replace />} />
+        <Route
+          path="/feed"
+          element={<FeedPage searchQuery={searchQuery} onSearchChange={onSearchChange} />}
+        />
+        <Route path="/article/:id" element={<ArticleDetailPage />} />
+        <Route path="/bookmarks" element={<BookmarksPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/" element={<Navigate to="/feed" replace />} />
+        <Route path="*" element={<Navigate to="/feed" replace />} />
       </Routes>
     );
   }
 
-  // If user is logged in and has completed topic selection, allow full app access
-  return (
-    <Routes>
-      <Route
-        path="/feed"
-        element={<FeedPage searchQuery={searchQuery} onSearchChange={onSearchChange} />}
-      />
-      <Route path="/article/:id" element={<ArticleDetailPage />} />
-      <Route path="/bookmarks" element={<BookmarksPage />} />
-      <Route path="/history" element={<HistoryPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/" element={<Navigate to="/feed" replace />} />
-      <Route path="*" element={<Navigate to="/feed" replace />} />
-    </Routes>
-  );
+  return null;
 }
 
 function AppShell() {
@@ -87,7 +85,9 @@ function AppShell() {
           onSearchChange={(value) => setSearchQuery(value)}
         />
       )}
-      <AppRoutes searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <PageTransition>
+        <AppRoutes searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      </PageTransition>
     </div>
   );
 }

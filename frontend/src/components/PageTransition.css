@@ -1,0 +1,32 @@
+/* Page Transition Animations */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.page-transition {
+  width: 100%;
+  display: block;
+}
+
+.page-transition.visible {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+.page-transition.hidden {
+  animation: fadeOut 0.3s ease-in-out forwards;
+}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import PageWrapper from '../components/PageWrapper';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './HistoryPage.css';
@@ -60,6 +61,7 @@ const HistoryPage = () => {
   };
 
   return (
+    <PageWrapper>
     <div className="history-page">
       <BackToTopButton />
       <div className="history-page-wrapper">
@@ -134,6 +136,7 @@ const HistoryPage = () => {
         </div>
       </div>
     </div>
+    </PageWrapper>
   );
 };
 

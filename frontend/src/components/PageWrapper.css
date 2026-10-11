@@ -1,0 +1,16 @@
+/* Page Wrapper Animation Styles */
+
+.page-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  animation: pageEnter 0.3s ease-in-out forwards;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

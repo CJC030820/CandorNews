@@ -1,12 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const BookmarkContext = createContext();
 
 const STORAGE_KEY = 'bookmarkedArticles';
 
-const getBookmarksFromStorage = () => {
+const getStorageKey = (email) => email ? `${STORAGE_KEY}:${email.toLowerCase()}` : null;
+
+const getBookmarksFromStorage = (email) => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const key = getStorageKey(email);
+    if (!key) return [];
+    const stored = localStorage.getItem(key);
     return stored ? JSON.parse(stored) : [];
   } catch (e) {
     console.error('Error parsing bookmarks from localStorage:', e);
@@ -15,12 +20,19 @@ const getBookmarksFromStorage = () => {
 };
 
 export const BookmarkProvider = ({ children }) => {
-  const [bookmarks, setBookmarks] = useState(getBookmarksFromStorage);
+  const { user } = useAuth();
+  const accountEmail = user?.email || null;
+  const [bookmarks, setBookmarks] = useState([]);
 
-  // Persist to localStorage whenever bookmarks change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
-  }, [bookmarks]);
+    setBookmarks(getBookmarksFromStorage(accountEmail));
+  }, [accountEmail]);
+
+  // Persist bookmarks under the signed-in account, never under one shared key.
+  useEffect(() => {
+    const key = getStorageKey(accountEmail);
+    if (key) localStorage.setItem(key, JSON.stringify(bookmarks));
+  }, [accountEmail, bookmarks]);
 
   const isBookmarked = (articleId) => {
     return bookmarks.some((a) => a.id === articleId);

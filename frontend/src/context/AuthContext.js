@@ -22,14 +22,26 @@ export const AuthProvider = ({ children }) => {
         try {
           // Set authorization header
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // Add 10-second timeout to prevent hanging
           const response = await axios.get('http://localhost:8080/api/auth/me', {
-            params: { token }
+            params: { token },
+            timeout: 10000
           });
           setUser(response.data);
           console.log('User loaded:', response.data);
         } catch (error) {
           console.error('Failed to fetch user:', error);
-          logout();
+          // Don't immediately logout; retry once more
+          try {
+            const retryResponse = await axios.get('http://localhost:8080/api/auth/me', {
+              params: { token },
+              timeout: 5000
+            });
+            setUser(retryResponse.data);
+          } catch (retryError) {
+            console.error('Retry failed, logging out:', retryError);
+            logout();
+          }
         }
       }
       setLoading(false);
@@ -179,7 +191,10 @@ export const AuthProvider = ({ children }) => {
       const params = { token };
       if (topic && topic !== 'all') params.topic = topic;
       if (limit) params.limit = limit;
-      const response = await axios.get('http://localhost:8080/api/articles/feed', { params });
+      const response = await axios.get('http://localhost:8080/api/articles/feed', { 
+        params,
+        timeout: 15000  // 15 second timeout for feed
+      });
       return response.data;
     } catch (error) {
       console.error('Get feed error:', error);
@@ -187,10 +202,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const refreshFeed = async () => {
+  const refreshFeed = async (platforms = []) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/articles/refresh', {}, {
-        params: { token }
+      const response = await axios.post('http://localhost:8080/api/articles/refresh', {
+        platforms
+      }, {
+        params: { token },
+        timeout: 45000
       });
       return response.data;
     } catch (error) {

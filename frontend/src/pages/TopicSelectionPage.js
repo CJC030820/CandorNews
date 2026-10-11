@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PageWrapper from '../components/PageWrapper';
 import { TOPICS } from '../constants/topics';
 import './TopicSelectionPage.css';
 
@@ -39,6 +40,7 @@ const TopicSelectionPage = () => {
   };
 
   return (
+    <PageWrapper>
     <div className="topic-selection-container">
       <div className="topic-selection-box">
         <div className="topic-header">
@@ -79,6 +81,7 @@ const TopicSelectionPage = () => {
         </div>
       </div>
     </div>
+    </PageWrapper>
   );
 };
 

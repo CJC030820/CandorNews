@@ -63,7 +63,7 @@ const ArticleDetailPage = () => {
   };
 
   return (
-    <div className={`article-detail-page ${isExiting ? 'fade-out' : 'fade-in'}`}>
+    <div className="article-detail-page">
       <div className="article-detail-wrapper">
         <button className="back-button" onClick={handleBack}>
           <span className="back-button-icon">←</span>

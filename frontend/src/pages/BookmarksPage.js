@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import PageWrapper from '../components/PageWrapper';
 import { useBookmarks } from '../context/BookmarkContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './BookmarksPage.css';
@@ -18,6 +19,7 @@ const BookmarksPage = () => {
   };
 
   return (
+    <PageWrapper>
     <div className="bookmarks-page">
       <BackToTopButton />
       <div className="bookmarks-page-wrapper">
@@ -71,6 +73,7 @@ const BookmarksPage = () => {
         </div>
       </div>
     </div>
+    </PageWrapper>
   );
 };
 

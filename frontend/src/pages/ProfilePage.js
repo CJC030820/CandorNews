@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import { useNavigate } from 'react-router-dom';
+import PageWrapper from '../components/PageWrapper';
 import BackToTopButton from '../components/BackToTopButton';
 import './ProfilePage.css';
 
@@ -179,6 +180,7 @@ const ProfilePage = () => {
   };
 
   return (
+    <PageWrapper>
     <div className="profile-page">
       <BackToTopButton />
       <div className="profile-page-wrapper">
@@ -277,14 +279,6 @@ const ProfilePage = () => {
           <div className="profile-section">
             <h2>✉️ Email Notifications</h2>
 
-            {!emailServerConfigured && (
-              <div className="email-warning">
-                ⚠️ Email sending isn't configured on the server yet (demo mode).
-                You can still save your preferences and preview the flow — sending will
-                return a friendly error until SMTP credentials are set.
-              </div>
-            )}
-
             <div className="preference-item">
               <label>Enable Email Notifications</label>
               <input
@@ -374,6 +368,11 @@ const ProfilePage = () => {
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               disabled={deletingAccount}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !deletingAccount && deletePassword) {
+                  handleConfirmDeleteAccount();
+                }
+              }}
               autoFocus
             />
             {deleteError && <p className="delete-error">{deleteError}</p>}
@@ -397,6 +396,7 @@ const ProfilePage = () => {
         </div>
       )}
     </div>
+    </PageWrapper>
   );
 };
 

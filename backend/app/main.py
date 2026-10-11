@@ -1,18 +1,15 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, List
 import os
 import logging
 from pydantic import BaseModel
 from jose import JWTError, jwt
-import ldclient
-from ldclient.config import Config
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-# Import the LD utils
-from app.utils.ld_utils import get_flag
+
 from app.services import email_service
 from app.services.storage import storage_service
 from app.core.security import get_password_hash, verify_password, create_access_token
@@ -24,24 +21,16 @@ logger = logging.getLogger(__name__)
 
 VALID_EMAIL_SCHEDULES = {"morning", "night", "both"}
 
+class RefreshRequest(BaseModel):
+    platforms: List[str] = []
+
+
 # JWT settings (kept in sync with app/core/security.py via settings)
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Initialize LaunchDarkly client
-ld_sdk_key = os.getenv("LD_SDK_KEY", "")
-ld_client = None
-if ld_sdk_key and "your" not in ld_sdk_key.lower() and ld_sdk_key != "your-flag-key-here":
-    try:
-        ldclient.set_config(Config(ld_sdk_key))
-        ld_client = ldclient.get()
-    except Exception as exc:
-        print(f"Warning: failed to initialize LaunchDarkly client: {exc}")
-        ld_client = None
 
-def get_ld_client():
-    return ld_client
 
 app = FastAPI(
     title="Trust-Aware Personalized AI News Intelligence System",
@@ -234,9 +223,11 @@ async def update_preferences(preferences: dict, token: str = None):
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     user = await get_current_user(token)
+    removed_topics = {"Education", "Lifestyle", "Property", "Malaysia", "World", "General"}
+    allowed_topics = [topic for topic in preferences.get("preferred_topics", []) if topic not in removed_topics]
     updated_user = await storage_service.update_user_by_email(
         user.email,
-        {"preferred_topics": preferences.get("preferred_topics", [])}
+        {"preferred_topics": allowed_topics}
     )
 
     return _user_to_response(updated_user)
@@ -325,16 +316,37 @@ async def get_feed(token: str = None, topic: str = None, limit: int = 50):
 
 
 @app.post("/api/articles/refresh")
-async def refresh_articles(token: str = None):
+async def refresh_articles(request: RefreshRequest, token: str = None):
     """Manually trigger an on-demand fetch of the latest news right now,
-    instead of waiting for the next scheduled background run."""
+    instead of waiting for the next scheduled background run. Runs with a
+    30-second timeout; if fetching takes longer, returns immediately and
+    lets the background process continue (the feed will update as articles
+    arrive). This prevents the refresh button from appearing to hang."""
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     await get_current_user(token)
 
-    stats = await news_worker.fetch_and_process_news()
-    return {"status": "completed", "stats": stats}
+    if not request.platforms:
+        raise HTTPException(status_code=400, detail="Select at least one trusted platform before refreshing news.")
+
+    try:
+        import asyncio
+        # Run the fetch with a 30-second timeout. If it completes faster,
+        # return stats immediately. If it times out, return a "pending" status
+        # and let the fetch continue in the background.
+        stats = await asyncio.wait_for(
+            news_worker.fetch_and_process_news(request.platforms),
+            timeout=30.0
+        )
+        return {"status": "completed", "stats": stats}
+    except asyncio.TimeoutError:
+        logger.warning("News refresh exceeded 30-second timeout; returning pending status")
+        return {
+            "status": "pending",
+            "message": "Refresh in progress. Articles will update as they arrive.",
+            "stats": {"timeout": True, "last_run": news_worker.last_run_stats}
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -415,8 +427,10 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
     # First try to get articles from user's preferred topics
     articles = []
     if preferred_topics:
+        removed_topics = {"Education", "Lifestyle", "Property", "Malaysia", "World", "General"}
+        allowed_topics = [topic for topic in preferred_topics if topic not in removed_topics]
         articles = await storage_service.get_latest_articles_for_topics(
-            preferred_topics, limit=MAX_DIGEST_ARTICLES * 2  # Get more to ensure we have 10
+            allowed_topics, limit=MAX_DIGEST_ARTICLES * 2
         )
         logger.info(f"Found {len(articles)} articles from preferred topics for {user.email}")
     
@@ -549,89 +563,10 @@ def start_email_scheduler():
     email_scheduler.start()
 
 
-@app.get("/api/test-ld")
-async def test_ld(
-    ld_client = Depends(get_ld_client)
-):
-    """
-    Test endpoint to verify LaunchDarkly client initialization.
-    """
-    if ld_client is None:
-        return {"status": "error", "message": "LaunchDarkly client not initialized"}
-
-    # Try to get a default flag value (this won't fail even if flag doesn't exist)
-    try:
-        # Create a test context
-        context = {
-            "key": "test-user",
-            "email": "test@example.com"
-        }
-
-        # Try to get a flag that likely doesn't exist - should return default
-        flag_value = ld_client.variation("test-flag-nonexistent", context, False)
-
-        return {
-            "status": "success",
-            "message": "LaunchDarkly client is initialized and working",
-            "client_initialized": ld_client.is_initialized(),
-            "test_flag_value": flag_value
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Error testing LaunchDarkly client: {str(e)}",
-            "client_initialized": ld_client.is_initialized() if ld_client else False
-        }
 
 
-@app.get("/flags/{flag_key}")
-async def get_feature_flag(
-    flag_key: str,
-    current_user = Depends(get_current_user),
-    ld_client = Depends(get_ld_client)
-):
-    """
-    Get the value of a feature flag for the current user.
-    """
-    # Create LD context
-    context = {
-        "key": str(current_user.id),
-        "email": current_user.email,
-        # Add any other attributes you want to target on
-    }
-    # Default to False if flag not found or error
-    flag_value = get_flag(ld_client, context, flag_key, False)
-    return {"flag_key": flag_key, "value": flag_value}
 
 
-@app.get("/test-ld")
-async def test_ld_connection():
-    """
-    Test endpoint to check if LaunchDarkly client is initialized.
-    """
-    if ld_client is None:
-        return {
-            "status": "error",
-            "message": "LaunchDarkly client is not initialized. Check LD_SDK_KEY environment variable."
-        }
 
-    try:
-        # Try to get a flag value (this will use default if flag doesn't exist)
-        test_context = {
-            "key": "test-user",
-            "email": "test@example.com"
-        }
-        flag_value = ld_client.variation("test-flag", test_context, False)
 
-        return {
-            "status": "success",
-            "message": "LaunchDarkly client is initialized and working",
-            "is_initialized": ld_client.is_initialized(),
-            "test_flag_value": flag_value
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Error testing LaunchDarkly client: {str(e)}",
-            "is_initialized": ld_client.is_initialized() if ld_client else False
-        }
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import PageWrapper from '../components/PageWrapper';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -30,6 +31,7 @@ const LoginPage = () => {
   };
 
   return (
+    <PageWrapper>
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
@@ -76,6 +78,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+    </PageWrapper>
   );
 };
 

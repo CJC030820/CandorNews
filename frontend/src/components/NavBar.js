@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import DarkModeToggle from '../components/DarkModeToggle';
 import './NavBar.css';
 
@@ -29,7 +29,6 @@ const NavBar = ({ searchQuery, onSearchChange }) => {
 
         <div className="search-bar-container">
           <div className="search-bar">
-            <span className="search-icon">🔍</span>
             <input
               type="text"
               placeholder="Search articles..."
@@ -52,15 +51,18 @@ const NavBar = ({ searchQuery, onSearchChange }) => {
         <div className="navbar-actions">
           {user && (
             <>
-              <a href="/bookmarks" className="nav-button">
+              <Link to="/bookmarks" className="nav-button">
                 📑 Bookmarks
-              </a>
-              <a href="/history" className="nav-button">
+              </Link>
+              <Link to="/history" className="nav-button">
                 🕘 History
-              </a>
-              <a href="/profile" className="nav-button">
+              </Link>
+              <Link to="/help" className="nav-button">
+                ❓ Help
+              </Link>
+              <Link to="/profile" className="nav-button">
                 👤 Profile
-              </a>
+              </Link>
               <DarkModeToggle />
               <button onClick={handleLogout} className="nav-button logout" title="Logout">
                 ⏻

@@ -13,7 +13,8 @@ const getFollowedIdsFromStorage = () => {
     // Guard against stale IDs from a previous session that no longer exist
     // in the fixed system catalog.
     const validIds = new Set(DEFAULT_TRUSTED_PLATFORMS.map((p) => p.id));
-    return parsed.filter((id) => validIds.has(id));
+    const filteredIds = parsed.filter((id) => validIds.has(id));
+    return filteredIds.length > 0 ? filteredIds : DEFAULT_FOLLOWED_IDS;
   } catch (e) {
     console.error('Error parsing followed platforms from localStorage:', e);
     return DEFAULT_FOLLOWED_IDS;
@@ -41,7 +42,10 @@ export const TrustedPlatformsProvider = ({ children }) => {
   };
 
   const unfollowPlatform = (platformId) => {
-    setFollowedIds((prev) => prev.filter((id) => id !== platformId));
+    setFollowedIds((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((id) => id !== platformId);
+    });
   };
 
   const toggleFollow = (platformId) => {

@@ -1,12 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
 const ReadArticlesContext = createContext();
 
 const STORAGE_KEY = 'readArticleHistory';
 
-const getHistoryFromStorage = () => {
+const getStorageKey = (email) => email ? `${STORAGE_KEY}:${email.toLowerCase()}` : null;
+
+const getHistoryFromStorage = (email) => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const key = getStorageKey(email);
+    if (!key) return [];
+    const stored = localStorage.getItem(key);
     return stored ? JSON.parse(stored) : [];
   } catch (e) {
     console.error('Error parsing read history from localStorage:', e);
@@ -17,25 +22,31 @@ const getHistoryFromStorage = () => {
 export const ReadArticlesProvider = ({ children }) => {
   // Each entry: { ...articleFields, id, readAt: <ISO timestamp> }
   // Sorted most-recently-read first.
-  const [history, setHistory] = useState(getHistoryFromStorage);
+  const { user } = useAuth();
+  const accountEmail = user?.email || null;
+  const [history, setHistory] = useState([]);
 
-  // Persist to localStorage whenever history changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-  }, [history]);
+    setHistory(getHistoryFromStorage(accountEmail));
+  }, [accountEmail]);
+
+  useEffect(() => {
+    const key = getStorageKey(accountEmail);
+    if (key) localStorage.setItem(key, JSON.stringify(history));
+  }, [accountEmail, history]);
 
   // Keep history in sync in real time across browser tabs/windows: if another
   // tab marks an article as read, this tab's History page (and any read
   // badges) update immediately without needing a manual refresh.
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === STORAGE_KEY) {
-        setHistory(getHistoryFromStorage());
+      if (e.key === getStorageKey(accountEmail)) {
+        setHistory(getHistoryFromStorage(accountEmail));
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [accountEmail]);
 
   const isRead = useCallback((articleId) => {
     if (articleId === undefined || articleId === null) return false;
