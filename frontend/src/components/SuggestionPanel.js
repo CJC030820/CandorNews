@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { TOPICS, getTopicEmoji, normalizeTopics } from '../constants/topics';
 import './SuggestionPanel.css';
 
-const SuggestionPanel = () => {
+const SuggestionPanel = ({ onSaved }) => {
   const { selectedTopics, updatePreferences } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [draftTopics, setDraftTopics] = useState(() => normalizeTopics(selectedTopics));
@@ -33,6 +33,7 @@ const SuggestionPanel = () => {
     try {
       await updatePreferences(normalizeTopics(draftTopics));
       setIsEditing(false);
+      if (onSaved) onSaved();
     } catch (err) {
       setError('Failed to save. Please try again.');
     } finally {
@@ -45,7 +46,7 @@ const SuggestionPanel = () => {
       <div className="suggestion-header-row">
         <div className="suggestion-header">
           <h3><span className="heading-icon">🎯</span> Your Interests</h3>
-          <p>{selectedTopics.length ? 'News is filtered using your selected interests.' : 'No interests selected yet.'}</p>
+          <p>{selectedTopics.length ? '"News For You" shows the latest articles in these interests.' : 'No interests selected yet; "News For You" shows all news.'}</p>
         </div>
         <button className="edit-topics-btn" onClick={handleStartEdit} title="Edit interests">
           <span className="btn-icon">✏️</span> Edit

@@ -40,7 +40,7 @@ export const mapFeedArticle = article => ({...article, rawDate:article.date,
   categories:article.categories?.length ? article.categories : (article.category ? [article.category] : [])});
 
 const FeedPage = ({ searchQuery = '', onSearchChange }) => {
-  const { user, logout, getFeed, refreshFeed, getRefreshStatus } = useAuth();
+  const { user, logout, getFeed, refreshFeed, getRefreshStatus, selectedTopics } = useAuth();
   const navigate = useNavigate();
   const feedPageRef = useRef(null);
   const [filter, setFilter] = useState('all');
@@ -113,17 +113,28 @@ useEffect(() => {
   }, [rawArticles]);
 
   // Filter by category (matches if the selected category is any of the
-  // article's up-to-3 categories)
+  // article's up-to-3 categories). "News For You" ('all') shows articles in
+  // any of the user's interests, and updates as soon as the interests change.
+  const interestKey = (selectedTopics || []).join('|');
   const filteredArticles = useMemo(() => {
+    const interests = interestKey ? interestKey.split('|') : [];
+    const categoriesOf = (a) => (a.categories && a.categories.length > 0 ? a.categories : [a.category]);
     const trustedArticles = rawArticles.filter((article) =>
       followedPlatforms.some((platform) =>
         (article.source || '').toLowerCase().includes(platform.name.toLowerCase())
       )
     );
-    return filter === 'all'
-      ? trustedArticles
-      : trustedArticles.filter(a => (a.categories && a.categories.length > 0 ? a.categories : [a.category]).includes(filter));
-  }, [rawArticles, filter, followedPlatforms]);
+    if (filter !== 'all') return trustedArticles.filter(a => categoriesOf(a).includes(filter));
+    return interests.length
+      ? trustedArticles.filter(a => categoriesOf(a).some(category => interests.includes(category)))
+      : trustedArticles;
+  }, [rawArticles, filter, followedPlatforms, interestKey]);
+
+  // After interests are saved, show the updated "News For You" list.
+  const handleInterestsSaved = useCallback(() => {
+    setFilter('all');
+    feedPageRef.current?.querySelector('.feed-toolbar')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   // Filter by search query
   const searchedArticles = useMemo(() => {
@@ -266,7 +277,7 @@ useEffect(() => {
         </div>
 
         <div className="main-content">
-          <SuggestionPanel />
+          <SuggestionPanel onSaved={handleInterestsSaved} />
 
           <div className="feed-toolbar">
             <div className="refresh-controls">
@@ -311,7 +322,9 @@ useEffect(() => {
                 <div className="no-results">
                   <span className="no-results-icon">🔍</span>
                   <h3>No articles found</h3>
-                  <p>Try adjusting your search or filters, or hit "Refresh News" to fetch the latest.</p>
+                  <p>{filter === 'all' && selectedTopics?.length && !searchQuery.trim()
+                    ? 'No recent articles match your interests yet. Try adding more interests, or hit "Refresh News" to fetch the latest.'
+                    : 'Try adjusting your search or filters, or hit "Refresh News" to fetch the latest.'}</p>
                 </div>
               )}
             </div>
