@@ -600,7 +600,8 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
     digest_articles = [_article_to_feed_dict(a) for a in articles[:MAX_DIGEST_ARTICLES]]
     logger.info(f"Sending email digest with {len(digest_articles)} articles to {user.email}")
 
-    digest = email_service.build_news_digest_email(user.name, digest_articles, period_label=period_label)
+    digest = email_service.build_news_digest_email(
+        user.name, digest_articles, period_label=period_label, site_url=settings.site_url)
     text_body = digest["text"]
     if custom_message:
         text_body = f"{custom_message}\n\n{text_body}"

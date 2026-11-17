@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import LoginPage from './LoginPage';
 
 const mockAction = jest.fn();
@@ -81,4 +81,38 @@ test('shows error message when login fails', async () => {
   // Wait for error message to appear
   const errorMessage = await screen.findByText(/login failed/i);
   expect(errorMessage).toBeInTheDocument();
+});
+const loginAndLand = async () => {
+  mockAction.mockResolvedValueOnce(true);
+  render(
+    <MemoryRouter initialEntries={['/login']}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/feed" element={<p>Feed page</p>} />
+        <Route path="/article/:id" element={<p>Article page</p>} />
+      </Routes>
+    </MemoryRouter>
+  );
+  fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'reader@example.com' } });
+  fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'Test-password-123' } });
+  fireEvent.click(screen.getByRole('button', { name: /login/i }));
+};
+
+test('after login, returns to the article that was opened from a link', async () => {
+  sessionStorage.setItem('returnAfterLogin', '/article/abc123');
+  await loginAndLand();
+  expect(await screen.findByText('Article page')).toBeInTheDocument();
+  expect(sessionStorage.getItem('returnAfterLogin')).toBeNull();
+});
+
+test('after login without a saved article, goes to the feed', async () => {
+  sessionStorage.removeItem('returnAfterLogin');
+  await loginAndLand();
+  expect(await screen.findByText('Feed page')).toBeInTheDocument();
+});
+
+test('ignores saved paths that are not article pages', async () => {
+  sessionStorage.setItem('returnAfterLogin', 'https://evil.example/phish');
+  await loginAndLand();
+  expect(await screen.findByText('Feed page')).toBeInTheDocument();
 });

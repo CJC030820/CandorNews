@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -18,6 +18,18 @@ import ProfilePage from './pages/ProfilePage';
 import HelpPage from './pages/HelpPage';
 import NavBar from './components/NavBar';
 
+
+export const RETURN_PATH_KEY = 'returnAfterLogin';
+
+// Logged-out visitors opening an article link (for example from a digest
+// email or a shared link) are sent to log in, then returned to that article.
+function LoginRedirect() {
+  const location = useLocation();
+  if (location.pathname.startsWith('/article/')) {
+    try { sessionStorage.setItem(RETURN_PATH_KEY, location.pathname); } catch { /* storage unavailable */ }
+  }
+  return <Navigate to="/login" replace />;
+}
 
 function AppRoutes({ searchQuery, onSearchChange }) {
   const { user, topicsCompleted, loading } = useAuth();
@@ -46,7 +58,7 @@ function AppRoutes({ searchQuery, onSearchChange }) {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<LoginRedirect />} />
       </Routes>
     );
   }

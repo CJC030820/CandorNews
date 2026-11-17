@@ -1,5 +1,5 @@
 from html import escape
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 """
 Email notification service using SMTP (works with Gmail, Outlook, or any
 SMTP provider).
@@ -101,8 +101,17 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
         return {"success": False, "message": f"Failed to send email: {exc}"}
 
 
-def build_news_digest_email(user_name: str, articles: list, period_label: str = "") -> dict:
+def article_page_url(site_url: str, article_id) -> str:
+    """Link to the article's page on the CandorNews website."""
+    if not site_url or article_id in (None, ""):
+        return ""
+    return f"{site_url.rstrip('/')}/article/{quote(str(article_id), safe='')}"
+
+
+def build_news_digest_email(user_name: str, articles: list, period_label: str = "", site_url: str = "") -> dict:
     """Build a friendly news-digest email for a batch of articles with detailed descriptions.
+    Each article links to its page on the CandorNews website (site_url), not
+    to the original publisher.
 
     Returns {"subject": str, "text": str, "html": str}
     """
@@ -117,7 +126,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             title = article.get("title", "Untitled")
             source = article.get("source", "")
             trust_score = article.get("trustScore")
-            url = article.get("url", "")
+            url = article_page_url(site_url, article.get("id"))
             description = article.get("description", "")
             date = article.get("date", "")
 
@@ -140,7 +149,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
                 text_lines.append(f"   {preview}")
             
             if url:
-                text_lines.append(f"   Read more: {url}")
+                text_lines.append(f"   Read on CandorNews: {url}")
             
             text_lines.append("")  # blank line between articles
             text_lines.append("-" * 60)
@@ -163,7 +172,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
                     {f' • <span>{date}</span>' if date else ''}
                   </div>
                   {f'<p style="color: #555; font-size: 14px; line-height: 1.6; margin: 12px 0; color: #444;">{description}</p>' if description else ''}
-                  {f'<a href="{url}" style="display: inline-block; background: #667eea; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">Read Full Article →</a>' if url else ''}
+                  {f'<a href="{url}" style="display: inline-block; background: #667eea; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">Read on CandorNews →</a>' if url else ''}
                 </div>
                 """
             )

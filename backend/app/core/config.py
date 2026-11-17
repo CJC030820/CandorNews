@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     EMAIL_TIMEZONE: str = "Asia/Kuala_Lumpur"
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    # Public address of the website, used for links in emails. When empty,
+    # the first CORS origin is used (the site's own https address in production).
+    PUBLIC_SITE_URL: str = ""
+
+    @property
+    def site_url(self) -> str:
+        url = self.PUBLIC_SITE_URL or self.CORS_ORIGINS.split(",")[0]
+        return url.strip().rstrip("/")
 
     @model_validator(mode="after")
     def validate_deployment_secret(self):

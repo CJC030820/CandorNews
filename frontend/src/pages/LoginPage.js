@@ -19,7 +19,12 @@ const LoginPage = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/feed');
+        let returnPath = null;
+        try {
+          returnPath = sessionStorage.getItem('returnAfterLogin');
+          sessionStorage.removeItem('returnAfterLogin');
+        } catch { /* storage unavailable */ }
+        navigate(returnPath && returnPath.startsWith('/article/') ? returnPath : '/feed');
       } else {
         setError('Invalid email or password');
       }
