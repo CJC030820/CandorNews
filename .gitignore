@@ -48,3 +48,6 @@ test_write.txt
 
 # Locally stored article images
 backend/image_cache/
+
+# Production secrets (server only)
+deploy/production.env

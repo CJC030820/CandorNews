@@ -17,7 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 from fastapi.responses import FileResponse
-from app.services import email_service, image_cache
+from app.services import email_service, email_verification, image_cache
 from app.services.trust_scorer import SCORE_VERSION
 from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
@@ -138,6 +138,7 @@ class UserResponse(BaseModel):
     email_notifications_enabled: bool = False
     email_notification_schedule: str = "morning"
     email_notification_times: List[str] = ["07:00"]
+    email_verified: bool = False
 
 class PreferencesUpdate(BaseModel):
     preferred_topics: List[str] = Field(default_factory=list, max_length=11)
@@ -164,7 +165,10 @@ class EmailSettingsUpdate(BaseModel):
     email_notification_times: Optional[List[str]] = Field(default=None, max_length=10)
 
 class EmailTestMessage(BaseModel):
-    message: Optional[str] = None
+    message: Optional[str] = Field(default=None, max_length=300)
+
+class EmailVerificationConfirm(BaseModel):
+    code: str = Field(min_length=1, max_length=12)
 
 
 def _user_to_response(user) -> UserResponse:
@@ -176,7 +180,8 @@ def _user_to_response(user) -> UserResponse:
         preferred_topics=user.preferred_topics or [],
         email_notifications_enabled=getattr(user, "email_notifications_enabled", False),
         email_notification_schedule=getattr(user, "email_notification_schedule", "morning") or "morning",
-        email_notification_times=user_times(user)
+        email_notification_times=user_times(user),
+        email_verified=bool(getattr(user, "email_verified", False))
     )
 
 
@@ -454,6 +459,7 @@ async def email_status(user=Depends(get_current_user)):
         "email_notifications_enabled": getattr(user, "email_notifications_enabled", False),
         "email_notification_schedule": getattr(user, "email_notification_schedule", "morning") or "morning",
         "email_notification_times": user_times(user),
+        "email_verified": bool(getattr(user, "email_verified", False)),
         "max_notification_times": MAX_TIMES,
         "timezone": settings.EMAIL_TIMEZONE,
         "server_configured": email_service.is_configured()
@@ -494,13 +500,64 @@ async def update_email_settings(settings_update: EmailSettingsUpdate, user=Depen
 
 @app.post("/api/notifications/email/test")
 async def send_email_test(payload: EmailTestMessage = None, user=Depends(get_current_user)):
-    """Send a notification email to the current user's account email right now."""
+    """Send a notification email to the current user's account email right now.
+    Requires a verified address and is limited to one send per minute."""
+    if not getattr(user, "email_verified", False):
+        raise HTTPException(status_code=403, detail="Verify your email address before sending notifications.")
+    now = datetime.utcnow()
+    wait = email_verification.wait_seconds(user.last_on_demand_email_at, email_verification.SEND_NOW_COOLDOWN, now)
+    if wait:
+        raise HTTPException(status_code=429, detail=f"Please wait {wait} seconds before sending another notification.")
+    await storage_service.update_user_by_email(user.email, {"last_on_demand_email_at": now})
     result = await _send_digest_email_to_user(user, period_label="On-Demand", custom_message=(payload.message if payload else None))
 
     if not result["success"]:
         raise HTTPException(status_code=502, detail=result["message"])
 
     return {"status": "sent", "detail": result["message"]}
+
+
+@app.post("/api/notifications/email/verification")
+async def send_verification_code(user=Depends(get_current_user)):
+    """Email a 6-digit code to the account address to prove ownership."""
+    if getattr(user, "email_verified", False):
+        raise HTTPException(status_code=400, detail="Your email address is already verified.")
+    now = datetime.utcnow()
+    state = dict(getattr(user, "email_verification", None) or {})
+    allowed, reason = email_verification.can_send_code(state, now)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=reason)
+    code = email_verification.new_code()
+    message = email_verification.build_code_email(user.name, code)
+    result = await asyncio.to_thread(
+        email_service.send_email, user.email, message["subject"], message["text"], message["html"])
+    if not result["success"]:
+        raise HTTPException(status_code=502, detail=result["message"])
+    await storage_service.update_user_by_email(
+        user.email, {"email_verification": email_verification.record_code(state, user.email, code, now)})
+    return {"status": "sent", "detail": "A verification code was sent to your email address."}
+
+
+@app.post("/api/notifications/email/verification/confirm", response_model=UserResponse)
+async def confirm_verification_code(payload: EmailVerificationConfirm, user=Depends(get_current_user)):
+    """Confirm the emailed code and mark the address as verified."""
+    if getattr(user, "email_verified", False):
+        return _user_to_response(user)
+    state = dict(getattr(user, "email_verification", None) or {})
+    result, new_state = email_verification.check_code(state, user.email, payload.code, datetime.utcnow())
+    if result == "ok":
+        user = await storage_service.update_user_by_email(
+            user.email, {"email_verified": True, "email_verification": new_state})
+        return _user_to_response(user)
+    if result == "wrong":
+        await storage_service.update_user_by_email(user.email, {"email_verification": new_state})
+    detail = {
+        "missing": "Request a verification code first.",
+        "expired": "This code has expired. Request a new one.",
+        "locked": "Too many incorrect attempts. Request a new code.",
+        "wrong": "Incorrect code. Please check the email and try again.",
+    }[result]
+    raise HTTPException(status_code=429 if result == "locked" else 400, detail=detail)
 
 
 MAX_DIGEST_ARTICLES = 10
@@ -595,7 +652,7 @@ async def _run_due_email_notifications(now: Optional[datetime] = None):
     now = now or datetime.now(ZoneInfo(settings.EMAIL_TIMEZONE))
     try:
         due = []
-        async for doc in storage_service.users.find({"email_notifications_enabled": True}):
+        async for doc in storage_service.users.find({"email_notifications_enabled": True, "email_verified": True}):
             doc["_id"] = str(doc["_id"])
             user = UserInDB(**doc)
             slots = due_times(user, now)

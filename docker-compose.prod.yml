@@ -1,0 +1,63 @@
+# Production stack for a single server.
+# Run on the server from the project folder:
+#   docker compose --env-file deploy/production.env -f docker-compose.prod.yml up -d --build
+# Only Caddy is reachable from the internet (ports 80/443). The backend,
+# frontend and MongoDB talk to each other on the private Docker network.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in deploy/production.env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    env_file:
+      - ./deploy/production.env
+    environment:
+      MONGODB_URL: mongodb://mongodb:27017
+    volumes:
+      - image_cache:/app/image_cache
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    # Keep exactly one backend container: refresh jobs and the email
+    # scheduler run inside this single process.
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Empty = the browser calls the same site, e.g. https://DOMAIN/api/...
+        REACT_APP_API_URL: ""
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  image_cache:
+  caddy_data:
+  caddy_config:

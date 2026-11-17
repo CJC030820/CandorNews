@@ -25,6 +25,7 @@ async def client():
 @pytest.fixture
 async def auth():
     await storage_service.create_user(UserCreate(name="Times", email="times@example.com", password="Test-password-123"))
+    await storage_service.users.update_one({"email": "times@example.com"}, {"$set": {"email_verified": True}})
     return {"Authorization": f"Bearer {create_access_token({'sub': 'times@example.com'})}"}
 
 
@@ -106,3 +107,13 @@ async def test_due_job_skips_disabled_users_and_retries_after_failure(client, au
     assert await main._run_due_email_notifications(now) == 0 and send.call_count == 1   # failed: not marked sent
     send.return_value = {"success": True, "message": "ok"}
     assert await main._run_due_email_notifications(now.replace(minute=1)) == 1           # retried next minute
+
+
+async def test_due_job_skips_unverified_addresses(client, auth, monkeypatch):
+    await client.put("/api/notifications/email", headers=auth, json={"email_notifications_enabled": True, "email_notification_times": ["09:00"]})
+    await storage_service.users.update_one({"email": "times@example.com"}, {"$set": {"email_verified": False}})
+    send = Mock(return_value={"success": True, "message": "ok"})
+    monkeypatch.setattr(main.email_service, "send_email", send)
+    monkeypatch.setattr(main, "_refresh_news_if_stale", AsyncMock())
+    assert await main._run_due_email_notifications(datetime(2026, 11, 18, 9, 0, tzinfo=MYT)) == 0
+    send.assert_not_called()

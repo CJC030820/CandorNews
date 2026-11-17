@@ -25,6 +25,8 @@ const ProfilePage = () => {
     getEmailStatus,
     updateEmailSettings,
     sendEmailTest,
+    requestEmailVerification,
+    confirmEmailVerification,
     deleteAccount,
     selectedTopics
   } = useAuth();
@@ -42,6 +44,10 @@ const ProfilePage = () => {
   const [draftTimes, setDraftTimes] = useState(user?.email_notification_times || ['07:00']);
   const [maxTimes, setMaxTimes] = useState(MAX_NOTIFICATION_TIMES);
   const [emailServerConfigured, setEmailServerConfigured] = useState(true);
+  const [emailVerified, setEmailVerified] = useState(Boolean(user?.email_verified));
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [togglingEmail, setTogglingEmail] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [sendingEmailNow, setSendingEmailNow] = useState(false);
@@ -68,6 +74,7 @@ const ProfilePage = () => {
         setDraftTimes(times);
         setMaxTimes(status.max_notification_times || MAX_NOTIFICATION_TIMES);
         setEmailServerConfigured(status.server_configured);
+        setEmailVerified(Boolean(status.email_verified));
       } catch (err) {
         // Non-fatal; keep whatever came from the user object
       }
@@ -179,6 +186,40 @@ const ProfilePage = () => {
     }
   };
 
+  const errorText = (err, fallback) => {
+    const detail = err?.response?.data?.detail;
+    return typeof detail === 'string' ? detail : fallback;
+  };
+
+  const handleSendCode = async () => {
+    setEmailStatusMessage(null);
+    setVerifying(true);
+    try {
+      await requestEmailVerification();
+      setCodeSent(true);
+      setEmailStatusMessage({ type: 'success', text: `A 6-digit code was sent to ${user?.email}. It expires in 15 minutes.` });
+    } catch (err) {
+      setEmailStatusMessage({ type: 'error', text: errorText(err, 'Could not send the code. Please try again.') });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleConfirmCode = async () => {
+    setEmailStatusMessage(null);
+    setVerifying(true);
+    try {
+      const updated = await confirmEmailVerification(verificationCode.trim());
+      setEmailVerified(Boolean(updated.email_verified));
+      setVerificationCode('');
+      setEmailStatusMessage({ type: 'success', text: '✅ Email verified. You will now receive digests at your delivery times.' });
+    } catch (err) {
+      setEmailStatusMessage({ type: 'error', text: errorText(err, 'Verification failed. Please try again.') });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleSendEmailNow = async () => {
     setEmailStatusMessage(null);
     setSendingEmailNow(true);
@@ -186,8 +227,7 @@ const ProfilePage = () => {
       await sendEmailTest();
       setEmailStatusMessage({ type: 'success', text: '✅ Notification email sent! Check your inbox.' });
     } catch (err) {
-      const detail = err?.response?.data?.detail || 'Failed to send notification email.';
-      setEmailStatusMessage({ type: 'error', text: detail });
+      setEmailStatusMessage({ type: 'error', text: errorText(err, 'Failed to send notification email.') });
     } finally {
       setSendingEmailNow(false);
     }
@@ -324,6 +364,44 @@ const ProfilePage = () => {
           <div className="profile-section">
             <h2>✉️ Email Notifications</h2>
 
+            {!emailVerified && (
+              <div className="email-verify-box">
+                <p className="email-verify-title">Verify your email address</p>
+                <p className="email-verify-text">
+                  Digests are only sent after you confirm that you own <strong>{user?.email}</strong>.
+                </p>
+                <div className="email-verify-row">
+                  <button type="button" className="email-verify-send" onClick={handleSendCode} disabled={verifying}>
+                    {codeSent ? 'Send a new code' : 'Send verification code'}
+                  </button>
+                  {codeSent && (
+                    <>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        className="email-verify-input"
+                        placeholder="6-digit code"
+                        aria-label="Verification code"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                        disabled={verifying}
+                      />
+                      <button
+                        type="button"
+                        className="email-verify-confirm"
+                        onClick={handleConfirmCode}
+                        disabled={verifying || verificationCode.length !== 6}
+                      >
+                        Verify
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="preference-item">
               <label>Enable Email Notifications</label>
               <input
@@ -384,7 +462,8 @@ const ProfilePage = () => {
             <button
               className="email-test-btn"
               onClick={handleSendEmailNow}
-              disabled={sendingEmailNow}
+              disabled={sendingEmailNow || !emailVerified}
+              title={emailVerified ? 'Send a digest to your email now' : 'Verify your email address first'}
             >
               {sendingEmailNow ? 'Sending...' : '📨 Send Notification Now'}
             </button>

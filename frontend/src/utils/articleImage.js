@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+// Empty string = same site (production behind the HTTPS proxy); unset = local dev backend.
+const API_URL = process.env.REACT_APP_API_URL ?? 'http://localhost:8080';
 
 // How long to wait for an image before trying the next source. Some
 // publishers leave the connection hanging instead of refusing it, which would

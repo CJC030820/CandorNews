@@ -1,0 +1,23 @@
+# HTTPS front door for CandorNews. Caddy obtains and renews the certificate
+# for $DOMAIN automatically (ports 80 and 443 must be open to the internet).
+{$DOMAIN} {
+	encode gzip
+
+	# API, health check and stored article images go to FastAPI.
+	@backend path /api/* /health
+	handle @backend {
+		reverse_proxy backend:8080
+	}
+
+	# Everything else is the React app.
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

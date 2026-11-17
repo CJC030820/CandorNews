@@ -71,10 +71,7 @@ def test_provider_retry_redacts_query_credentials(monkeypatch, caplog):
     assert fake_secret not in caplog.text
 
 
-@pytest.mark.xfail(
-    strict=True, raises=AssertionError,
-    reason="SEC-03: unverified account addresses can receive on-demand SMTP messages",
-)
+# SEC-03 fixed: digests require a verified address (see test_email_verification.py).
 async def test_unverified_account_cannot_send_digest(monkeypatch):
     send = Mock(return_value={"success": True, "message": "Mock delivery only"})
     monkeypatch.setattr(main.email_service, "send_email", send)

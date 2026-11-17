@@ -39,6 +39,11 @@ class UserInDB(UserBase):
     # Delivery time -> date (YYYY-MM-DD) it was last sent, so each time slot
     # is emailed at most once per day.
     email_notification_last_sent: dict = {}
+    # Email ownership: digests are only sent once a code sent to this
+    # address has been confirmed.
+    email_verified: bool = False
+    email_verification: dict = {}
+    last_on_demand_email_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

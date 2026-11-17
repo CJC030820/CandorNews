@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import axios from 'axios';
 
 const AuthContext = createContext();
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+// Empty string = same site (production behind the HTTPS proxy); unset = local dev backend.
+const API_URL = process.env.REACT_APP_API_URL ?? 'http://localhost:8080';
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -48,6 +49,10 @@ export const AuthProvider = ({ children }) => {
     setUser(data); return data;
   };
   const sendEmailTest = async message => (await api.post('/api/notifications/email/test', {message})).data;
+  const requestEmailVerification = async () => (await api.post('/api/notifications/email/verification')).data;
+  const confirmEmailVerification = async code => {
+    const {data} = await api.post('/api/notifications/email/verification/confirm', {code}); setUser(data); return data;
+  };
   const deleteAccount = async password => {
     await api.delete('/api/users/me', {data: {password}});
     ['bookmarkedArticles', 'readArticleHistory', 'followedPlatformIds'].forEach(key =>
@@ -62,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   const selectedTopics = user?.preferred_topics || [];
   return <AuthContext.Provider value={{token,user,loading,topicsCompleted:selectedTopics.length > 0,selectedTopics,
     login,logout,register,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
-    getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,deleteAccount,
+    getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,requestEmailVerification,confirmEmailVerification,deleteAccount,
     getFeed,getArticle,refreshFeed,getRefreshStatus}}>{!loading && children}</AuthContext.Provider>;
 };
 export const useAuth = () => useContext(AuthContext);

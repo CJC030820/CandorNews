@@ -199,6 +199,8 @@ async def test_email_settings_and_failure_without_sending(client,auth,monkeypatc
     assert result.json()['email_notification_schedule']=='both'
     assert result.json()['email_notification_times']==['07:00','19:00']
     monkeypatch.setattr(main.email_service,'send_email',Mock(return_value={'success':False,'message':'SMTP unavailable'}))
+    assert (await client.post('/api/notifications/email/test',headers=auth,json={})).status_code==403
+    await storage_service.users.update_many({},{'$set':{'email_verified':True}})
     assert (await client.post('/api/notifications/email/test',headers=auth,json={})).status_code==502
 
 

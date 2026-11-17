@@ -342,6 +342,61 @@
   opacity: 0.85;
 }
 
+.email-verify-box {
+  margin: 12px 0 4px;
+  padding: 14px;
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  background-color: rgba(245, 158, 11, 0.08);
+}
+
+.email-verify-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.email-verify-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+.email-verify-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.email-verify-send,
+.email-verify-confirm {
+  width: auto;
+  flex: 0 0 auto;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.email-verify-input {
+  width: 9em;
+  flex: 0 0 auto;
+  font-size: 16px;
+  letter-spacing: 3px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.email-verify-confirm:disabled,
+.email-verify-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .schedule-hint {
   font-weight: 400;
   font-size: 12px;
