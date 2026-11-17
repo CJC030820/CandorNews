@@ -24,7 +24,9 @@ const LoginPage = () => {
           returnPath = sessionStorage.getItem('returnAfterLogin');
           sessionStorage.removeItem('returnAfterLogin');
         } catch { /* storage unavailable */ }
-        navigate(returnPath && returnPath.startsWith('/article/') ? returnPath : '/feed');
+        // replace: the login page should not stay in the history, so the
+        // browser's back button does not return to it.
+        navigate(returnPath && returnPath.startsWith('/article/') ? returnPath : '/feed', { replace: true });
       } else {
         setError('Invalid email or password');
       }

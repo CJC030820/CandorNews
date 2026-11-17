@@ -72,10 +72,15 @@ const ArticleDetailPage = () => {
     }
   };
 
+  // Opened from inside the app (feed, bookmarks, history pass the article in
+  // navigation state): go back to that page. Opened from a shared or email
+  // link: there is no earlier CandorNews page in this tab, so go to the feed.
+  const openedInApp = Boolean(location.state?.article);
   const handleBack = () => {
     setIsExiting(true);
     setTimeout(() => {
-      navigate(-1);
+      if (openedInApp) navigate(-1);
+      else navigate('/feed', { replace: true });
     }, 300);
   };
 
