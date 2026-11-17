@@ -275,7 +275,7 @@ const HelpPage = () => {
               <div className="support-option">
                 <div className="support-icon">📧</div>
                 <h4>Email Support</h4>
-                <p>support@newsintelligence.com</p>
+                <p><a href="mailto:angrybird4408@gmail.com">angrybird4408@gmail.com</a></p>
               </div>
               <div className="support-option">
                 <div className="support-icon">📱</div>

@@ -400,3 +400,14 @@
     padding: 25px 15px;
   }
 }
+
+.support-option a {
+  color: var(--accent-color);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.support-option a:hover {
+  text-decoration: underline;
+}
