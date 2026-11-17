@@ -279,8 +279,12 @@ const HelpPage = () => {
               </div>
               <div className="support-option">
                 <div className="support-icon">📱</div>
-                <h4>Live Chat</h4>
-                <p>Available 9am-5pm EST</p>
+                <h4>WhatsApp</h4>
+                <p>
+                  <a href="https://wa.me/601155553986" target="_blank" rel="noopener noreferrer">
+                    +6011-55553986
+                  </a>
+                </p>
               </div>
               <div className="support-option">
                 <div className="support-icon">📋</div>
