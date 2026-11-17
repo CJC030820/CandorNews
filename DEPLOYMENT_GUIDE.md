@@ -1,8 +1,8 @@
-# Deploying CandorNews to one server
+# Deploying CandorNews on Azure for Students
 
 This puts the whole system (website, API, MongoDB, news collector and email
-scheduler) on one Linux server using `docker-compose.prod.yml`. Caddy serves
-the site over HTTPS and is the only thing reachable from the internet.
+scheduler) on one small Linux server using `docker-compose.prod.yml`. Caddy
+serves the site over HTTPS and is the only part reachable from the internet.
 
 ```
 Internet ──443──> Caddy ──/api, /health──> backend (FastAPI, collector, email scheduler)
@@ -10,64 +10,74 @@ Internet ──443──> Caddy ──/api, /health──> backend (FastAPI, col
                                             backend ──> MongoDB (private)
 ```
 
-**You need:** a server, a domain name pointing at it, and your Gmail App Password.
-Sign-ups, payment details and passwords are entered by you.
+**You need:** your university email (for Azure for Students), and your Gmail
+App Password. Sign-ups and passwords are entered by you. Expect about one hour.
 
-## 1. Get a server
+## 1. Activate Azure for Students
 
-**Option A: Oracle Cloud Always Free (no monthly cost; a card is needed at sign-up).**
+1. Go to <https://azure.microsoft.com/free/students/> and sign up with your **university email**.
+   No credit card is required. You get **US$100 credit for 12 months**, renewable each year while you are a student.
+2. In the Azure portal, open **Cost Management → Budgets** and create a budget of **US$10** with an
+   email alert at 50%. The setup below should cost only a few dollars a month from the credit
+   (mainly the public IP address), and the alert tells you if anything costs more.
 
-1. Create an Oracle Cloud account and choose a home region close to Malaysia (for example Singapore).
-2. Create a compute instance:
-   - Image: **Ubuntu 22.04 or 24.04**.
-   - Shape: **VM.Standard.A1.Flex** (Ampere, Always Free eligible) with **2 OCPU and 12 GB memory**.
-     Do not exceed the Always Free allowance. If the region reports "out of capacity", try again later
-     or use the small AMD **VM.Standard.E2.1.Micro** shape (add swap, see step 3).
-   - Add your SSH public key.
-3. In the instance's **Virtual Cloud Network → Security List**, add ingress rules for TCP **80** and **443** from `0.0.0.0/0`.
+When the credit runs out the subscription is paused; your card is never charged.
 
-**Option B: any small paid server** (about US$5/month, 1–2 GB RAM, Ubuntu). Make sure the provider
-allows outgoing email on port **587**; some providers block it for new accounts.
+## 2. Create the server
 
-Note the server's **public IP address**.
+1. In the portal search for **Free services** and create the **Linux Virtual Machine** from there
+   (this keeps you on the free-eligible options).
+2. Settings:
+   - **Region:** the closest region your subscription allows. Try **Southeast Asia** first. If you get
+     "RequestDisallowedByAzure" or the region is missing, pick another listed region (for example
+     East Asia, Japan East or Central India). Student subscriptions only allow certain regions.
+   - **Image:** Ubuntu Server **24.04 LTS** (x64).
+   - **Size:** **B2ats v2** (2 vCPU, 1 GiB) if offered as free, otherwise **B1s** (1 vCPU, 1 GiB).
+   - **Authentication:** SSH public key; username `azureuser`. Download the private key when asked and keep it safe.
+   - **Inbound ports:** allow **SSH (22), HTTP (80), HTTPS (443)**.
+   - **Disks:** keep the default OS disk only. Do not add extra or Premium disks.
+   - **Management tab:** make sure **Auto-shutdown is OFF**. Otherwise the server stops every night
+     and the news collector and email digests stop with it.
+3. Create the VM and wait for it to finish.
+4. Open the VM → **Networking**. Optional hardening: change the SSH rule's source from *Any* to *My IP address*.
 
-## 2. Get a domain name
+## 3. Get the web address (free)
 
-Any of these works:
+Open the VM → **Overview → DNS name → Not configured**, set a **DNS name label** such as `candornews`,
+and save. Your site address becomes:
 
-- Your own domain: add an `A` record pointing to the server IP.
-- Free: [DuckDNS](https://www.duckdns.org) gives `yourname.duckdns.org`; set it to the server IP.
-- Quickest: `<server-ip>.sslip.io` (for example `203.0.113.10.sslip.io`) needs no sign-up.
+```
+candornews.<region>.cloudapp.azure.com     (for example candornews.southeastasia.cloudapp.azure.com)
+```
 
-## 3. Prepare the server
+If the page asks, set the public IP **Assignment** to **Static** so the address never changes.
+This is your `DOMAIN`. Caddy will get the HTTPS certificate for it automatically.
 
-SSH in (`ssh ubuntu@<server-ip>`), then:
+## 4. Prepare the server
+
+Connect from your computer (PowerShell or Terminal):
+
+```bash
+ssh -i path/to/your-key.pem azureuser@<DOMAIN>
+```
+
+Then on the server:
 
 ```bash
 sudo apt-get update && sudo apt-get -y upgrade
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
-```
 
-Log out and back in so the `docker` group applies.
-
-**Oracle Ubuntu images only:** the server's own firewall blocks web traffic by default. Open it:
-
-```bash
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-sudo netfilter-persistent save
-```
-
-**Servers with 1 GB RAM only:** add swap so the frontend can build:
-
-```bash
+# 1 GB servers need swap, especially for building the website
 sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
 sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+exit
 ```
 
-## 4. Get the code and add the settings
+Connect again (so the `docker` group applies).
+
+## 5. Get the code and add the settings
 
 ```bash
 git clone https://github.com/CJC030820/CandorNews.git
@@ -77,29 +87,38 @@ python3 -c "import secrets; print(secrets.token_urlsafe(48))"   # copy this for 
 nano deploy/production.env
 ```
 
-Fill in `DOMAIN`, `SECRET_KEY`, `CORS_ORIGINS` (`https://` + your domain) and the `SMTP_*` values.
-Then protect the file:
+Fill in:
+
+| Setting | Value |
+|---|---|
+| `DOMAIN` | your address from step 3, without `https://` |
+| `SECRET_KEY` | the random value printed above |
+| `CORS_ORIGINS` | `https://` + your address |
+| `SMTP_USERNAME`, `SMTP_FROM_EMAIL` | your Gmail address |
+| `SMTP_PASSWORD` | your Gmail **App Password** |
+
+Save (Ctrl+O, Enter, Ctrl+X), then protect the file:
 
 ```bash
 chmod 600 deploy/production.env
 ```
 
-## 5. Start it
+## 6. Start it
 
 ```bash
 docker compose --env-file deploy/production.env -f docker-compose.prod.yml up -d --build
 docker compose --env-file deploy/production.env -f docker-compose.prod.yml ps
 ```
 
-The first build takes several minutes. Caddy requests the HTTPS certificate on first start.
+The first build takes **10–20 minutes** on a 1 GB server. All four services should show `running`.
 
-## 6. Check it works
+## 7. Check it works
 
-1. Open `https://<your-domain>`. The padlock should show and the login page should load.
-2. `https://<your-domain>/health` should show `"status":"healthy"`.
-3. Register an account, choose topics, and wait for the first news collection (about a minute).
+1. Open `https://<DOMAIN>`. The padlock should show and the login page should load.
+2. `https://<DOMAIN>/health` should show `"status":"healthy"`.
+3. Register an account, choose topics, and wait about a minute for the first news collection.
 4. On **Profile**, click **Send verification code**, enter the code from your inbox, then
-   **Send Notification Now**. This confirms email sending works from the server.
+   **Send Notification Now**. This confirms email sending works from Azure (port 587 is allowed).
 
 Logs, if something fails:
 
@@ -110,9 +129,11 @@ docker compose --env-file deploy/production.env -f docker-compose.prod.yml logs 
 
 Common problems:
 
-- **No certificate / site unreachable:** ports 80 and 443 not open (step 1 security list, step 3 firewall), or the domain does not point at the server yet.
-- **Email fails with "Network is unreachable" or a timeout:** the provider blocks port 587. Use another provider or ask them to unblock it.
+- **Site unreachable or no certificate:** ports 80/443 not allowed in the VM's Networking rules, or the DNS name label is not set.
+- **Build stops or the server freezes:** swap is missing (step 4). Check with `free -h`.
 - **Backend keeps restarting with a SECRET_KEY error:** `SECRET_KEY` is missing or shorter than 32 characters.
+- **Email: "SMTP authentication failed":** use a Gmail App Password, not your normal password.
+- **Site stopped overnight:** auto-shutdown is on (VM → Auto-shutdown → Off), then start the VM again.
 
 ## Keeping it running
 
@@ -123,18 +144,20 @@ cd ~/CandorNews && git pull
 docker compose --env-file deploy/production.env -f docker-compose.prod.yml up -d --build
 ```
 
-**Back up the database** (keep copies off the server too):
+**Back up the database** and copy the file off the server:
 
 ```bash
 docker compose --env-file deploy/production.env -f docker-compose.prod.yml exec -T mongodb \
   mongodump --archive --gzip --db news_intelligence > backup-$(date +%F).archive.gz
 ```
 
-**Copy your local data to the server (optional).** On your computer:
+From your computer: `scp -i path/to/your-key.pem azureuser@<DOMAIN>:~/CandorNews/backup-*.archive.gz .`
+
+**Copy your local news data to the server (optional).** On your computer:
 
 ```bash
 docker exec newscollectbot-mongodb-1 mongodump --archive --gzip --db news_intelligence > local.archive.gz
-scp local.archive.gz ubuntu@<server-ip>:~/CandorNews/
+scp -i path/to/your-key.pem local.archive.gz azureuser@<DOMAIN>:~/CandorNews/
 ```
 
 On the server:
@@ -144,10 +167,20 @@ docker compose --env-file deploy/production.env -f docker-compose.prod.yml exec 
   mongorestore --archive --gzip --drop < local.archive.gz
 ```
 
-Account emails must be verified again only if they were never verified.
+**Check spending** now and then under Cost Management. Stop the VM (Overview → Stop) when you do not
+need it; a stopped VM does not use compute hours, but the static public IP is still charged.
 
 ## Rules for this setup
 
 - Run **one** backend container only; refresh jobs and the email scheduler live in that process.
 - Never commit `deploy/production.env`.
 - MongoDB has no published port; do not add one.
+
+## Other servers
+
+The same steps work on any Ubuntu server with Docker. Differences:
+
+- **Oracle Cloud Always Free:** open TCP 80/443 in the VCN Security List **and** in the server firewall
+  (`sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT`, the same for 443,
+  then `sudo netfilter-persistent save`). Use a domain from DuckDNS or `<server-ip>.sslip.io`.
+- **Other providers:** make sure outgoing port 587 (email) is allowed.

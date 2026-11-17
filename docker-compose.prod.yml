@@ -3,10 +3,18 @@
 #   docker compose --env-file deploy/production.env -f docker-compose.prod.yml up -d --build
 # Only Caddy is reachable from the internet (ports 80/443). The backend,
 # frontend and MongoDB talk to each other on the private Docker network.
+# Tuned to fit a 1 GB server (Azure B1s / B2ats v2) with a swap file.
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   caddy:
     image: caddy:2-alpine
+    logging: *default-logging
     ports:
       - "80:80"
       - "443:443"
@@ -23,6 +31,7 @@ services:
 
   backend:
     build: ./backend
+    logging: *default-logging
     env_file:
       - ./deploy/production.env
     environment:
@@ -37,6 +46,7 @@ services:
     # scheduler run inside this single process.
 
   frontend:
+    logging: *default-logging
     build:
       context: ./frontend
       args:
@@ -46,6 +56,9 @@ services:
 
   mongodb:
     image: mongo:7.0
+    logging: *default-logging
+    # Small cache so MongoDB fits next to the app on a 1 GB server.
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
     volumes:
       - mongodb_data:/data/db
     healthcheck:
