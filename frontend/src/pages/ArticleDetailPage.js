@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useReadArticles } from '../context/ReadArticlesContext';
+import { useAuth } from '../context/AuthContext';
+import ArticleAnalysis from '../components/ArticleAnalysis';
 import ShareMenu from '../components/ShareMenu';
 import './ArticleDetailPage.css';
 
@@ -21,6 +23,10 @@ const toneIcon = (toneLabel) => {
 
 const ArticleDetailPage = () => {
   const location = useLocation();
+  const { getArticle } = useAuth();
+  const [fetched, setFetched] = useState(null);
+  const [loadError, setLoadError] = useState('');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { id } = useParams();
   const { isBookmarked, toggleBookmark, bookmarks } = useBookmarks();
@@ -31,9 +37,19 @@ const ArticleDetailPage = () => {
   // Prefer article passed via navigation state; fall back to a bookmarked
   // article with matching id (e.g. after a page refresh).
   const article =
+    (fetched?.id === id ? fetched : null) ||
     location.state?.article ||
     bookmarks.find((a) => String(a.id) === String(id)) ||
     {};
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true); setLoadError(''); setFetched(null);
+    getArticle(id).then(data => { if (active) setFetched({...data, date:new Date(data.date).toLocaleString()}); })
+      .catch(error => { if (active) setLoadError(error.response?.status === 404 ? 'Article not found.' : 'Could not update this article. Please retry.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id, getArticle]);
 
   const bookmarked = article.id !== undefined && isBookmarked(article.id);
 
@@ -62,6 +78,7 @@ const ArticleDetailPage = () => {
     }, 300);
   };
 
+  if (!article.id) return <main className="article-detail-page"><p role="status">{loading ? 'Loading article…' : loadError}</p><button onClick={() => navigate('/feed')}>Back to news</button></main>;
   return (
     <div className="article-detail-page">
       <div className="article-detail-wrapper">
@@ -71,10 +88,11 @@ const ArticleDetailPage = () => {
         </button>
         <article className="article-detail">
           <h1>{article.title}</h1>
+          {loadError && <p role="alert">{loadError} Showing the saved copy.</p>}
           <div className="article-meta">
             <span>{article.source}</span>
             <span>{article.date}</span>
-            <span className="trust-score-detail">{article.trustScore}% Trust</span>
+            <span className="trust-score-detail">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 indicator`}</span>
           </div>
           {article.toneLabel && (
             <div className="tone-label-row">
@@ -119,9 +137,7 @@ const ArticleDetailPage = () => {
             </div>
           )}
 
-          <div className="article-demo-notice">
-            <p>This is a detailed article view. In a real application, this would fetch full content from the backend API.</p>
-          </div>
+          <ArticleAnalysis article={article} />
 
           <div className="article-actions">
             <button

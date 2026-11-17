@@ -36,7 +36,7 @@ const HelpPage = () => {
         },
         {
           question: 'What does the Trust Score mean?',
-          answer: 'The Trust Score (0-100) indicates the credibility of the news source based on historical accuracy, editorial standards, and bias ratings. Higher scores mean more reliable sources.'
+          answer: 'The trust indicator combines configured source reputation, related coverage from other publishers, metadata and sentiment neutrality. The weighted score is capped at 95. Open an article to inspect its components and related reports. It is not an external fact check or a probability of truth.'
         },
         {
           question: 'How often is the news updated?',

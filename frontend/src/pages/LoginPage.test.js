@@ -3,12 +3,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LoginPage from './LoginPage';
 
+const mockAction = jest.fn();
+
 // Mock useAuth hook
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    login: jest.fn(),
+    login: (...args) => mockAction(...args),
   }),
 }));
+
+beforeEach(() => mockAction.mockReset());
 
 test('renders login form with email and password inputs', () => {
   render(
@@ -17,8 +21,8 @@ test('renders login form with email and password inputs', () => {
     </MemoryRouter>
   );
 
-  const emailInput = screen.getByLabelText(/email:/i);
-  const passwordInput = screen.getByLabelText(/password:/i);
+  const emailInput = screen.getByLabelText(/email address/i);
+  const passwordInput = screen.getByLabelText(/^password$/i);
   const submitButton = screen.getByRole('button', { name: /login/i });
 
   expect(emailInput).toBeInTheDocument();
@@ -29,7 +33,7 @@ test('renders login form with email and password inputs', () => {
 test('calls login function on form submit with correct credentials', async () => {
   // Get the mock login function
   const { useAuth } = require('../context/AuthContext');
-  const mockLogin = useAuth().login;
+  const mockLogin = mockAction;
   mockLogin.mockResolvedValueOnce(true); // Resolve to true (successful login)
 
   render(
@@ -38,8 +42,8 @@ test('calls login function on form submit with correct credentials', async () =>
     </MemoryRouter>
   );
 
-  const emailInput = screen.getByLabelText(/email:/i);
-  const passwordInput = screen.getByLabelText(/password:/i);
+  const emailInput = screen.getByLabelText(/email address/i);
+  const passwordInput = screen.getByLabelText(/^password$/i);
   const submitButton = screen.getByRole('button', { name: /login/i });
 
   // Fill in the form
@@ -57,7 +61,7 @@ test('calls login function on form submit with correct credentials', async () =>
 
 test('shows error message when login fails', async () => {
   const { useAuth } = require('../context/AuthContext');
-  const mockLogin = useAuth().login;
+  const mockLogin = mockAction;
   mockLogin.mockRejectedValueOnce(new Error('Login failed'));
 
   render(
@@ -66,8 +70,8 @@ test('shows error message when login fails', async () => {
     </MemoryRouter>
   );
 
-  const emailInput = screen.getByLabelText(/email:/i);
-  const passwordInput = screen.getByLabelText(/password:/i);
+  const emailInput = screen.getByLabelText(/email address/i);
+  const passwordInput = screen.getByLabelText(/^password$/i);
   const submitButton = screen.getByRole('button', { name: /login/i });
 
   fireEvent.change(emailInput, { target: { value: 'test@example.com' } });

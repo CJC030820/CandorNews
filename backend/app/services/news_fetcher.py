@@ -2,6 +2,9 @@ import requests
 import feedparser
 import time
 import re
+import html
+from urllib.parse import urljoin, urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Optional
 from app.core.config import settings
 import logging
@@ -9,13 +12,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _repair_mojibake(value: str) -> str:
+    """Repair common UTF-8-as-Windows-1252 corruption from RSS feeds."""
+    if not value or not re.search(r"[ÃÂâ€™â€œâ€â€“â€”â€¦ðŸ]", value):
+        return value
+    try:
+        repaired = value.encode("cp1252").decode("utf-8")
+        return repaired if repaired != value else value
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+
+
 def _strip_html(raw_html: Optional[str]) -> str:
-    """Remove HTML tags/entities from RSS description/content fields so the
-    frontend doesn't render raw markup."""
+    """Convert publisher HTML fragments into clean display text.
+
+    RSS descriptions commonly contain entities such as ``&nbsp;`` and
+    numeric entities. Decode them after removing tags, then normalize all
+    whitespace so entities never reach the UI or database.
+    """
     if not raw_html:
         return ""
-    text = re.sub(r"<[^>]+>", " ", raw_html)
-    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"<[^>]+>", " ", str(raw_html))
+    text = html.unescape(text)
+    text = _repair_mojibake(text)
+    text = re.sub(r"[\s\u00a0\u2007\u202f]+", " ", text).strip()
     return text
 
 class NewsFetcherService:
@@ -71,13 +91,13 @@ class NewsFetcherService:
             articles = []
             for article in data.get("articles", []):
                 articles.append({
-                    "title": article.get("title"),
+                    "title": _strip_html(article.get("title")),
                     "author": article.get("author"),
                     "source": article.get("source", {}).get("name"),
                     "url": article.get("url"),
                     "published_at": article.get("publishedAt"),
-                    "description": article.get("description"),
-                    "content": article.get("content"),
+                    "description": _strip_html(article.get("description")),
+                    "content": _strip_html(article.get("content")),
                     "urlToImage": article.get("urlToImage")
                 })
             return articles
@@ -107,13 +127,13 @@ class NewsFetcherService:
             articles = []
             for article in data.get("articles", []):
                 articles.append({
-                    "title": article.get("title"),
+                    "title": _strip_html(article.get("title")),
                     "author": article.get("author"),
                     "source": article.get("source", {}).get("name"),
                     "url": article.get("url"),
                     "published_at": article.get("publishedAt"),
-                    "description": article.get("description"),
-                    "content": article.get("content"),
+                    "description": _strip_html(article.get("description")),
+                    "content": _strip_html(article.get("content")),
                     "image": article.get("image")
                 })
             return articles
@@ -124,7 +144,13 @@ class NewsFetcherService:
 
     def fetch_from_rss(self, feed_url: str) -> List[Dict]:
         try:
-            feed = feedparser.parse(feed_url)
+            response = requests.get(
+                feed_url,
+                timeout=8,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; CandorNewsBot/1.0)"}
+            )
+            response.raise_for_status()
+            feed = feedparser.parse(response.content)
             articles = []
             for entry in feed.entries:
                 content = entry.get("content", [{}])[0].get("value") if entry.get("content") else None
@@ -132,10 +158,9 @@ class NewsFetcherService:
                 image_url = self._extract_rss_image(entry, content, raw_description)
                 link = entry.get("link")
                 if not image_url and link:
-                    # Some feeds (e.g. Bernama) carry no image data at all in
-                    # the RSS entry itself. Fall back to scraping the
-                    # article page's Open Graph / Twitter image meta tag.
-                    image_url = self._fetch_og_image(link)
+                    # Avoid opening every article page during refresh. RSS
+                    # media/enclosure images are already extracted above.
+                    image_url = None
                 articles.append({
                     "title": _strip_html(entry.get("title")),
                     "author": entry.get("author", None),
@@ -144,12 +169,42 @@ class NewsFetcherService:
                     "published_at": entry.get("published"),
                     "description": _strip_html(raw_description),
                     "content": _strip_html(content),
-                    "image": image_url
+                    "image": self._normalize_image_url(image_url, link)
                 })
+
+            # Many RSS feeds omit media fields even though the article page
+            # exposes an Open Graph image. Resolve those images concurrently
+            # so one slow publisher does not block the entire feed refresh.
+            missing_images = [article for article in articles if not article.get("image") and article.get("url")]
+            with ThreadPoolExecutor(max_workers=min(8, max(1, len(missing_images)))) as executor:
+                futures = {
+                    executor.submit(self._fetch_og_image, article["url"]): article
+                    for article in missing_images
+                }
+                for future in as_completed(futures):
+                    article = futures[future]
+                    try:
+                        article["image"] = self._normalize_image_url(future.result(), article.get("url"))
+                    except Exception as exc:
+                        logger.debug(f"Could not resolve fallback image for {article.get('url')}: {exc}")
+
             return articles
         except Exception as e:
             logger.error(f"Error fetching from RSS feed {feed_url}: {e}")
             return []
+
+    @staticmethod
+    def _normalize_image_url(image_url: Optional[str], article_url: Optional[str]) -> Optional[str]:
+        """Return an absolute, browser-safe image URL."""
+        if not image_url:
+            return None
+        value = html.unescape(str(image_url)).strip()
+        if value.startswith("//"):
+            value = "https:" + value
+        elif article_url:
+            value = urljoin(article_url, value)
+        parsed = urlparse(value)
+        return value if parsed.scheme in {"http", "https"} and parsed.netloc else None
 
     def _extract_rss_image(self, entry: dict, content: Optional[str], raw_description: Optional[str]) -> Optional[str]:
         """Best-effort extraction of an article image from an RSS entry,
@@ -214,25 +269,45 @@ class NewsFetcherService:
             logger.debug(f"Could not fetch OG image for {article_url}: {e}")
             return None
 
-    def fetch_all_sources(self) -> List[Dict]:
-        """Fetch news from all configured sources (NewsAPI, GNews, RSS)"""
+    def fetch_all_sources(self, selected_platforms: Optional[List[str]] = None) -> List[Dict]:
+        """Fetch news from configured sources, optionally restricted to selected platforms."""
         all_articles = []
+        selected = {name.strip().lower() for name in (selected_platforms or []) if name and name.strip()}
 
-        # Fetch from NewsAPI
-        newsapi_articles = self.fetch_from_newsapi()
-        all_articles.extend(newsapi_articles)
+        selected_feeds = []
+        feed_aliases = {
+            "bernama": ("bernama",),
+            "new straits times": ("nst",),
+            "free malaysia today": ("freemalaysiatoday",),
+        }
+        if selected:
+            for feed_url in settings.RSS_FEEDS.split(","):
+                feed_url = feed_url.strip()
+                if feed_url and any(
+                    alias in feed_url.lower()
+                    for platform in selected
+                    for alias in feed_aliases.get(platform, (platform.replace(" ", ""),))
+                ):
+                    selected_feeds.append(feed_url)
+        else:
+            selected_feeds = [feed.strip() for feed in settings.RSS_FEEDS.split(",") if feed.strip()]
 
-        # Fetch from GNews
-        gnews_articles = self.fetch_from_gnews()
-        all_articles.extend(gnews_articles)
+        def fetch_feed(feed_url):
+            return feed_url, self.fetch_from_rss(feed_url)
 
-        # Fetch from RSS feeds
-        rss_feeds = settings.RSS_FEEDS.split(",")
-        for feed_url in rss_feeds:
-            feed_url = feed_url.strip()
-            if feed_url:
-                rss_articles = self.fetch_from_rss(feed_url)
+        with ThreadPoolExecutor(max_workers=min(6, max(1, len(selected_feeds)))) as executor:
+            futures = [executor.submit(fetch_feed, feed_url) for feed_url in selected_feeds]
+            for future in as_completed(futures):
+                feed_url, rss_articles = future.result()
                 all_articles.extend(rss_articles)
                 logger.info(f"Fetched {len(rss_articles)} articles from RSS feed: {feed_url}")
 
-        return all_articles
+        if not selected:
+            return all_articles
+
+        filtered = [
+            article for article in all_articles
+            if any(name in (article.get("source") or "").lower() for name in selected)
+        ]
+        logger.info(f"Filtered refresh to platforms {sorted(selected)}: {len(filtered)} article(s)")
+        return filtered

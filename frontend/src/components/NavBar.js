@@ -5,13 +5,8 @@ import DarkModeToggle from '../components/DarkModeToggle';
 import './NavBar.css';
 
 const NavBar = ({ searchQuery, onSearchChange }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <nav className="navbar">
@@ -23,7 +18,10 @@ const NavBar = ({ searchQuery, onSearchChange }) => {
             title="Go to main page"
             aria-label="CandorNews - Go to main page"
           >
-            <h2>CandorNews</h2>
+            <span className="logo-brand">
+              <img src="/CandorNews-removebg-preview.png" alt="" className="logo-image" />
+              <h2>CandorNews</h2>
+            </span>
           </button>
         </div>
 
@@ -64,9 +62,6 @@ const NavBar = ({ searchQuery, onSearchChange }) => {
                 👤 Profile
               </Link>
               <DarkModeToggle />
-              <button onClick={handleLogout} className="nav-button logout" title="Logout">
-                ⏻
-              </button>
             </>
           )}
         </div>

@@ -7,7 +7,6 @@ import SuggestionPanel from '../components/SuggestionPanel';
 import BackToTopButton from '../components/BackToTopButton';
 import { useTrustedPlatforms } from '../context/TrustedPlatformsContext';
 import { useOverscrollBounce } from '../hooks/useOverscrollBounce';
-import { normalizeTopics } from '../constants/topics';
 import './FeedPage.css';
 
 const CATEGORY_ICONS = {
@@ -28,10 +27,8 @@ const formatRelativeDate = (isoString, now = Date.now()) => {
   const date = new Date(isoString);
   if (isNaN(date.getTime())) return isoString;
   const diffMs = now - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  if (diffSecs < 5) return 'Just now';
-  if (diffSecs < 60) return `${diffSecs} second${diffSecs === 1 ? '' : 's'} ago`;
   const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'Less than a minute ago';
   if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
@@ -39,59 +36,11 @@ const formatRelativeDate = (isoString, now = Date.now()) => {
   return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 };
 
-const getTitleWords = (title = '') => new Set(
-  title.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter((word) => word.length > 2)
-);
+export const mapFeedArticle = article => ({...article, rawDate:article.date,
+  categories:article.categories?.length ? article.categories : (article.category ? [article.category] : [])});
 
-const areSameStory = (firstTitle, secondTitle) => {
-  const firstWords = getTitleWords(firstTitle);
-  const secondWords = getTitleWords(secondTitle);
-  if (!firstWords.size || !secondWords.size) return false;
-  const sharedWords = [...firstWords].filter((word) => secondWords.has(word)).length;
-  const overlap = sharedWords / Math.min(firstWords.size, secondWords.size);
-  return overlap >= 0.6;
-};
-
-const combineSimilarArticles = (articles) => {
-  const groups = [];
-
-  articles.forEach((article) => {
-    const group = groups.find((candidate) => areSameStory(candidate[0].title, article.title));
-    if (group) {
-      group.push(article);
-    } else {
-      groups.push([article]);
-    }
-  });
-
-  return groups.map((group) => {
-    const primary = group[0];
-    const reports = group.map((article) => ({
-      source: article.source,
-      title: article.title,
-      summary: article.description || ''
-    }));
-    const sources = [...new Set(group.map((article) => article.source).filter(Boolean))];
-    const longestSummary = group
-      .map((article) => article.description || '')
-      .sort((first, second) => second.length - first.length)[0] || '';
-
-    return {
-      ...primary,
-      title: primary.title,
-      description: longestSummary,
-      source: sources.join(' • '),
-      sources,
-      platformReports: reports,
-      isCombinedStory: sources.length > 1,
-      url: primary.url
-    };
-  });
-};
-
-const FeedPage = ({ searchQuery, onSearchChange }) => {
-  const { user, logout, getFeed, refreshFeed } = useAuth();
-    const selectedTopics = normalizeTopics(user?.preferred_topics || []);
+const FeedPage = ({ searchQuery = '', onSearchChange }) => {
+  const { user, logout, getFeed, refreshFeed, getRefreshStatus } = useAuth();
   const navigate = useNavigate();
   const feedPageRef = useRef(null);
   const [filter, setFilter] = useState('all');
@@ -99,57 +48,15 @@ const FeedPage = ({ searchQuery, onSearchChange }) => {
   // Enable overscroll bounce effect
   useOverscrollBounce(feedPageRef);
 
-  const [rawArticles, setRawArticles] = useState(() => {
-    const stored = sessionStorage.getItem('feedArticles');
-    return stored ? combineSimilarArticles(JSON.parse(stored)) : [];
-  });
-  const [loading, setLoading] = useState(() => {
-    const stored = sessionStorage.getItem('feedArticles');
-    return !stored; // Only show loading if no cached articles
-  });
+  const [rawArticles, setRawArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [nowTick, setNowTick] = useState(Date.now());
-  const [isExiting, setIsExiting] = useState(false);
-  
-  const [refreshProgress, setRefreshProgress] = useState(0);
-  const refreshProgressTimer = useRef(null);
-
-  const stopRefreshProgress = () => {
-    if (refreshProgressTimer.current) {
-      clearInterval(refreshProgressTimer.current);
-      refreshProgressTimer.current = null;
-    }
-  };
-
-  const startRefreshProgress = () => {
-    stopRefreshProgress();
-    refreshProgressTimer.current = setInterval(() => {
-      setRefreshProgress((previous) => {
-        if (previous >= 92) return previous;
-        const remaining = 92 - previous;
-        return Math.min(92, previous + Math.max(0.4, remaining * 0.035));
-      });
-    }, 120);
-  };
-
-  const finishRefreshProgress = () => {
-    stopRefreshProgress();
-    setRefreshProgress((previous) => Math.max(previous, 92));
-    const finishTimer = setInterval(() => {
-      setRefreshProgress((previous) => {
-        const next = previous + Math.max(3, (100 - previous) * 0.35);
-        if (next >= 99.5) {
-          clearInterval(finishTimer);
-          return 100;
-        }
-        return next;
-      });
-    }, 45);
-  };
-
-  useEffect(() => () => stopRefreshProgress(), []);
-
+  const alive = useRef(true);
+  const busy = useRef(false);
+  const restoredScroll = useRef(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   const {
     platforms,
@@ -162,179 +69,38 @@ const FeedPage = ({ searchQuery, onSearchChange }) => {
   const [isManagingPlatforms, setIsManagingPlatforms] = useState(false);
 
   const loadFeed = useCallback(async () => {
-    // Check if we have cached articles from a previous session
-    const cached = sessionStorage.getItem('feedArticles');
-    if (cached) {
-      // Use cached articles, don't reload
-      setLoading(false);
-      return;
-    }
-    
-    // Only fetch if no cache exists
-    setError('');
     try {
-      const data = await getFeed({ limit: 500 });
-      const mapped = (data.articles || []).map((a) => ({
-        id: a.id,
-        title: a.title,
-        source: a.source,
-        rawDate: a.date,
-        image: a.image,
-        description: a.description,
-        trustScore: a.trustScore,
-        category: a.category,
-        categories: (a.categories && a.categories.length > 0) ? a.categories : (a.category ? [a.category] : []),
-        url: a.url,
-        toneLabel: a.toneLabel || null
-      }));
-      setRawArticles(combineSimilarArticles(mapped));
-      sessionStorage.setItem('feedArticles', JSON.stringify(mapped));
-    } catch (err) {
-      setError('Failed to load the latest news. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      const data = await getFeed({limit:500});
+      if (alive.current) setRawArticles((data.articles || []).map(mapFeedArticle));
+    } catch { if (alive.current) setError('Failed to load the latest news. Please try again.'); }
+    finally { if (alive.current) setLoading(false); }
   }, [getFeed]);
+  useEffect(() => { loadFeed(); }, [loadFeed]);
+useEffect(() => {
+    const tick = setInterval(() => setNowTick(Date.now()), 1000);
+    const reload = setInterval(loadFeed, 60000);
+    return () => { clearInterval(tick); clearInterval(reload); };
+  }, [loadFeed]);
 
-  // Effect: Initialize and load feed
-  useEffect(() => {
-    // Load feed (uses cache if available)
-    loadFeed();
-    
-    // Auto-refresh news in the background when page loads
-    const autoRefreshNews = async () => {
-      try {
-        await refreshFeed(followedPlatforms.map((platform) => platform.name));
-        // After refresh completes, reload the feed to show latest articles
-        await loadFeed();
-      } catch (err) {
-        console.error('Auto-refresh on page load failed:', err);
-      }
-    };
-    
-    // Trigger auto-refresh after a short delay to not block initial load
-    const refreshTimer = setTimeout(() => {
-      autoRefreshNews();
-    }, 500);
-    
-    return () => clearTimeout(refreshTimer);
-  }, []);
-
-  useEffect(() => {
-    // Restore scroll position when returning to feed page
-    const savedScrollPosition = sessionStorage.getItem('feedScrollPosition');
-    if (savedScrollPosition) {
-      setTimeout(() => {
-        window.scrollTo(0, parseInt(savedScrollPosition, 10));
-      }, 0);
-      sessionStorage.removeItem('feedScrollPosition');
-    }
-  }, [rawArticles]); // Restore scroll after articles are rendered
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!refreshing && followedPlatforms.length > 0) {
-        handleManualRefresh();
-      }
-    }, 15 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refreshing, followedPlatforms]);
-
-  useEffect(() => {
-    // Keep article dates accurate in real time without refetching the feed.
-    const tickInterval = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(tickInterval);
-  }, []);
-  
   const handleManualRefresh = async () => {
-    if (followedPlatforms.length === 0) {
-      setError('Select at least one trusted platform before refreshing news.');
-      return;
-    }
-
-    setRefreshing(true);
-    setRefreshProgress(4);
-    startRefreshProgress();
-    setError('');
+    if (busy.current) return;
+    if (!followedPlatforms.length) { setError('Select at least one platform.'); return; }
+    busy.current = true; setRefreshing(true); setError('');
     try {
-      if (followedPlatforms.length === 0) {
-        setError('Select at least one trusted platform before refreshing news.');
-        return;
+      const job = await refreshFeed(followedPlatforms.map(platform => platform.name));
+      let finished = false;
+      for (let attempt = 0; attempt < 120 && alive.current; attempt += 1) {
+        const status = await getRefreshStatus(job.jobId);
+        if (status.status === 'failed') throw new Error('Refresh failed. Please retry.');
+        if (status.status === 'completed') { finished = true; break; }
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
-      sessionStorage.removeItem('feedArticles');
-
-      const response = await refreshFeed(followedPlatforms.map((platform) => platform.name));
-      setRefreshProgress((previous) => Math.max(previous, 60));
-
-      if (response.status === "completed" || response.status === "pending") {
-        if (response.status === "completed") {
-          const data = await getFeed({ limit: 1000 });
-          setRefreshProgress(85);
-
-          const mapped = (data.articles || []).map((a) => ({
-            id: a.id,
-            title: a.title,
-            source: a.source,
-            rawDate: a.date,
-            image: a.image,
-            description: a.description,
-            trustScore: a.trustScore,
-            category: a.category,
-            categories: (a.categories && a.categories.length > 0) ? a.categories : (a.category ? [a.category] : []),
-            url: a.url,
-            toneLabel: a.toneLabel || null
-          }));
-          setRawArticles(combineSimilarArticles(mapped));
-          sessionStorage.setItem('feedArticles', JSON.stringify(mapped));
-          finishRefreshProgress();
-        } else {
-          setError('Refresh in progress — articles will update as they arrive.');
-          setRefreshProgress(65);
-
-          const pollInterval = setInterval(async () => {
-            try {
-              const freshData = await getFeed({ limit: 100 });
-              const freshMapped = (freshData.articles || []).map((a) => ({
-                id: a.id,
-                title: a.title,
-                source: a.source,
-                rawDate: a.date,
-                image: a.image,
-                description: a.description,
-                trustScore: a.trustScore,
-                category: a.category,
-                categories: (a.categories && a.categories.length > 0) ? a.categories : (a.category ? [a.category] : []),
-                url: a.url,
-                toneLabel: a.toneLabel || null
-              }));
-              setRawArticles(combineSimilarArticles(freshMapped));
-              sessionStorage.setItem('feedArticles', JSON.stringify(freshMapped));
-            } catch (e) {
-              console.debug('Poll for new articles failed:', e);
-            }
-          }, 3000);
-          setTimeout(() => {
-            clearInterval(pollInterval);
-            setRefreshProgress(100);
-          }, 60000);
-        }
-      } else {
-        setError('Failed to fetch the latest news right now. Please try again shortly.');
-        stopRefreshProgress();
-        setRefreshProgress(0);
+      if (alive.current) {
+        await loadFeed();
+        if (!finished) setError('Refresh is still running. The feed checks for new articles every minute.');
       }
-    } catch (err) {
-      setError('Failed to fetch the latest news right now. Please try again shortly.');
-      stopRefreshProgress();
-      setRefreshProgress(0);
-    } finally {
-      setTimeout(() => {
-        stopRefreshProgress();
-        setRefreshing(false);
-        setRefreshProgress(0);
-        setError('');
-      }, 800);
-    }
+    } catch (err) { if (alive.current) setError(err.message || 'Refresh failed. Please retry.'); }
+    finally { busy.current = false; if (alive.current) setRefreshing(false); }
   };
 
   // Categories actually present in the fetched articles (falls back to a
@@ -343,7 +109,7 @@ const FeedPage = ({ searchQuery, onSearchChange }) => {
   const availableCategories = useMemo(() => {
     return Array.from(
       new Set(rawArticles.flatMap(a => a.categories && a.categories.length > 0 ? a.categories : [a.category]))
-    ).filter((category) => category && category !== 'General');
+    ).filter(Boolean);
   }, [rawArticles]);
 
   // Filter by category (matches if the selected category is any of the
@@ -352,14 +118,12 @@ const FeedPage = ({ searchQuery, onSearchChange }) => {
     const trustedArticles = rawArticles.filter((article) =>
       followedPlatforms.some((platform) =>
         (article.source || '').toLowerCase().includes(platform.name.toLowerCase())
-      ) && (selectedTopics.length === 0 || (article.categories || [article.category]).some((category) =>
-        selectedTopics.some((topic) => category.toLowerCase() === topic.toLowerCase())
-      ))
+      )
     );
     return filter === 'all'
       ? trustedArticles
       : trustedArticles.filter(a => (a.categories && a.categories.length > 0 ? a.categories : [a.category]).includes(filter));
-  }, [rawArticles, filter, followedPlatforms, selectedTopics]);
+  }, [rawArticles, filter, followedPlatforms]);
 
   // Filter by search query
   const searchedArticles = useMemo(() => {
@@ -385,6 +149,22 @@ const FeedPage = ({ searchQuery, onSearchChange }) => {
       date: formatRelativeDate(a.rawDate, nowTick)
     }));
   }, [sortedArticles, nowTick]);
+
+  // Restore the feed position after its cards exist in the DOM.
+  useEffect(() => {
+    if (loading || restoredScroll.current) return;
+    const savedPosition = Number(sessionStorage.getItem('feedScrollPosition'));
+    if (!Number.isFinite(savedPosition) || savedPosition < 0) {
+      restoredScroll.current = true;
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      window.scrollTo({ top: savedPosition, left: 0, behavior: 'auto' });
+      restoredScroll.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [loading, displayArticles.length]);
 
   const handleLogout = () => {
     logout();
@@ -509,16 +289,8 @@ const FeedPage = ({ searchQuery, onSearchChange }) => {
                 
               </div>
               
-              {refreshing && (
-                <div className="refresh-progress-container">
-                  <div className="progress-bar-wrapper">
-                    <div 
-                      className="progress-bar" 
-                      style={{ width: `${Math.min(refreshProgress, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+              {refreshing && <p role="status">Collecting and analyzing articles. This may take a few minutes.</p>}
+
             </div>
           </div>
 

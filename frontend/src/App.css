@@ -113,7 +113,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 1s ease, color 1s ease;
+}
+
+html.theme-color-transition,
+html.theme-color-transition body,
+html.theme-color-transition body * {
+  transition: background-color 1s ease, color 1s ease, border-color 1s ease,
+    fill 1s ease, stroke 1s ease, box-shadow 1s ease !important;
 }
 
 code {

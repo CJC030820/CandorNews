@@ -1,25 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
+import { useAccountStorage } from '../hooks/useAccountStorage';
 import { DEFAULT_TRUSTED_PLATFORMS, DEFAULT_FOLLOWED_IDS } from '../constants/platforms';
 
 const TrustedPlatformsContext = createContext();
-
-const FOLLOWED_STORAGE_KEY = 'followedPlatformIds';
-
-const getFollowedIdsFromStorage = () => {
-  try {
-    const stored = localStorage.getItem(FOLLOWED_STORAGE_KEY);
-    if (!stored) return DEFAULT_FOLLOWED_IDS;
-    const parsed = JSON.parse(stored);
-    // Guard against stale IDs from a previous session that no longer exist
-    // in the fixed system catalog.
-    const validIds = new Set(DEFAULT_TRUSTED_PLATFORMS.map((p) => p.id));
-    const filteredIds = parsed.filter((id) => validIds.has(id));
-    return filteredIds.length > 0 ? filteredIds : DEFAULT_FOLLOWED_IDS;
-  } catch (e) {
-    console.error('Error parsing followed platforms from localStorage:', e);
-    return DEFAULT_FOLLOWED_IDS;
-  }
-};
 
 export const TrustedPlatformsProvider = ({ children }) => {
   // The catalog of trusted platforms is fixed by the system - users can only
@@ -28,11 +11,7 @@ export const TrustedPlatformsProvider = ({ children }) => {
   const platforms = DEFAULT_TRUSTED_PLATFORMS;
 
   // Which platform IDs the user is currently following.
-  const [followedIds, setFollowedIds] = useState(getFollowedIdsFromStorage);
-
-  useEffect(() => {
-    localStorage.setItem(FOLLOWED_STORAGE_KEY, JSON.stringify(followedIds));
-  }, [followedIds]);
+  const [followedIds, setFollowedIds] = useAccountStorage('followedPlatformIds', DEFAULT_FOLLOWED_IDS);
 
   const isFollowing = (platformId) => followedIds.includes(platformId);
 

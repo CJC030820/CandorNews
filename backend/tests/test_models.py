@@ -76,9 +76,11 @@ def test_article_create_model():
         "title": "Test Article",
         "source": "Test Source",
         "url": "https://example.com/article",
-        "published_at": datetime.utcnow(),
+        "published_date": datetime.utcnow(),
+        "sentiment": "Neutral",
+        "trust_score": 50,
         "description": "A test article",
-        "content": "Full content",
+        "content_excerpt": "Full content",
         "topic": "Technology"
     }
     article = ArticleCreate(**article_data)
@@ -86,7 +88,7 @@ def test_article_create_model():
     assert article.source == article_data["source"]
     assert article.url == article_data["url"]
     assert article.description == article_data["description"]
-    assert article.content == article_data["content"]
+    assert article.content_excerpt == article_data["content_excerpt"]
     assert article.topic == article_data["topic"]
 
 def test_interaction_create_model():
@@ -104,13 +106,13 @@ def test_interaction_create_model():
 def test_source_credibility_create_model():
     """Test SourceCredibilityCreate model."""
     cred_data = {
-        "name": "Trusted News",
+        "source_name": "Trusted News",
         "domain": "trustednews.com",
         "credibility_score": 95,
         "category": "News"
     }
     cred = SourceCredibilityCreate(**cred_data)
-    assert cred.name == cred_data["name"]
+    assert cred.source_name == cred_data["source_name"]
     assert cred.domain == cred_data["domain"]
     assert cred.credibility_score == cred_data["credibility_score"]
     assert cred.category == cred_data["category"]
@@ -119,7 +121,7 @@ def test_source_credibility_score_validation():
     """Test that credibility score must be between 0 and 100."""
     # Valid score
     cred = SourceCredibilityCreate(
-        name="Valid",
+        source_name="Valid",
         domain="valid.com",
         credibility_score=50,
         category="News"
@@ -129,7 +131,7 @@ def test_source_credibility_score_validation():
     # Too low
     with pytest.raises(ValidationError):
         SourceCredibilityCreate(
-            name="Low",
+            source_name="Low",
             domain="low.com",
             credibility_score=-1,
             category="News"
@@ -138,7 +140,7 @@ def test_source_credibility_score_validation():
     # Too high
     with pytest.raises(ValidationError):
         SourceCredibilityCreate(
-            name="High",
+            source_name="High",
             domain="high.com",
             credibility_score=101,
             category="News"

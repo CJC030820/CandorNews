@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from typing import List, Dict
 import logging
 from difflib import SequenceMatcher
@@ -22,7 +23,7 @@ class DeduplicatorService:
 
     def remove_duplicates(self, articles: List[Dict]) -> List[Dict]:
         seen_urls = set()
-        seen_titles = []
+        seen_titles = {}
         unique_articles = []
 
         for article in articles:
@@ -36,12 +37,13 @@ class DeduplicatorService:
                 logger.debug(f"Skipping duplicate URL: {url}")
                 continue
 
-            if self.is_similar_title(title, seen_titles):
+            domain = (urlparse(url).hostname or "").lower().removeprefix("www.")
+            if self.is_similar_title(title, seen_titles.get(domain, [])):
                 logger.debug(f"Skipping similar title: {title}")
                 continue
 
             seen_urls.add(url)
-            seen_titles.append(title)
+            seen_titles.setdefault(domain, []).append(title)
             unique_articles.append(article)
 
         return unique_articles

@@ -1,0 +1,1809 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "description": "300 fictional English news headlines for offline sentiment evaluation: 100 Positive, 100 Negative, and 100 Neutral; 10 examples per label in each of 10 topics.",
+  "annotation_method": "AI-authored semantic polarity labels assigned independently of the classifier. These are intended labels requiring human review, not validated ground truth.",
+  "intended_use": "Smoke evaluation and error analysis only. Headlines are fictional and must not be published as real news. This is not a representative benchmark or a measure of full-article sentiment accuracy.",
+  "examples": [
+    {
+      "id": "pos-001",
+      "headline": "Small businesses celebrate record sales at weekend market",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-002",
+      "headline": "Cooperative secures new export deal and creates 80 jobs",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-003",
+      "headline": "Family bakery rebounds as neighbourhood orders surge",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-004",
+      "headline": "Factory workers welcome pay rise after productive quarter",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-005",
+      "headline": "Local traders thrive following reopening of town square",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-006",
+      "headline": "New mentoring programme helps young entrepreneurs succeed",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-007",
+      "headline": "Rural producers earn higher incomes through shared delivery network",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-008",
+      "headline": "Independent bookshops report strongest holiday sales in years",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-009",
+      "headline": "Manufacturing survey shows confidence improving among employers",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-010",
+      "headline": "Social enterprise expands affordable meals after profitable year",
+      "expected_sentiment": "Positive",
+      "category": "Business"
+    },
+    {
+      "id": "pos-011",
+      "headline": "Families welcome lower mortgage repayments after rate cut",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-012",
+      "headline": "Community fund reaches target to support flood recovery",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-013",
+      "headline": "Credit union returns surplus to members after solid year",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-014",
+      "headline": "New savings scheme helps households build emergency funds",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-015",
+      "headline": "Insurance payout enables damaged shops to reopen",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-016",
+      "headline": "Financial literacy workshops boost confidence among students",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-017",
+      "headline": "Affordable loans help farmers replace ageing equipment",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-018",
+      "headline": "Bank removes account fees for low income customers",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-019",
+      "headline": "Pension fund reports gains above its annual target",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-020",
+      "headline": "Debt counselling programme helps hundreds regain financial stability",
+      "expected_sentiment": "Positive",
+      "category": "Finance"
+    },
+    {
+      "id": "pos-021",
+      "headline": "New accessibility app helps blind commuters navigate stations",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-022",
+      "headline": "Software patch restores service for thousands of users",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-023",
+      "headline": "Community broadband project connects remote classrooms",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-024",
+      "headline": "Affordable device enables seniors to call family more easily",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-025",
+      "headline": "Open source volunteers fix critical bugs in public records tool",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-026",
+      "headline": "Battery breakthrough extends operating time for medical sensors",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-027",
+      "headline": "Digital booking system cuts clinic queues by half",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-028",
+      "headline": "Students win innovation prize for low cost water monitor",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-029",
+      "headline": "New translation tool improves access to public information",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-030",
+      "headline": "Repair programme gives discarded laptops a second life",
+      "expected_sentiment": "Positive",
+      "category": "Technology"
+    },
+    {
+      "id": "pos-031",
+      "headline": "AI tool helps doctors detect treatable eye conditions earlier",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-032",
+      "headline": "Machine learning project improves flood warning accuracy",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-033",
+      "headline": "Speech recognition system opens new opportunities for disabled learners",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-034",
+      "headline": "Farmers reduce water waste with accurate AI irrigation forecasts",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-035",
+      "headline": "Volunteer team makes language model resources freely available",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-036",
+      "headline": "AI assisted sorting increases recovery of recyclable materials",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-037",
+      "headline": "Researchers celebrate advance in detecting harmful crop diseases",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-038",
+      "headline": "Accessible chatbot guides families to emergency support",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-039",
+      "headline": "New model reduces false alarms in factory safety inspections",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-040",
+      "headline": "AI translation project preserves endangered oral histories",
+      "expected_sentiment": "Positive",
+      "category": "AI"
+    },
+    {
+      "id": "pos-041",
+      "headline": "Hospital celebrates successful recovery of all injured passengers",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-042",
+      "headline": "New clinic brings affordable care to remote villages",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-043",
+      "headline": "Vaccination campaign sharply reduces preventable infections",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-044",
+      "headline": "Patients benefit from shorter waits for essential surgery",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-045",
+      "headline": "Community exercise programme improves participants' mobility",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-046",
+      "headline": "Medical team develops promising treatment for rare disorder",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-047",
+      "headline": "Donated equipment restores hearing for dozens of children",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-048",
+      "headline": "Health volunteers deliver lifesaving supplies to isolated families",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-049",
+      "headline": "Recovery centre helps stroke survivors regain independence",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-050",
+      "headline": "Clean water project cuts illness rates in rural community",
+      "expected_sentiment": "Positive",
+      "category": "Health"
+    },
+    {
+      "id": "pos-051",
+      "headline": "Underdog football team celebrates first championship victory",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-052",
+      "headline": "Young swimmer breaks national junior record",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-053",
+      "headline": "Community coaches receive award for inclusive sports programme",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-054",
+      "headline": "Injured athlete makes inspiring return to competition",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-055",
+      "headline": "Local badminton pair wins thrilling tournament final",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-056",
+      "headline": "School runners achieve personal bests at district meet",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-057",
+      "headline": "New funding gives disabled athletes access to training equipment",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-058",
+      "headline": "Fans celebrate unbeaten season for village cricket club",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-059",
+      "headline": "Junior basketball team earns praise for outstanding teamwork",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-060",
+      "headline": "Volunteer referees help revive neighbourhood youth league",
+      "expected_sentiment": "Positive",
+      "category": "Sports"
+    },
+    {
+      "id": "pos-061",
+      "headline": "Local film wins audience award at regional festival",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-062",
+      "headline": "Community choir delights residents at free evening concert",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-063",
+      "headline": "Young dancer earns scholarship after outstanding performance",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-064",
+      "headline": "Restored theatre reopens to enthusiastic crowds",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-065",
+      "headline": "Independent musicians celebrate sold out benefit show",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-066",
+      "headline": "Accessible screenings bring cinema joy to more families",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-067",
+      "headline": "Arts programme helps shy children gain confidence on stage",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-068",
+      "headline": "Animated short receives praise for imaginative storytelling",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-069",
+      "headline": "Festival raises record donations for community libraries",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-070",
+      "headline": "Traditional performers welcome new grants to preserve their craft",
+      "expected_sentiment": "Positive",
+      "category": "Entertainment"
+    },
+    {
+      "id": "pos-071",
+      "headline": "Council unanimously approves funding for accessible public buildings",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-072",
+      "headline": "Residents welcome transparent publication of local spending records",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-073",
+      "headline": "Peaceful talks resolve long running community boundary dispute",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-074",
+      "headline": "New voter assistance service improves access for disabled residents",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-075",
+      "headline": "Cross party agreement secures repairs for rural schools",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-076",
+      "headline": "Public consultation gives neighbourhood groups a stronger voice",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-077",
+      "headline": "Successful mediation restores cooperation between district councils",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-078",
+      "headline": "Open procurement system reduces waste in municipal spending",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-079",
+      "headline": "Youth representatives gain seats on community advisory board",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-080",
+      "headline": "Parliament approves protections for displaced families",
+      "expected_sentiment": "Positive",
+      "category": "Politics"
+    },
+    {
+      "id": "pos-081",
+      "headline": "Police recover stolen school computers and return them to pupils",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-082",
+      "headline": "Community safety campaign helps reduce neighbourhood burglaries",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-083",
+      "headline": "Victims receive compensation after successful fraud investigation",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-084",
+      "headline": "Missing child reunited safely with family",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-085",
+      "headline": "Witness protection programme helps survivors rebuild their lives",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-086",
+      "headline": "Officers rescue trapped workers from illegal confinement",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-087",
+      "headline": "Rehabilitation initiative helps former offenders find steady jobs",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-088",
+      "headline": "Anti scam workshops help seniors protect their savings",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-089",
+      "headline": "Stolen medical supplies recovered before clinic runs out",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-090",
+      "headline": "Residents praise swift response that prevents violent assault",
+      "expected_sentiment": "Positive",
+      "category": "Crime"
+    },
+    {
+      "id": "pos-091",
+      "headline": "Volunteers restore neglected playground for neighbourhood children",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-092",
+      "headline": "Farmers celebrate healthy harvest after reliable rainfall",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-093",
+      "headline": "Mangrove restoration brings wildlife back to coastal habitat",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-094",
+      "headline": "New library opens free learning space for village families",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-095",
+      "headline": "Rescue team saves stranded hikers before nightfall",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-096",
+      "headline": "Community kitchen serves nutritious meals to families in need",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-097",
+      "headline": "Students earn scholarships through local fundraising campaign",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-098",
+      "headline": "Repair crews restore clean water after overnight work",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-099",
+      "headline": "Neighbours unite to rebuild home damaged by storm",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "pos-100",
+      "headline": "Waste reduction project keeps tonnes of plastic out of river",
+      "expected_sentiment": "Positive",
+      "category": "General"
+    },
+    {
+      "id": "neg-001",
+      "headline": "Furniture factory closes as falling orders force layoffs",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-002",
+      "headline": "Small retailers struggle with sharp increase in rental costs",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-003",
+      "headline": "Supply shortages threaten production at regional workshops",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-004",
+      "headline": "Family restaurant shuts after months of mounting losses",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-005",
+      "headline": "Exporters warn of shrinking demand and cancelled contracts",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-006",
+      "headline": "Market vendors face financial hardship after warehouse fire",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-007",
+      "headline": "Transport strike leaves local businesses without deliveries",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-008",
+      "headline": "Tourism operators report steep losses after booking cancellations",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-009",
+      "headline": "Cooperative collapses under unpaid debts",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-010",
+      "headline": "Unexpected equipment failures halt production and cut wages",
+      "expected_sentiment": "Negative",
+      "category": "Business"
+    },
+    {
+      "id": "neg-011",
+      "headline": "Rising loan repayments strain household budgets",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-012",
+      "headline": "Pension fund records heavy losses after market slump",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-013",
+      "headline": "Families lose savings in fraudulent investment scheme",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-014",
+      "headline": "Sharp insurance premium increases leave drivers worried",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-015",
+      "headline": "Credit card debt climbs as wages fail to keep pace",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-016",
+      "headline": "Small borrowers face eviction after missed payments",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-017",
+      "headline": "Currency decline raises costs for import dependent shops",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-018",
+      "headline": "Unexpected account charges trigger complaints from customers",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-019",
+      "headline": "Unpaid claims leave flood victims without repair funds",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-020",
+      "headline": "Retirement survey finds growing anxiety over inadequate savings",
+      "expected_sentiment": "Negative",
+      "category": "Finance"
+    },
+    {
+      "id": "neg-021",
+      "headline": "Server outage disrupts hospital appointment bookings",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-022",
+      "headline": "Faulty software update locks users out of their accounts",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-023",
+      "headline": "Data breach exposes customer contact details",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-024",
+      "headline": "Battery defect prompts urgent recall of portable chargers",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-025",
+      "headline": "Rural internet failures interrupt online examinations",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-026",
+      "headline": "Ransomware attack shuts down community service portal",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-027",
+      "headline": "Customers report lost files after storage system crash",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-028",
+      "headline": "Overheating equipment forces computer lab to close",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-029",
+      "headline": "Accessibility bug prevents screen reader users from paying bills",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-030",
+      "headline": "Electronic waste piles up as recycling contractor withdraws",
+      "expected_sentiment": "Negative",
+      "category": "Technology"
+    },
+    {
+      "id": "neg-031",
+      "headline": "Biased hiring algorithm unfairly rejects qualified applicants",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-032",
+      "headline": "Chatbot gives dangerously incorrect emergency instructions",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-033",
+      "headline": "AI generated impersonation scam steals donations from charity",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-034",
+      "headline": "Faulty prediction system sends flood warnings too late",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-035",
+      "headline": "Automated grading errors put students at risk of losing scholarships",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-036",
+      "headline": "Researchers uncover discriminatory outputs in public service model",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-037",
+      "headline": "Deepfake audio spreads false accusations against fictional candidates",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-038",
+      "headline": "AI scheduling failures leave patients without appointments",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-039",
+      "headline": "Training data leak exposes private customer conversations",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-040",
+      "headline": "Unreliable image model misidentifies damaged bridges as safe",
+      "expected_sentiment": "Negative",
+      "category": "AI"
+    },
+    {
+      "id": "neg-041",
+      "headline": "Hospital overcrowding delays urgent treatment",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-042",
+      "headline": "Disease outbreak forces schools to suspend classes",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-043",
+      "headline": "Medicine shortage leaves patients struggling to manage pain",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-044",
+      "headline": "Contaminated water sends dozens of residents to hospital",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-045",
+      "headline": "Health workers report exhaustion after weeks of staff shortages",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-046",
+      "headline": "Clinic closure leaves remote families without nearby care",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-047",
+      "headline": "Ambulance breakdown delays response to serious collision",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-048",
+      "headline": "Study links unsafe factory exposure to respiratory illness",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-049",
+      "headline": "Patients face cancelled operations after equipment failure",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-050",
+      "headline": "Malnutrition rates rise as food prices strain family budgets",
+      "expected_sentiment": "Negative",
+      "category": "Health"
+    },
+    {
+      "id": "neg-051",
+      "headline": "Severe injury ends captain's season",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-052",
+      "headline": "Flooded stadium forces cancellation of charity tournament",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-053",
+      "headline": "Doping violations lead to suspension of two fictional athletes",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-054",
+      "headline": "Team suffers crushing defeat after costly defensive errors",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-055",
+      "headline": "Funding cuts threaten closure of youth sports academy",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-056",
+      "headline": "Spectators injured when temporary stand collapses",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-057",
+      "headline": "Players protest unpaid wages after club financial crisis",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-058",
+      "headline": "Extreme heat sends several marathon runners to hospital",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-059",
+      "headline": "Training ground vandalism disrupts preparations for regional games",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-060",
+      "headline": "Coach resigns following repeated harassment complaints",
+      "expected_sentiment": "Negative",
+      "category": "Sports"
+    },
+    {
+      "id": "neg-061",
+      "headline": "Concert cancelled after organisers fail safety inspection",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-062",
+      "headline": "Theatre fire destroys costumes and stage equipment",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-063",
+      "headline": "Festival workers left unpaid after promoter disappears",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-064",
+      "headline": "Noise complaints escalate during overnight music event",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-065",
+      "headline": "Ticket scam leaves hundreds of fans out of pocket",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-066",
+      "headline": "Dance school closes after losing essential funding",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-067",
+      "headline": "Film production halted by serious on set accident",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-068",
+      "headline": "Historic cinema faces demolition after repair costs soar",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-069",
+      "headline": "Performers report harassment during touring production",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-070",
+      "headline": "Storm damage forces closure of community arts centre",
+      "expected_sentiment": "Negative",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neg-071",
+      "headline": "Budget impasse delays essential repairs to public housing",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-072",
+      "headline": "Political violence forces cancellation of community meeting",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-073",
+      "headline": "Residents condemn exclusion from major planning decision",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-074",
+      "headline": "Election equipment failure leaves voters waiting for hours",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-075",
+      "headline": "Council dispute stalls emergency flood relief funding",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-076",
+      "headline": "Misuse of public funds undermines confidence in local office",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-077",
+      "headline": "Protesters injured during clashes outside fictional assembly",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-078",
+      "headline": "Broken campaign promises fuel anger over unfinished clinic",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-079",
+      "headline": "Policy reversal leaves scholarship applicants without support",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-080",
+      "headline": "Officials face criticism after withholding environmental report",
+      "expected_sentiment": "Negative",
+      "category": "Politics"
+    },
+    {
+      "id": "neg-081",
+      "headline": "Burglary leaves family without essential belongings",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-082",
+      "headline": "Fraud scheme drains savings of elderly residents",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-083",
+      "headline": "Violent assault sends market worker to intensive care",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-084",
+      "headline": "Arson attack destroys community food storage centre",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-085",
+      "headline": "Online blackmail campaign causes distress among students",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-086",
+      "headline": "Stolen ambulance delays emergency care in rural district",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-087",
+      "headline": "Human trafficking victims found in unsafe factory dormitory",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-088",
+      "headline": "Repeated motorcycle thefts leave delivery riders without income",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-089",
+      "headline": "Domestic abuse cases rise as shelter capacity falls",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-090",
+      "headline": "Vandalism damages memorial built by local volunteers",
+      "expected_sentiment": "Negative",
+      "category": "Crime"
+    },
+    {
+      "id": "neg-091",
+      "headline": "Flash floods destroy homes and displace hundreds of residents",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-092",
+      "headline": "Drought leaves farmers facing severe crop losses",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-093",
+      "headline": "Landslide cuts off only road to mountain village",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-094",
+      "headline": "Illegal dumping pollutes river used for drinking water",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-095",
+      "headline": "Wildfire destroys nesting habitat along forest boundary",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-096",
+      "headline": "School roof collapse forces pupils into temporary classrooms",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-097",
+      "headline": "Power failure spoils food supplies at community shelter",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-098",
+      "headline": "Bus collision injures passengers on rural route",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-099",
+      "headline": "Storm damage leaves fishing families without boats",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neg-100",
+      "headline": "Rising sea levels threaten coastal homes and farmland",
+      "expected_sentiment": "Negative",
+      "category": "General"
+    },
+    {
+      "id": "neu-001",
+      "headline": "Trade association publishes quarterly business survey",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-002",
+      "headline": "Company schedules annual meeting for next month",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-003",
+      "headline": "Market committee lists opening hours for public holidays",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-004",
+      "headline": "Factory changes its registered office address",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-005",
+      "headline": "Retail group names three members to advisory panel",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-006",
+      "headline": "Export agency releases shipment figures for September",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-007",
+      "headline": "Business forum will include sessions on packaging and logistics",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-008",
+      "headline": "Cooperative updates membership application procedure",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-009",
+      "headline": "Port authority records 240 cargo arrivals this week",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-010",
+      "headline": "Chamber of commerce announces date of budget briefing",
+      "expected_sentiment": "Neutral",
+      "category": "Business"
+    },
+    {
+      "id": "neu-011",
+      "headline": "Central bank publishes monthly monetary statistics",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-012",
+      "headline": "Financial committee reviews proposed reporting format",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-013",
+      "headline": "Insurer updates timetable for branch appointments",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-014",
+      "headline": "Credit union lists documents needed for account registration",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-015",
+      "headline": "Analysts compare bond yields across five markets",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-016",
+      "headline": "Savings survey records household responses by age group",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-017",
+      "headline": "Bank issues schedule for year end statement delivery",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-018",
+      "headline": "Pension board announces next public briefing",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-019",
+      "headline": "Currency exchange desk moves to terminal concourse",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-020",
+      "headline": "Finance office explains how to read transaction codes",
+      "expected_sentiment": "Neutral",
+      "category": "Finance"
+    },
+    {
+      "id": "neu-021",
+      "headline": "Developer conference releases timetable for software sessions",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-022",
+      "headline": "Device maker lists dimensions of its upcoming tablet",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-023",
+      "headline": "Library moves computer training classes to second floor",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-024",
+      "headline": "Software team documents changes to file naming rules",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-025",
+      "headline": "Internet provider publishes scheduled maintenance notice",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-026",
+      "headline": "Researchers compare three wireless communication protocols",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-027",
+      "headline": "Council inventories computers across public offices",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-028",
+      "headline": "App developer changes the position of settings menu",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-029",
+      "headline": "Technology museum displays computers from the 1980s",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-030",
+      "headline": "Digital archive adds metadata fields for document dates",
+      "expected_sentiment": "Neutral",
+      "category": "Technology"
+    },
+    {
+      "id": "neu-031",
+      "headline": "University publishes dataset description for language study",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-032",
+      "headline": "Research team compares neural network training methods",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-033",
+      "headline": "AI conference schedules panel on evaluation benchmarks",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-034",
+      "headline": "Laboratory lists computing resources for model experiments",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-035",
+      "headline": "Chatbot trial will run in three languages for six weeks",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-036",
+      "headline": "Researchers record model responses to 200 test prompts",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-037",
+      "headline": "Government committee requests submissions on AI terminology",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-038",
+      "headline": "Machine learning course adds module on feature selection",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-039",
+      "headline": "Study measures inference time on four processor types",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-040",
+      "headline": "Public library hosts introduction to how language models work",
+      "expected_sentiment": "Neutral",
+      "category": "AI"
+    },
+    {
+      "id": "neu-041",
+      "headline": "Hospital publishes visiting hours for new ward",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-042",
+      "headline": "Health department lists locations of vaccination centres",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-043",
+      "headline": "Researchers describe methods used in sleep survey",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-044",
+      "headline": "Clinic moves appointment desk to ground floor",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-045",
+      "headline": "Medical conference announces speakers for annual meeting",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-046",
+      "headline": "Laboratory updates instructions for sample collection",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-047",
+      "headline": "Community health survey records exercise frequency by age",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-048",
+      "headline": "Pharmacy posts opening schedule for public holidays",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-049",
+      "headline": "University opens registration for nursing seminar",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-050",
+      "headline": "Health agency explains categories in weekly monitoring report",
+      "expected_sentiment": "Neutral",
+      "category": "Health"
+    },
+    {
+      "id": "neu-051",
+      "headline": "Football league publishes next season's fixtures",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-052",
+      "headline": "Badminton tournament draw places 32 pairs in opening round",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-053",
+      "headline": "Sports council announces venue for annual awards ceremony",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-054",
+      "headline": "Basketball club names roster for weekend exhibition match",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-055",
+      "headline": "Officials explain changes to swimming qualification schedule",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-056",
+      "headline": "Stadium management lists gates for ticket holders",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-057",
+      "headline": "Tennis association releases rankings after monthly update",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-058",
+      "headline": "Cycling race route covers 120 kilometres across three districts",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-059",
+      "headline": "School teams register for interdistrict athletics meet",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-060",
+      "headline": "Cricket board confirms starting time for practice match",
+      "expected_sentiment": "Neutral",
+      "category": "Sports"
+    },
+    {
+      "id": "neu-061",
+      "headline": "Film festival publishes screening schedule",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-062",
+      "headline": "Museum announces exhibition on regional music history",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-063",
+      "headline": "Theatre group lists cast for upcoming production",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-064",
+      "headline": "Orchestra rehearsals move to civic auditorium",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-065",
+      "headline": "Streaming service releases monthly programme catalogue",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-066",
+      "headline": "Dance workshop opens registration for adult beginners",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-067",
+      "headline": "Gallery displays 40 photographs of coastal towns",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-068",
+      "headline": "Documentary crew begins filming market routines",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-069",
+      "headline": "Radio station changes afternoon programme start time",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-070",
+      "headline": "Arts council invites proposals for annual cultural calendar",
+      "expected_sentiment": "Neutral",
+      "category": "Entertainment"
+    },
+    {
+      "id": "neu-071",
+      "headline": "Parliament schedules debate on transport bill",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-072",
+      "headline": "Election commission publishes revised district maps",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-073",
+      "headline": "Council meeting agenda includes waste collection contracts",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-074",
+      "headline": "Minister briefs reporters on census timetable",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-075",
+      "headline": "Public consultation opens on proposed zoning categories",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-076",
+      "headline": "Legislative committee lists witnesses for next hearing",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-077",
+      "headline": "Voter registration office extends Friday opening hours",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-078",
+      "headline": "Assembly records attendance at quarterly sitting",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-079",
+      "headline": "District council publishes minutes of planning meeting",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-080",
+      "headline": "Government bulletin outlines process for submitting petitions",
+      "expected_sentiment": "Neutral",
+      "category": "Politics"
+    },
+    {
+      "id": "neu-081",
+      "headline": "Court schedules preliminary hearing for next month",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-082",
+      "headline": "Police publish annual crime statistics by district",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-083",
+      "headline": "Witness registration desk moves to courthouse annex",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-084",
+      "headline": "Investigators request footage recorded near bus terminal",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-085",
+      "headline": "Legal aid office explains procedure for reporting fraud",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-086",
+      "headline": "Court registry changes hours for document submissions",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-087",
+      "headline": "Police training seminar covers evidence handling procedures",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-088",
+      "headline": "Judicial panel reviews case management timetable",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-089",
+      "headline": "Forensic laboratory describes standard fingerprint comparison process",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-090",
+      "headline": "Community meeting discusses neighbourhood patrol boundaries",
+      "expected_sentiment": "Neutral",
+      "category": "Crime"
+    },
+    {
+      "id": "neu-091",
+      "headline": "Weather station records afternoon temperature of 29 degrees",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-092",
+      "headline": "Library updates timetable for weekend study rooms",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-093",
+      "headline": "Town archive catalogues maps donated by residents",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-094",
+      "headline": "Ferry operator publishes revised boarding instructions",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-095",
+      "headline": "Agricultural office lists dates for seed distribution",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-096",
+      "headline": "School releases schedule for parent teacher meetings",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-097",
+      "headline": "Road survey measures traffic at six junctions",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-098",
+      "headline": "Community hall hosts monthly residents' meeting",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-099",
+      "headline": "Park authorities map walking routes across reserve",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    },
+    {
+      "id": "neu-100",
+      "headline": "Postal service assigns new delivery codes to housing estate",
+      "expected_sentiment": "Neutral",
+      "category": "General"
+    }
+  ]
+}

@@ -15,6 +15,7 @@ class TopicClassifierService:
         # don't false-positive match substrings inside unrelated words
         # (e.g. "said", "detail", "obtained", "mainly" all contain "ai").
         self.topic_keywords = {
+            "Local Malaysia News": ["malaysia", "kuala lumpur", "putrajaya", "selangor", "johor", "penang", "sabah", "sarawak"],
             "Crime": [
                 "crime", "criminal", "murder", "murdered", "robbery", "robbed",
                 "theft", "stolen", "steal", "arrest", "arrested", "police",
@@ -32,7 +33,6 @@ class TopicClassifierService:
             "Sports": ["sport", "football", "basketball", "tennis", "olympics", "match", "team", "player", "tournament", "championship"],
             "Health": ["health", "medical", "medicine", "hospital", "disease", "virus", "vaccine", "fitness", "nutrition", "patient"],
             "AI": ["artificial intelligence", "machine learning", "deep learning", "neural network", "chatbot", "generative ai", "large language model"],
-            "Local Malaysia News": ["malaysia", "kuala lumpur", "putrajaya", "malaysian", "sabah", "sarawak", "selangor", "penang", "johor"],
             "Entertainment": ["entertainment", "movie", "film", "music", "celebrity", "hollywood", "bollywood", "concert", "actress", "actor"],
             "Finance": ["banking", "bank", "loan", "mortgage", "credit", "insurance", "fund", "interest rate", "inflation"]
         }

@@ -1,52 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useCallback } from 'react';
+import { useAccountStorage } from '../hooks/useAccountStorage';
 
 const ReadArticlesContext = createContext();
 
-const STORAGE_KEY = 'readArticleHistory';
-
-const getStorageKey = (email) => email ? `${STORAGE_KEY}:${email.toLowerCase()}` : null;
-
-const getHistoryFromStorage = (email) => {
-  try {
-    const key = getStorageKey(email);
-    if (!key) return [];
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
-  } catch (e) {
-    console.error('Error parsing read history from localStorage:', e);
-    return [];
-  }
-};
+const EMPTY = [];
 
 export const ReadArticlesProvider = ({ children }) => {
-  // Each entry: { ...articleFields, id, readAt: <ISO timestamp> }
-  // Sorted most-recently-read first.
-  const { user } = useAuth();
-  const accountEmail = user?.email || null;
-  const [history, setHistory] = useState([]);
-
-  useEffect(() => {
-    setHistory(getHistoryFromStorage(accountEmail));
-  }, [accountEmail]);
-
-  useEffect(() => {
-    const key = getStorageKey(accountEmail);
-    if (key) localStorage.setItem(key, JSON.stringify(history));
-  }, [accountEmail, history]);
-
-  // Keep history in sync in real time across browser tabs/windows: if another
-  // tab marks an article as read, this tab's History page (and any read
-  // badges) update immediately without needing a manual refresh.
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === getStorageKey(accountEmail)) {
-        setHistory(getHistoryFromStorage(accountEmail));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [accountEmail]);
+  const [history, setHistory] = useAccountStorage('readArticleHistory', EMPTY);
 
   const isRead = useCallback((articleId) => {
     if (articleId === undefined || articleId === null) return false;
@@ -63,15 +23,15 @@ export const ReadArticlesProvider = ({ children }) => {
       const entry = { ...article, readAt: new Date().toISOString() };
       return [entry, ...withoutThis];
     });
-  }, []);
+  }, [setHistory]);
 
   const removeFromHistory = useCallback((articleId) => {
     setHistory((prev) => prev.filter((entry) => String(entry.id) !== String(articleId)));
-  }, []);
+  }, [setHistory]);
 
   const clearHistory = useCallback(() => {
     setHistory([]);
-  }, []);
+  }, [setHistory]);
 
   const value = {
     history,

@@ -18,6 +18,7 @@ const ArticleCard = ({ article }) => {
   const handleClick = () => {
     // Save current scroll position before navigating
     sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     navigate(`/article/${article.id}`, { state: { article } });
   };
 
@@ -72,7 +73,7 @@ const ArticleCard = ({ article }) => {
         <div className="card-share-wrapper" onClick={(e) => e.stopPropagation()}>
           <ShareMenu article={article} variant="icon" />
         </div>
-        <span className="trust-score">{article.trustScore}% Trust</span>
+        <span className="trust-score">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 indicator`}</span>
         <div className="category-badges">
           {(article.categories && article.categories.length > 0 ? article.categories : [article.category])
             .filter(Boolean)
@@ -89,6 +90,7 @@ const ArticleCard = ({ article }) => {
           <span className="source">{article.source}</span>
           <span className="date">{article.date}</span>
         </p>
+        <p className="article-sentiment">Sentiment: {article.sentiment || 'Unavailable'}</p>
         <p className="article-description">{article.description}</p>
         <div className="article-actions">
           {article.content && article.content.length > article.description?.length && (
@@ -120,7 +122,7 @@ const ArticleCard = ({ article }) => {
             <div className="expanded-summary-meta">
               <span className="expanded-source">{article.source}</span>
               <span className="expanded-date">{article.date}</span>
-              <span className="expanded-trust">{article.trustScore}% Trust</span>
+              <span className="expanded-trust">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 indicator`}</span>
             </div>
             <div className="expanded-summary-body">
               {article.content || article.description}

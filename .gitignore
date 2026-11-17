@@ -1,32 +1,47 @@
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Editors
-.vscode/
-.idea/
-*.swp
-
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
 *.so
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
 
 # Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+frontend/build/
 
-# Logs / runtime
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs and local runtime files
 *.log
 server.log
+
+# Local databases and generated data
+mongodb_data/
+.tmp_fyp_doc_render/
+memory/
+
+# Project-local temporary files
 PLAN.txt
 test_write.txt
 
-# Local env (keep .env.example tracked)
-.env
-backend/.env
-frontend/.env
+# Local dependency download cache
+.npm-cache/

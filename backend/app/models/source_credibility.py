@@ -5,7 +5,7 @@ from datetime import datetime
 class SourceCredibilityBase(BaseModel):
     source_name: str
     domain: str
-    credibility_score: float  # 0-100
+    credibility_score: float = Field(ge=0, le=100)
     category: Optional[str] = None
     notes: Optional[str] = None
 
@@ -17,7 +17,7 @@ class SourceCredibilityInDB(SourceCredibilityBase):
     last_updated: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
@@ -27,4 +27,4 @@ class SourceCredibilityResponse(SourceCredibilityBase):
     last_updated: datetime
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True

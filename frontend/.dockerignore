@@ -1,0 +1,11 @@
+node_modules/
+build/
+.npm-cache/
+.git
+.gitignore
+npm-debug.log
+.env
+.env.local
+.DS_Store
+*.md
+public/favicon.ico

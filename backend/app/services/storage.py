@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class StorageService:
     def __init__(self):
-        self.client = AsyncIOMotorClient(settings.MONGODB_URL)
+        self.client = AsyncIOMotorClient(settings.MONGODB_URL, serverSelectionTimeoutMS=5000)
         self.db = self.client[settings.DATABASE_NAME]
         self.users = self.db.users
         self.articles = self.db.articles
@@ -44,6 +44,7 @@ class StorageService:
         user_dict = user.dict()
         user_dict["hashed_password"] = hashed_password
         del user_dict["password"]
+        user_dict["created_at"] = user_dict["updated_at"] = datetime.utcnow()
         result = await self.users.insert_one(user_dict)
         user_dict["_id"] = str(result.inserted_id)
         return UserInDB(**user_dict)
@@ -95,6 +96,8 @@ class StorageService:
 
     async def get_article_by_id(self, article_id: str) -> Optional[ArticleInDB]:
         from bson import ObjectId
+        if not ObjectId.is_valid(article_id):
+            return None
         article_doc = await self.articles.find_one({"_id": ObjectId(article_id)})
         if article_doc:
             article_doc["_id"] = str(article_doc["_id"])
@@ -120,7 +123,12 @@ class StorageService:
         """Return the most recently published completed articles, newest first.
         If `topic` is given, matches against either the primary `topic` field
         or the `topics` array (an article can belong to up to 3 categories)."""
-        query = {"processing_status": "completed"}
+        excluded_topics = ["Education", "Lifestyle", "Property", "Malaysia", "World"]
+        query = {
+            "processing_status": "completed",
+            "topic": {"$nin": excluded_topics},
+            "topics": {"$nin": excluded_topics}
+        }
         if topic and topic.lower() != "all":
             query["$or"] = [{"topic": topic}, {"topics": topic}]
         cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
@@ -149,7 +157,7 @@ class StorageService:
     async def count_articles(self) -> int:
         return await self.articles.count_documents({})
 
-    async def find_articles_by_keywords(self, keywords: List[str], exclude_url: str, hours: int = 72, limit: int = 15) -> List[ArticleInDB]:
+    async def find_articles_by_keywords(self, keywords: List[str], exclude_url: str, hours: int = 72, limit: int = 100) -> List[ArticleInDB]:
         """Find recently-ingested articles (from any source) sharing at
         least one extracted keyword with the given article, excluding the
         article itself. Used for real cross-source corroboration: if
@@ -166,7 +174,7 @@ class StorageService:
             "published_date": {"$gte": cutoff},
             "processing_status": "completed"
         }
-        cursor = self.articles.find(query).limit(limit)
+        cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
         articles = []
         async for doc in cursor:
             doc["_id"] = str(doc["_id"])
@@ -248,13 +256,8 @@ class StorageService:
                 {"source_name": "Bernama", "domain": "bernama.com", "credibility_score": 92, "category": "news_agency"},
                 {"source_name": "New Straits Times", "domain": "www.nst.com.my", "credibility_score": 87, "category": "newspaper"},
                 {"source_name": "New Straits Times", "domain": "nst.com.my", "credibility_score": 87, "category": "newspaper"},
-                {"source_name": "The Star", "domain": "www.thestar.com.my", "credibility_score": 87, "category": "newspaper"},
-                {"source_name": "The Star", "domain": "thestar.com.my", "credibility_score": 87, "category": "newspaper"},
                 {"source_name": "Free Malaysia Today", "domain": "www.freemalaysiatoday.com", "credibility_score": 83, "category": "news_site"},
                 {"source_name": "Free Malaysia Today", "domain": "freemalaysiatoday.com", "credibility_score": 83, "category": "news_site"},
-                {"source_name": "Malay Mail", "domain": "www.malaymail.com", "credibility_score": 80, "category": "news_site"},
-                {"source_name": "Malay Mail", "domain": "malaymail.com", "credibility_score": 80, "category": "news_site"},
-                {"source_name": "The Edge Malaysia", "domain": "theedgemalaysia.com", "credibility_score": 86, "category": "business_news"},
                 {"source_name": "The Edge Markets", "domain": "www.theedgemarkets.com", "credibility_score": 86, "category": "business_news"},
                 {"source_name": "Astro AWANI", "domain": "www.astroawani.com", "credibility_score": 81, "category": "broadcast_news"},
                 {"source_name": "Focus Malaysia", "domain": "focusmalaysia.my", "credibility_score": 74, "category": "news_site"},

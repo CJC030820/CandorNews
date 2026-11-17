@@ -1,3 +1,5 @@
+from html import escape
+from urllib.parse import urlparse
 """
 Email notification service using SMTP (works with Gmail, Outlook, or any
 SMTP provider).
@@ -107,7 +109,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
     heading = f"Your {period_label} News Digest" if period_label else "Your News Digest"
     subject = f"📰 {heading} - CandorNews ({len(articles)} articles)"
 
-    text_lines = [f"Hi {user_name},", "", f"Here are the {len(articles)} top stories from your interests:", "", "=" * 60, ""]
+    text_lines = [f"Hi {user_name},", "", f"Here are the {len(articles)} recent stories, prioritizing your interests:", "", "=" * 60, ""]
     html_articles = []
 
     if articles:
@@ -124,7 +126,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             text_lines.append(text_line)
             text_lines.append(f"   Source: {source}")
             if trust_score is not None:
-                text_lines.append(f"   Trust Score: {trust_score}%")
+                text_lines.append(f"   Trust indicator: {trust_score}/100 (not a truth probability)")
             if date:
                 text_lines.append(f"   Published: {date}")
             
@@ -144,13 +146,16 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             text_lines.append("-" * 60)
             text_lines.append("")
 
+            score_label = f'{trust_score}/100 indicator' if trust_score is not None else 'Analysis pending'
+            title, source, description, date = [escape(str(value)) for value in (title, source, description, date)]
+            url = escape(url, quote=True) if urlparse(url).scheme in {'http', 'https'} else ''
             # Build HTML version with rich formatting
             html_articles.append(
                 f"""
                 <div style="margin-bottom: 24px; padding: 16px; background: #f9f9f9; border-left: 4px solid #667eea; border-radius: 4px;">
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                     <span style="font-size: 18px; font-weight: 600; color: #333;">{idx}.</span>
-                    <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{trust_score}% Trust</span>
+                    <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{score_label}</span>
                   </div>
                   <h3 style="margin: 0 0 10px 0; font-size: 16px; line-height: 1.4; color: #0f172a;">{title}</h3>
                   <div style="color: #666; font-size: 12px; margin-bottom: 12px;">
@@ -172,15 +177,16 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
     text_lines.append("CandorNews Team")
     text_body = "\n".join(text_lines)
 
+    user_name = escape(user_name)
     html_body = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
         <h1 style="color: white; margin: 0 0 10px 0; font-size: 28px;">📰 {heading}</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">Top {len(articles)} stories from your interests</p>
+        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">Top {len(articles)} recent stories</p>
       </div>
       <div style="padding: 30px;">
         <p style="color: #333; font-size: 16px; margin-bottom: 20px;">Hi {user_name},</p>
-        <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Here are the {len(articles)} latest news articles selected based on your interests. Each includes a brief summary for quick reading.</p>
+        <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Here are the {len(articles)} recent news articles, prioritizing your interests and including other recent stories when needed. Each includes a brief summary for quick reading.</p>
         <div style="border-top: 2px solid #eee; padding-top: 20px;">
           {''.join(html_articles)}
         </div>

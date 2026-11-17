@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
+  const initialThemeApplied = useRef(false);
+  const transitionTimer = useRef(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage for saved preference
     const saved = localStorage.getItem('darkMode');
@@ -20,10 +22,19 @@ export const ThemeProvider = ({ children }) => {
 
   // Apply theme on mount and when isDarkMode changes
   useEffect(() => {
-    // Save preference to localStorage
+    const root = document.documentElement;
+    const animateThemeChange = initialThemeApplied.current;
+    if (transitionTimer.current) {
+      window.clearTimeout(transitionTimer.current);
+      transitionTimer.current = null;
+    }
+    if (animateThemeChange) {
+      root.classList.add('theme-color-transition');
+    }
+    initialThemeApplied.current = true;
+
+    // Save preference in the browser and apply both theme attributes together.
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    
-    // Apply to document root element
     if (isDarkMode) {
       document.documentElement.setAttribute('data-theme', 'dark');
       document.body.setAttribute('data-theme', 'dark');
@@ -32,7 +43,20 @@ export const ThemeProvider = ({ children }) => {
       document.body.removeAttribute('data-theme');
     }
     
+    if (animateThemeChange) {
+      transitionTimer.current = window.setTimeout(() => {
+        root.classList.remove('theme-color-transition');
+        transitionTimer.current = null;
+      }, 1100);
+    }
+
     console.log('Theme updated:', isDarkMode ? 'dark' : 'light');
+    return () => {
+      if (transitionTimer.current) {
+        window.clearTimeout(transitionTimer.current);
+        transitionTimer.current = null;
+      }
+    };
   }, [isDarkMode]);
 
   const toggleDarkMode = () => {

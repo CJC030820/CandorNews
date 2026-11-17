@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 class ArticleBase(BaseModel):
@@ -8,6 +8,7 @@ class ArticleBase(BaseModel):
     source: str
     url: str
     published_date: datetime
+    publication_date_inferred: bool = False
     description: Optional[str] = None
     content_excerpt: Optional[str] = None
     image_url: Optional[str] = None
@@ -20,6 +21,12 @@ class ArticleBase(BaseModel):
     tone_label: Optional[str] = None  # Neutral / Objective, Mildly Emotional, Emotionally Charged
     trust_score: float  # 0-100
     trust_explanation: Optional[str] = None
+    trust_label: Optional[str] = None
+    trust_components: Dict[str, float] = Field(default_factory=dict)
+    trust_weights: Dict[str, float] = Field(default_factory=dict)
+    trust_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    trust_version: Optional[str] = None
+    trust_scored_at: Optional[datetime] = None
     processing_status: str = "pending"  # pending, completed, failed
     processed_at: Optional[datetime] = None
 
@@ -30,7 +37,7 @@ class ArticleInDB(ArticleBase):
     id: str = Field(alias="_id")
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
@@ -39,4 +46,4 @@ class ArticleResponse(ArticleBase):
     id: str
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True

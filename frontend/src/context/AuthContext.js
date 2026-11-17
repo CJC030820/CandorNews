@@ -1,261 +1,67 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const api = useMemo(() => axios.create({ baseURL: API_URL, timeout: 15000,
+    headers: token ? { Authorization: `Bearer ${token}` } : {} }), [token]);
+  const logout = useCallback(() => {
+    setToken(''); setUser(null); localStorage.removeItem('token');
+    sessionStorage.removeItem('feedArticles');
+  }, []);
 
-  // Whether the user has completed topic selection is derived directly from
-  // the persisted user profile (preferred_topics stored in MongoDB), so it
-  // is remembered across devices/sessions and the topic-selection page is
-  // skipped automatically once topics exist - no localStorage needed.
-  const topicsCompleted = !!(user && user.preferred_topics && user.preferred_topics.length > 0);
-  const selectedTopics = user?.preferred_topics || [];
-
-  // Load user when token changes
   useEffect(() => {
-    const loadUser = async () => {
-      if (token) {
-        try {
-          // Set authorization header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          // Add 10-second timeout to prevent hanging
-          const response = await axios.get('http://localhost:8080/api/auth/me', {
-            params: { token },
-            timeout: 10000
-          });
-          setUser(response.data);
-          console.log('User loaded:', response.data);
-        } catch (error) {
-          console.error('Failed to fetch user:', error);
-          // Don't immediately logout; retry once more
-          try {
-            const retryResponse = await axios.get('http://localhost:8080/api/auth/me', {
-              params: { token },
-              timeout: 5000
-            });
-            setUser(retryResponse.data);
-          } catch (retryError) {
-            console.error('Retry failed, logging out:', retryError);
-            logout();
-          }
-        }
-      }
-      setLoading(false);
-    };
-    loadUser();
-  }, [token]);
+    let active = true;
+    if (!token) { setLoading(false); return; }
+    api.get('/api/auth/me').then(({data}) => { if (active) setUser(data); })
+      .catch(error => { if (active && error.response?.status === 401) logout(); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [api, token, logout]);
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', { 
-        email, 
-        password 
-      });
-      const { access_token } = response.data;
-      setToken(access_token);
-      localStorage.setItem('token', access_token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      
-      // Fetch user data (includes preferred_topics, which determines
-      // whether topic selection should be skipped)
-      const userResponse = await axios.get('http://localhost:8080/api/auth/me', {
-        params: { token: access_token }
-      });
-      setUser(userResponse.data);
-      
+      const { data } = await api.post('/api/auth/login', { email, password });
+      const profile = await api.get('/api/auth/me', { headers: { Authorization: `Bearer ${data.access_token}` } });
+      localStorage.setItem('token', data.access_token);
+      setToken(data.access_token); setUser(profile.data);
       return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    }
+    } catch { return false; }
   };
-
-  const logout = () => {
-    console.log('Logging out...');
-    setToken('');
-    setUser(null);
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+  const register = async (name, email, password) => (await api.post('/api/auth/register', {name,email,password})).data;
+  const updatePreferences = async preferred_topics => {
+    const {data} = await api.put('/api/users/preferences', {preferred_topics}); setUser(data); return data;
   };
-
-  const register = async (name, email, password) => {
-    try {
-      const response = await axios.post('http://localhost:8080/api/auth/register', { 
-        name, 
-        email, 
-        password 
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
+  const updateProfile = async name => {
+    const {data} = await api.put('/api/users/profile', {name}); setUser(data); return data;
   };
-
-  const updatePreferences = async (preferredTopics) => {
-    try {
-      const response = await axios.put('http://localhost:8080/api/users/preferences', 
-        { preferred_topics: preferredTopics }, 
-        {
-          params: { token }
-        }
-      );
-      setUser(response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Update preferences error:', error);
-      throw error;
-    }
+  const getEmailStatus = async () => (await api.get('/api/notifications/email/status')).data;
+  const updateEmailSettings = async ({emailNotificationsEnabled, emailNotificationSchedule}) => {
+    const {data} = await api.put('/api/notifications/email', {
+      email_notifications_enabled: emailNotificationsEnabled, email_notification_schedule: emailNotificationSchedule});
+    setUser(data); return data;
   };
-
-  const updateProfile = async (name) => {
-    try {
-      const response = await axios.put('http://localhost:8080/api/users/profile',
-        { name },
-        { params: { token } }
-      );
-      setUser(response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      throw error;
-    }
+  const sendEmailTest = async message => (await api.post('/api/notifications/email/test', {message})).data;
+  const deleteAccount = async password => {
+    await api.delete('/api/users/me', {data: {password}});
+    ['bookmarkedArticles', 'readArticleHistory', 'followedPlatformIds'].forEach(key =>
+      localStorage.removeItem(`${key}:${user.email.toLowerCase()}`));
+    logout(); return true;
   };
-
-  const getEmailStatus = async () => {
-    try {
-      const response = await axios.get('http://localhost:8080/api/notifications/email/status', {
-        params: { token }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Get email status error:', error);
-      throw error;
-    }
-  };
-
-  const updateEmailSettings = async ({ emailNotificationsEnabled, emailNotificationSchedule }) => {
-    try {
-      const payload = {};
-      if (emailNotificationsEnabled !== undefined) {
-        payload.email_notifications_enabled = emailNotificationsEnabled;
-      }
-      if (emailNotificationSchedule !== undefined) {
-        payload.email_notification_schedule = emailNotificationSchedule;
-      }
-      const response = await axios.put('http://localhost:8080/api/notifications/email', payload, {
-        params: { token }
-      });
-      setUser(response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Update email settings error:', error);
-      throw error;
-    }
-  };
-
-  const sendEmailTest = async (message) => {
-    try {
-      const response = await axios.post(
-        'http://localhost:8080/api/notifications/email/test',
-        message ? { message } : {},
-        { params: { token } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Send email test error:', error);
-      throw error;
-    }
-  };
-
-  const deleteAccount = async (password) => {
-    try {
-      await axios.delete('http://localhost:8080/api/users/me', {
-        data: { password },
-        params: { token }
-      });
-      logout();
-      return true;
-    } catch (error) {
-      console.error('Delete account error:', error);
-      throw error;
-    }
-  };
-
-  const getFeed = async ({ topic, limit } = {}) => {
-    try {
-      const params = { token };
-      if (topic && topic !== 'all') params.topic = topic;
-      if (limit) params.limit = limit;
-      const response = await axios.get('http://localhost:8080/api/articles/feed', { 
-        params,
-        timeout: 15000  // 15 second timeout for feed
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Get feed error:', error);
-      throw error;
-    }
-  };
-
-  const refreshFeed = async (platforms = []) => {
-    try {
-      const response = await axios.post('http://localhost:8080/api/articles/refresh', {
-        platforms
-      }, {
-        params: { token },
-        timeout: 45000
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Refresh feed error:', error);
-      throw error;
-    }
-  };
-
-  // Called from the Topic Selection page on first-time setup. Persists to
-  // the backend (MongoDB) via updatePreferences so it's remembered for
-  // future logins/devices, and topicsCompleted flips automatically since it
-  // is derived from user.preferred_topics.
-  const completeTopicSelection = async (topics) => {
-    console.log('Completing topic selection with topics:', topics);
-    return updatePreferences(topics);
-  };
-
-  const getSelectedTopics = () => selectedTopics;
-
-  const value = {
-    token,
-    user,
-    loading,
-    topicsCompleted,
-    selectedTopics,
-    login,
-    logout,
-    register,
-    updatePreferences,
-    updateProfile,
-    completeTopicSelection,
-    getSelectedTopics,
-    getEmailStatus,
-    updateEmailSettings,
-    sendEmailTest,
-    deleteAccount,
-    getFeed,
-    refreshFeed
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  const getFeed = useCallback(async ({topic, limit} = {}) =>
+    (await api.get('/api/articles/feed', {params: {topic: topic === 'all' ? undefined : topic, limit}})).data, [api]);
+  const getArticle = useCallback(async id => (await api.get(`/api/articles/${encodeURIComponent(id)}`)).data, [api]);
+  const refreshFeed = useCallback(async platforms => (await api.post('/api/articles/refresh', {platforms})).data, [api]);
+  const getRefreshStatus = useCallback(async id => (await api.get(`/api/articles/refresh/${encodeURIComponent(id)}`)).data, [api]);
+  const selectedTopics = user?.preferred_topics || [];
+  return <AuthContext.Provider value={{token,user,loading,topicsCompleted:selectedTopics.length > 0,selectedTopics,
+    login,logout,register,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
+    getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,deleteAccount,
+    getFeed,getArticle,refreshFeed,getRefreshStatus}}>{!loading && children}</AuthContext.Provider>;
 };
-
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

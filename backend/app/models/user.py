@@ -1,11 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 from datetime import datetime
 
 class User(BaseModel):
     """MongoDB user document"""
     id: str = Field(alias="_id")
-    email: str
+    email: EmailStr
     name: str
     hashed_password: str
     preferred_topics: List[str] = []
@@ -13,11 +13,11 @@ class User(BaseModel):
     updated_at: datetime
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
 
 class UserBase(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     preferred_topics: List[str] = []
     email_notifications_enabled: bool = False
     # One of: "morning" (7am), "night" (7pm), "both" (7am and 7pm)
@@ -27,7 +27,7 @@ class UserCreate(UserBase):
     password: str
 
 class UserLogin(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 class UserInDB(UserBase):
@@ -37,7 +37,7 @@ class UserInDB(UserBase):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
@@ -48,4 +48,4 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True

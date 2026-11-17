@@ -44,6 +44,19 @@
   transform: scale(0.98);
 }
 
+.logo-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-image {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+
 .navbar h2 {
   color: var(--text-primary);
   font-size: 20px;
@@ -161,69 +174,92 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .navbar-content {
     flex-wrap: wrap;
-    padding: 10px 15px;
+    padding: 10px 14px;
+    gap: 8px;
   }
 
   .logo {
     order: 1;
     width: 100%;
-    margin-bottom: 10px;
-  }
-
-  .navbar h2 {
-    font-size: 18px;
+    margin: 0;
   }
 
   .search-bar-container {
     order: 2;
+    flex: 1 1 100%;
     width: 100%;
     max-width: none;
-    margin: 0 0 10px 0;
+    margin: 0;
   }
 
   .navbar-actions {
     order: 3;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
     width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
   }
 
   .nav-button {
-    padding: 6px 8px;
+    justify-content: center;
+    min-width: 0;
+    padding: 7px 4px;
     font-size: 12px;
-  }
-
-  .nav-button span {
-    display: inline;
-  }
-
-  .nav-button.logo span {
-    display: none;
   }
 }
 
 @media (max-width: 480px) {
+  .navbar-content {
+    padding: 8px 10px;
+    gap: 7px;
+  }
+
+  .logo-image {
+    width: 24px;
+    height: 24px;
+  }
+
   .navbar h2 {
     font-size: 16px;
   }
 
   .search-bar {
-    padding: 6px 12px;
+    padding: 7px 10px;
   }
 
   .search-input {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .navbar-actions {
-    gap: 8px;
+    gap: 4px;
   }
 
   .nav-button {
-    padding: 4px 6px;
-    font-size: 11px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 2px;
+    border-radius: 10px;
+    font-size: 10px;
+    line-height: 1.1;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .dark-mode-toggle {
+    justify-self: center;
+    width: 36px;
+    height: 36px;
+    padding: 4px;
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 350px) {
+  .navbar-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

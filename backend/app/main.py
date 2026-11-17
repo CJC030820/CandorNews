@@ -1,10 +1,16 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import asyncio
+from uuid import uuid4
+from pymongo.errors import DuplicateKeyError
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import os
 import logging
-from pydantic import BaseModel
+import html
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from jose import JWTError, jwt
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -41,7 +47,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in settings.CORS_ORIGINS.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,8 +58,7 @@ app.add_middleware(
 async def on_startup():
     """Ensure database indexes exist so accounts persist reliably, start the
     scheduled email notification jobs (7am and 7pm), and start the background
-    news ingestion worker that fetches the latest headlines from NewsAPI,
-    GNews, and RSS feeds (runs immediately, then every WORKER_INTERVAL_MINUTES)."""
+    news ingestion worker that fetches the latest headlines from configured RSS feeds (runs immediately, then every WORKER_INTERVAL_MINUTES)."""
     try:
         await storage_service.ensure_indexes()
         print("MongoDB indexes ensured. User accounts will persist across restarts.")
@@ -81,6 +86,9 @@ async def on_startup():
 
 @app.on_event("shutdown")
 async def on_shutdown():
+    for task in list(refresh_tasks):
+        task.cancel()
+    await asyncio.gather(*refresh_tasks, return_exceptions=True)
     try:
         email_scheduler.shutdown(wait=False)
     except Exception:
@@ -93,9 +101,23 @@ async def on_shutdown():
 
 # Pydantic models (API request/response contracts)
 class UserCreate(BaseModel):
-    email: str
-    password: str
-    name: str
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=72)
+    name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def valid_name(cls, value):
+        if not value.strip():
+            raise ValueError("Name cannot be blank")
+        return value.strip()
+
+    @field_validator("password")
+    @classmethod
+    def valid_password(cls, value):
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must not exceed 72 UTF-8 bytes")
+        return value
 
 class UserLogin(BaseModel):
     email: str
@@ -112,6 +134,17 @@ class UserResponse(BaseModel):
     preferred_topics: list = []
     email_notifications_enabled: bool = False
     email_notification_schedule: str = "morning"
+
+class PreferencesUpdate(BaseModel):
+    preferred_topics: List[str] = Field(default_factory=list, max_length=11)
+
+    @field_validator("preferred_topics")
+    @classmethod
+    def supported_topics(cls, values):
+        allowed = {"Politics", "Business", "Health", "Sports", "Entertainment", "Technology", "AI", "Finance", "Crime", "Local Malaysia News", "General"}
+        if any(value not in allowed for value in values):
+            raise ValueError("Unsupported topic")
+        return list(dict.fromkeys(values))
 
 class UserProfileUpdate(BaseModel):
     name: str
@@ -139,7 +172,10 @@ def _user_to_response(user) -> UserResponse:
     )
 
 
-async def get_current_user(token: str = None):
+bearer = HTTPBearer(auto_error=False)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
+    token = credentials.credentials if credentials else None
     """Resolve the current user from a JWT token, always reading fresh from
     MongoDB so accounts and settings persist across server restarts."""
     if not token:
@@ -164,6 +200,10 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    try:
+        await storage_service.client.admin.command("ping")
+    except Exception:
+        raise HTTPException(status_code=503, detail="Database unavailable")
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat()
@@ -177,16 +217,19 @@ async def register(user: UserCreate):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    new_user = await storage_service.create_user(
-        DBUserCreate(
-            name=user.name,
-            email=user.email,
-            password=user.password,
-            preferred_topics=[],
-            email_notifications_enabled=False,
-            email_notification_schedule="morning"
+    try:
+        new_user = await storage_service.create_user(
+            DBUserCreate(
+                name=user.name,
+                email=user.email,
+                password=user.password,
+                preferred_topics=[],
+                email_notifications_enabled=False,
+                email_notification_schedule="morning"
+            )
         )
-    )
+    except DuplicateKeyError:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     return _user_to_response(new_user)
 
@@ -210,21 +253,12 @@ async def login(user: UserLogin):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/api/auth/me", response_model=UserResponse)
-async def get_current_user_info(token: str = None):
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = await get_current_user(token)
+async def get_current_user_info(user=Depends(get_current_user)):
     return _user_to_response(user)
 
 @app.put("/api/users/preferences")
-async def update_preferences(preferences: dict, token: str = None):
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = await get_current_user(token)
-    removed_topics = {"Education", "Lifestyle", "Property", "Malaysia", "World", "General"}
-    allowed_topics = [topic for topic in preferences.get("preferred_topics", []) if topic not in removed_topics]
+async def update_preferences(preferences: PreferencesUpdate, user=Depends(get_current_user)):
+    allowed_topics = preferences.preferred_topics
     updated_user = await storage_service.update_user_by_email(
         user.email,
         {"preferred_topics": allowed_topics}
@@ -234,17 +268,13 @@ async def update_preferences(preferences: dict, token: str = None):
 
 
 @app.put("/api/users/profile", response_model=UserResponse)
-async def update_profile(profile: UserProfileUpdate, token: str = None):
+async def update_profile(profile: UserProfileUpdate, user=Depends(get_current_user)):
     """Update the current user's display name. Persisted permanently in
     MongoDB, so the new name survives server restarts and future logins."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
     new_name = profile.name.strip()
     if not new_name:
         raise HTTPException(status_code=400, detail="Name cannot be empty.")
 
-    user = await get_current_user(token)
     updated_user = await storage_service.update_user_by_email(
         user.email,
         {"name": new_name}
@@ -254,14 +284,10 @@ async def update_profile(profile: UserProfileUpdate, token: str = None):
 
 
 @app.delete("/api/users/me")
-async def delete_account(request: AccountDeleteRequest, token: str = None):
+async def delete_account(request: AccountDeleteRequest, user=Depends(get_current_user)):
     """Permanently delete the current user's account. Requires the account
     password to be re-entered as a safety confirmation. This action cannot
     be undone - the user document is removed from MongoDB entirely."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = await get_current_user(token)
 
     if not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password.")
@@ -272,39 +298,61 @@ async def delete_account(request: AccountDeleteRequest, token: str = None):
 
     return {"status": "deleted", "detail": "Your account has been permanently deleted."}
 
+def _repair_mojibake(value: str) -> str:
+    """Repair common UTF-8-as-Windows-1252 corruption in stored text."""
+    if not value or not re.search(r"[ÃÂâ€™â€œâ€â€“â€”â€¦ðŸ]", value):
+        return value
+    try:
+        repaired = value.encode("cp1252").decode("utf-8")
+        return repaired if repaired != value else value
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+
+
+def _clean_display_text(value) -> str:
+    """Normalize entities, mojibake, and non-breaking whitespace."""
+    if not value:
+        return ""
+    text = html.unescape(str(value))
+    text = _repair_mojibake(text)
+    return re.sub(r"[\s\u00a0\u2007\u202f]+", " ", text).strip()
+
 def _article_to_feed_dict(article) -> dict:
     """Convert a stored ArticleInDB into the shape the frontend expects."""
     published = article.published_date
+    if published.tzinfo is None:
+        published = published.replace(tzinfo=timezone.utc)
     date_str = published.isoformat() if hasattr(published, "isoformat") else str(published)
     categories = getattr(article, "topics", None) or ([article.topic] if article.topic else [])
     return {
         "id": article.id,
-        "title": article.title,
-        "source": article.source,
-        "description": article.summary or article.description or "",
+        "title": _clean_display_text(article.title),
+        "source": _clean_display_text(article.source),
+        "description": _clean_display_text(article.summary or article.description or ""),
         "date": date_str,
-        "trustScore": round(article.trust_score) if article.trust_score is not None else None,
+        "trustScore": article.trust_score if article.trust_version == "independent-publishers-v2" else None,
         "category": article.topic,
         "categories": categories,
         "image": article.image_url or None,
         "url": article.url,
         "author": article.author,
         "sentiment": article.sentiment,
-        "toneLabel": getattr(article, "tone_label", None)
+        "toneLabel": getattr(article, "tone_label", None),
+        "sentimentScore": article.sentiment_score,
+        "trustLabel": article.trust_label,
+        "trustExplanation": article.trust_explanation,
+        "trustComponents": article.trust_components,
+        "trustWeights": article.trust_weights,
+        "relatedReports": article.trust_evidence,
+        "trustVersion": article.trust_version,
+        "trustScoredAt": article.trust_scored_at.isoformat() + "Z" if article.trust_scored_at else None
     }
 
 
 @app.get("/api/articles/feed")
-async def get_feed(token: str = None, topic: str = None, limit: int = 50):
+async def get_feed(user=Depends(get_current_user), topic: str = None, limit: int = Query(50, ge=1, le=1000)):
     """Get the latest news feed, sourced from the MongoDB-backed article
-    store that the background news worker keeps up to date (NewsAPI, GNews,
-    and Malaysia English RSS feeds)."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    # Validate the token (raises 401 if invalid)
-    await get_current_user(token)
-
+    store that the background news worker keeps up to date (configured Malaysia English RSS feeds)."""
     articles = await storage_service.get_latest_articles(limit=limit, topic=topic)
     total = await storage_service.count_articles()
 
@@ -315,38 +363,55 @@ async def get_feed(token: str = None, topic: str = None, limit: int = 50):
     }
 
 
-@app.post("/api/articles/refresh")
-async def refresh_articles(request: RefreshRequest, token: str = None):
-    """Manually trigger an on-demand fetch of the latest news right now,
-    instead of waiting for the next scheduled background run. Runs with a
-    30-second timeout; if fetching takes longer, returns immediately and
-    lets the background process continue (the feed will update as articles
-    arrive). This prevents the refresh button from appearing to hang."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+refresh_jobs = {}
+refresh_tasks = set()
 
-    await get_current_user(token)
-
-    if not request.platforms:
-        raise HTTPException(status_code=400, detail="Select at least one trusted platform before refreshing news.")
-
+async def _execute_refresh(job_id, platforms):
     try:
-        import asyncio
-        # Run the fetch with a 30-second timeout. If it completes faster,
-        # return stats immediately. If it times out, return a "pending" status
-        # and let the fetch continue in the background.
-        stats = await asyncio.wait_for(
-            news_worker.fetch_and_process_news(request.platforms),
-            timeout=30.0
-        )
-        return {"status": "completed", "stats": stats}
-    except asyncio.TimeoutError:
-        logger.warning("News refresh exceeded 30-second timeout; returning pending status")
-        return {
-            "status": "pending",
-            "message": "Refresh in progress. Articles will update as they arrive.",
-            "stats": {"timeout": True, "last_run": news_worker.last_run_stats}
-        }
+        stats = await news_worker.fetch_and_process_news(platforms)
+        refresh_jobs[job_id].update(status="failed" if stats.get("error") else "completed", stats=stats)
+    except asyncio.CancelledError:
+        refresh_jobs[job_id].update(status="failed", message="Server stopped; refresh again.")
+        raise
+    except Exception:
+        logger.exception("Refresh failed")
+        refresh_jobs[job_id].update(status="failed", message="Refresh failed; please retry.")
+
+@app.post("/api/articles/refresh", status_code=202)
+async def refresh_articles(request: RefreshRequest, user=Depends(get_current_user)):
+    if not request.platforms:
+        raise HTTPException(status_code=400, detail="Select at least one platform.")
+    for job_id, job in refresh_jobs.items():
+        if job["owner"] == user.id and job["status"] == "pending":
+            return {"jobId": job_id, "status": "pending"}
+    # Bound process-local job history; unfinished jobs are retained.
+    for old_id in list(refresh_jobs):
+        if len(refresh_jobs) < 100:
+            break
+        if refresh_jobs[old_id]["status"] != "pending":
+            del refresh_jobs[old_id]
+    if len(refresh_jobs) >= 100:
+        raise HTTPException(status_code=429, detail="Refresh queue is full; retry later.")
+    job_id = uuid4().hex
+    refresh_jobs[job_id] = {"owner": user.id, "status": "pending"}
+    task = asyncio.create_task(_execute_refresh(job_id, request.platforms))
+    refresh_tasks.add(task)
+    task.add_done_callback(refresh_tasks.discard)
+    return {"jobId": job_id, "status": "pending"}
+
+@app.get("/api/articles/refresh/{job_id}")
+async def refresh_status(job_id: str, user=Depends(get_current_user)):
+    job = refresh_jobs.get(job_id)
+    if not job or job["owner"] != user.id:
+        raise HTTPException(status_code=404, detail="Refresh job not found")
+    return {key: value for key, value in job.items() if key != "owner"}
+
+@app.get("/api/articles/{article_id}")
+async def article_detail(article_id: str, user=Depends(get_current_user)):
+    article = await storage_service.get_article_by_id(article_id)
+    if not article or article.processing_status != "completed":
+        raise HTTPException(status_code=404, detail="Article not found")
+    return _article_to_feed_dict(article)
 
 
 # ---------------------------------------------------------------------------
@@ -354,13 +419,9 @@ async def refresh_articles(request: RefreshRequest, token: str = None):
 # ---------------------------------------------------------------------------
 
 @app.get("/api/notifications/email/status")
-async def email_status(token: str = None):
+async def email_status(user=Depends(get_current_user)):
     """Return the current user's email notification settings and whether the
     server has SMTP credentials configured."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = await get_current_user(token)
     return {
         "email": user.email,
         "email_notifications_enabled": getattr(user, "email_notifications_enabled", False),
@@ -370,13 +431,9 @@ async def email_status(token: str = None):
 
 
 @app.put("/api/notifications/email", response_model=UserResponse)
-async def update_email_settings(settings_update: EmailSettingsUpdate, token: str = None):
+async def update_email_settings(settings_update: EmailSettingsUpdate, user=Depends(get_current_user)):
     """Update the current user's email notification toggle and/or schedule
     preference (morning 7am / night 7pm / both)."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = await get_current_user(token)
     update_data = {}
 
     if settings_update.email_notification_schedule is not None:
@@ -398,12 +455,8 @@ async def update_email_settings(settings_update: EmailSettingsUpdate, token: str
 
 
 @app.post("/api/notifications/email/test")
-async def send_email_test(payload: EmailTestMessage = None, token: str = None):
+async def send_email_test(payload: EmailTestMessage = None, user=Depends(get_current_user)):
     """Send a notification email to the current user's account email right now."""
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user = await get_current_user(token)
     result = await _send_digest_email_to_user(user, period_label="On-Demand", custom_message=(payload.message if payload else None))
 
     if not result["success"]:
@@ -417,9 +470,8 @@ MAX_DIGEST_ARTICLES = 10
 
 async def _send_digest_email_to_user(user, period_label: str = "", custom_message: Optional[str] = None) -> dict:
     """Build and send a personalized news digest email to a single user,
-    using exactly 10 latest real articles matching their preferred topics.
-    Falls back to the latest articles overall only if the user has no
-    preferred topics set."""
+    using up to ten articles, prioritizing preferred topics and filling
+    remaining slots from recent articles."""
     preferred_topics = getattr(user, "preferred_topics", None) or []
     
     logger.info(f"Preparing email digest for {user.email}, preferred topics: {preferred_topics}")
@@ -427,7 +479,7 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
     # First try to get articles from user's preferred topics
     articles = []
     if preferred_topics:
-        removed_topics = {"Education", "Lifestyle", "Property", "Malaysia", "World", "General"}
+        removed_topics = {"Education", "Lifestyle", "Property", "Malaysia", "World"}
         allowed_topics = [topic for topic in preferred_topics if topic not in removed_topics]
         articles = await storage_service.get_latest_articles_for_topics(
             allowed_topics, limit=MAX_DIGEST_ARTICLES * 2
@@ -449,7 +501,7 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
             articles = all_articles
         logger.info(f"After fallback: {len(articles)} articles for {user.email}")
     
-    # Ensure exactly 10 articles
+    # At most ten articles, depending on availability
     digest_articles = [_article_to_feed_dict(a) for a in articles[:MAX_DIGEST_ARTICLES]]
     logger.info(f"Sending email digest with {len(digest_articles)} articles to {user.email}")
 
@@ -517,56 +569,13 @@ async def _run_scheduled_email_job(job_period: str):
 
 
 def start_email_scheduler():
-    """Register the 7am / 7pm cron jobs and start the scheduler."""
+    """Async jobs share the application's event loop and explicit Malaysian time."""
     if email_scheduler.running:
         return
-
-    # Wrap async job in sync function for APScheduler
-    def run_morning_job():
-        logger.info("Executing morning email job via scheduler")
-        import asyncio
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(_run_scheduled_email_job("morning"))
-        except Exception as e:
-            logger.error(f"Morning job failed: {e}", exc_info=True)
-        finally:
-            loop.close()
-    
-    def run_evening_job():
-        logger.info("Executing evening email job via scheduler")
-        import asyncio
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(_run_scheduled_email_job("night"))
-        except Exception as e:
-            logger.error(f"Evening job failed: {e}", exc_info=True)
-        finally:
-            loop.close()
-    
-    email_scheduler.add_job(
-        run_morning_job,
-        CronTrigger(hour=7, minute=0),
-        id="email_morning_job",
-        replace_existing=True,
-        name="Morning Email Digest"
-    )
-    email_scheduler.add_job(
-        run_evening_job,
-        CronTrigger(hour=19, minute=0),
-        id="email_night_job",
-        replace_existing=True,
-        name="Evening Email Digest"
-    )
+    for period, hour in (("morning", 7), ("night", 19)):
+        email_scheduler.add_job(
+            _run_scheduled_email_job,
+            CronTrigger(hour=hour, minute=0, timezone=settings.EMAIL_TIMEZONE),
+            args=[period], id=f"email_{period}_job", replace_existing=True,
+            coalesce=True, max_instances=1, misfire_grace_time=300)
     email_scheduler.start()
-
-
-
-
-
-
-
-
-

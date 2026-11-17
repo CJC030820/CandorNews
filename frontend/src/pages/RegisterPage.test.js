@@ -3,12 +3,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import RegisterPage from './RegisterPage';
 
+const mockAction = jest.fn();
+
 // Mock useAuth hook
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    register: jest.fn(),
+    register: (...args) => mockAction(...args),
   }),
 }));
+
+beforeEach(() => mockAction.mockReset());
 
 test('renders register form with name, email, password inputs', () => {
   render(
@@ -17,9 +21,9 @@ test('renders register form with name, email, password inputs', () => {
     </MemoryRouter>
   );
 
-  const nameInput = screen.getByLabelText(/name:/i);
-  const emailInput = screen.getByLabelText(/email:/i);
-  const passwordInput = screen.getByLabelText(/password:/i);
+  const nameInput = screen.getByLabelText(/full name/i);
+  const emailInput = screen.getByLabelText(/email address/i);
+  const passwordInput = screen.getByLabelText(/^password$/i);
   const submitButton = screen.getByRole('button', { name: /register/i });
 
   expect(nameInput).toBeInTheDocument();
@@ -30,7 +34,7 @@ test('renders register form with name, email, password inputs', () => {
 
 test('calls register function on form submit with correct data', async () => {
   const { useAuth } = require('../context/AuthContext');
-  const mockRegister = useAuth().register;
+  const mockRegister = mockAction;
   mockRegister.mockResolvedValueOnce({}); // Resolve with empty object
 
   render(
@@ -39,15 +43,16 @@ test('calls register function on form submit with correct data', async () => {
     </MemoryRouter>
   );
 
-  const nameInput = screen.getByLabelText(/name:/i);
-  const emailInput = screen.getByLabelText(/email:/i);
-  const passwordInput = screen.getByLabelText(/password:/i);
+  const nameInput = screen.getByLabelText(/full name/i);
+  const emailInput = screen.getByLabelText(/email address/i);
+  const passwordInput = screen.getByLabelText(/^password$/i);
   const submitButton = screen.getByRole('button', { name: /register/i });
 
   fireEvent.change(nameInput, { target: { value: 'Test User' } });
   fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
   fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
+  fireEvent.change(screen.getByLabelText(/confirm password/i), {target: {value: passwordInput.value}});
   fireEvent.click(submitButton);
 
   await waitFor(() => {
@@ -57,7 +62,7 @@ test('calls register function on form submit with correct data', async () => {
 
 test('shows error message when registration fails', async () => {
   const { useAuth } = require('../context/AuthContext');
-  const mockRegister = useAuth().register;
+  const mockRegister = mockAction;
   mockRegister.mockRejectedValueOnce(new Error('Registration failed'));
 
   render(
@@ -66,14 +71,15 @@ test('shows error message when registration fails', async () => {
     </MemoryRouter>
   );
 
-  const nameInput = screen.getByLabelText(/name:/i);
-  const emailInput = screen.getByLabelText(/email:/i);
-  const passwordInput = screen.getByLabelText(/password:/i);
+  const nameInput = screen.getByLabelText(/full name/i);
+  const emailInput = screen.getByLabelText(/email address/i);
+  const passwordInput = screen.getByLabelText(/^password$/i);
   const submitButton = screen.getByRole('button', { name: /register/i });
 
   fireEvent.change(nameInput, { target: { value: 'Test User' } });
   fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-  fireEvent.change(passwordInput, { target: { value: 'wrong' } });
+  fireEvent.change(passwordInput, { target: { value: 'password123' } });
+  fireEvent.change(screen.getByLabelText(/confirm password/i), {target: {value: passwordInput.value}});
   fireEvent.click(submitButton);
 
   const errorMessage = await screen.findByText(/registration failed/i);

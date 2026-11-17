@@ -21,9 +21,7 @@ class RecommenderService:
             return 0.5
         if article_topic in user_preferred_topics:
             return 1.0
-        # Partial match: if article topic is General, give lower score
-        if article_topic == "General":
-            return 0.3
+        # Articles without a recognized topic receive no topic bonus.
         return 0.0
 
     def calculate_article_freshness(self, published_date: Any) -> float:
@@ -63,7 +61,7 @@ class RecommenderService:
                 return 0.5
 
             # Calculate similarity based on topic and source
-            target_topic = target_article.get("topic", "General")
+            target_topic = target_article.get("topic", "")
             target_source = target_article.get("source", "")
 
             # Find articles the user has interacted with
@@ -134,7 +132,7 @@ class RecommenderService:
                 continue
 
             topic_match = self.calculate_topic_preference_match(
-                article.get("topic", "General"),
+                article.get("topic", ""),
                 user_preferred_topics
             )
             freshness = self.calculate_article_freshness(
@@ -178,7 +176,7 @@ class RecommenderService:
             return "Recommended based on high trust score and recent publication."
 
         explanations = []
-        if article.get("topic", "General") in (user.preferred_topics or []):
+        if article.get("topic", "") in (user.preferred_topics or []):
             explanations.append(f"matches your {article.get('topic')} interest")
         # Add more explanation components as needed
         if not explanations:

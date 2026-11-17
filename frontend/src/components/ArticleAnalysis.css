@@ -1,0 +1,12 @@
+.article-analysis { margin-top: 2rem; padding-top: 1.75rem; border-top: 2px solid var(--border-color); line-height: 1.6; }
+.article-analysis h2 { font-size: 1.25rem; margin-top: 1.6rem; }
+.article-analysis h2 + p { margin-top: .5rem; }
+.article-analysis h2:not(:first-child) { margin-top: 2.25rem; padding-top: 1.75rem; border-top: 2px solid var(--border-color); }
+.analysis-table-scroll { overflow-x: auto; }
+.analysis-disclaimer { color: var(--text-muted); font-size: .9rem; }
+.article-analysis table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.article-analysis caption { text-align: left; font-weight: 600; margin-bottom: .5rem; }
+.article-analysis th, .article-analysis td { padding: .6rem; text-align: left; border-bottom: 1px solid #9996; }
+.related-report { border: 1px solid #9996; border-radius: .6rem; padding: 1rem; margin: 1rem 0; }
+.related-report h3 { margin-top: 0; }
+.related-report a { color: inherit; text-decoration: underline; }

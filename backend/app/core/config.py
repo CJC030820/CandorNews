@@ -1,4 +1,6 @@
 from pathlib import Path
+import secrets
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 # Resolve backend/.env relative to this file so settings load regardless of
@@ -13,7 +15,16 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = "news_intelligence"
 
     # JWT settings
-    SECRET_KEY: str = "news-intelligence-static-dev-secret-key-do-not-use-in-prod"  # Change in production
+    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(48))
+    ENVIRONMENT: str = "development"
+    EMAIL_TIMEZONE: str = "Asia/Kuala_Lumpur"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    @model_validator(mode="after")
+    def validate_deployment_secret(self):
+        if self.ENVIRONMENT == "production" and ("SECRET_KEY" not in self.model_fields_set or len(self.SECRET_KEY) < 32 or "dev-secret" in self.SECRET_KEY):
+            raise ValueError("Production requires an explicit strong SECRET_KEY of at least 32 characters")
+        return self
     ALGORITHM: str = "HS256"
     # Long-lived session so users stay logged in ("remember me") across
     # browser restarts and backend restarts, as long as the token itself
@@ -27,12 +38,7 @@ class Settings(BaseSettings):
     # RSS feeds - Malaysia English news sources only
     RSS_FEEDS: str = "https://www.freemalaysiatoday.com/feed/,https://www.freemalaysiatoday.com/category/nation/feed/,https://www.freemalaysiatoday.com/category/business/feed/,https://www.freemalaysiatoday.com/category/world/feed/,https://www.nst.com.my/feed,https://www.bernama.com/en/rssfeed.php"
 
-    # Trust score weights requested by the product specification.
-    TRUST_WEIGHT_SOURCE_REPUTATION: float = 0.40
-    TRUST_WEIGHT_CROSS_SOURCE_SIMILARITY: float = 0.25
-    TRUST_WEIGHT_FACT_CHECK_AVAILABILITY: float = 0.20
-    TRUST_WEIGHT_METADATA_COMPLETENESS: float = 0.05
-    TRUST_WEIGHT_SENTIMENT_NEUTRALITY: float = 0.10
+    # The versioned heuristic weights are defined in services/trust_scorer.py.
 
     # Worker interval in minutes
     WORKER_INTERVAL_MINUTES: int = 30

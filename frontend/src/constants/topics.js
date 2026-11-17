@@ -3,11 +3,11 @@
 
 export const TOPICS = [
   'Politics', 'Business', 'Health', 'Sports', 'Entertainment',
-  'Technology', 'AI', 'Finance', 'Crime', 'Local Malaysia News'
+  'Technology', 'AI', 'Finance', 'Crime', 'Local Malaysia News', 'General'
 ];
 
 export const REMOVED_TOPICS = new Set([
-  'Education', 'Lifestyle', 'Property', 'Malaysia', 'World', 'General'
+  'Education', 'Lifestyle', 'Property', 'Malaysia', 'World'
 ]);
 
 export const normalizeTopics = (topics = []) => [...new Set(topics)]
