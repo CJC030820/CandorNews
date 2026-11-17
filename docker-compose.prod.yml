@@ -61,12 +61,14 @@ services:
     command: ["--wiredTigerCacheSizeGB", "0.25"]
     volumes:
       - mongodb_data:/data/db
+    # mongosh is slow to start on a busy 1 GB server (for example during a
+    # rebuild), so allow more time before calling the database unhealthy.
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 20s
       retries: 5
-      start_period: 20s
+      start_period: 60s
     restart: unless-stopped
 
 volumes:
