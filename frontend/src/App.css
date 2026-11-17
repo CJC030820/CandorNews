@@ -5,6 +5,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   gap: 1rem;
   color: var(--text-secondary);
 }
@@ -145,6 +146,7 @@ code {
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .login-page,
@@ -154,6 +156,7 @@ code {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-primary);
 }
 
@@ -321,6 +324,7 @@ a:hover {
 
 .topic-selection-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-primary);
 }
 

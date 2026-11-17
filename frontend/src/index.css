@@ -6,10 +6,34 @@
 
 html, body {
   width: 100%;
-  height: 100%;
-  /* Enable momentum scrolling and elastic overscroll on iOS/Mac */
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: auto;
+  min-height: 100%;
+}
+
+html {
+  /* Stop iPhone Safari enlarging text in landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* No grey flash when tapping links and buttons on iPhone. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safari draws its own rounded/gradient button style unless told not to. */
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* iPhone zooms the page when a text box smaller than 16px is focused
+   (and stays zoomed). Use 16px text in form fields on touch screens. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 body {
@@ -28,17 +52,7 @@ code {
 
 #root {
   width: 100%;
-  height: 100%;
-  /* Allow elastic scrolling on the main container */
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: auto;
-}
-
-/* Smooth overscroll bounce effect */
-@supports (scroll-behavior: smooth) {
-  html {
-    scroll-behavior: smooth;
-  }
+  min-height: 100%;
 }
 
 /* Custom scrollbar styling for better UX during overscroll */

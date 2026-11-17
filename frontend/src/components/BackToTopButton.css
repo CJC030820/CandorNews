@@ -1,7 +1,7 @@
 .back-to-top-btn {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  right: calc(30px + env(safe-area-inset-right, 0px));
   background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
   color: white;
   width: 50px;

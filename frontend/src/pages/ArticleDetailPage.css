@@ -4,6 +4,7 @@
   padding: 30px 20px;
   background-color: var(--bg-primary);
   min-height: 100vh;
+  min-height: 100dvh;
   transition: background-color 0.3s;
   opacity: 1;
 }

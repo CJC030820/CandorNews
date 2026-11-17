@@ -6,7 +6,6 @@ import DarkModeToggle from '../components/DarkModeToggle';
 import SuggestionPanel from '../components/SuggestionPanel';
 import BackToTopButton from '../components/BackToTopButton';
 import { useTrustedPlatforms } from '../context/TrustedPlatformsContext';
-import { useOverscrollBounce } from '../hooks/useOverscrollBounce';
 import './FeedPage.css';
 
 const CATEGORY_ICONS = {
@@ -39,14 +38,13 @@ const formatRelativeDate = (isoString, now = Date.now()) => {
 export const mapFeedArticle = article => ({...article, rawDate:article.date,
   categories:article.categories?.length ? article.categories : (article.category ? [article.category] : [])});
 
+const NEAR_TOP_PX = 300;
+
 const FeedPage = ({ searchQuery = '', onSearchChange }) => {
   const { user, logout, getFeed, refreshFeed, getRefreshStatus, selectedTopics } = useAuth();
   const navigate = useNavigate();
   const feedPageRef = useRef(null);
   const [filter, setFilter] = useState('all');
-
-  // Enable overscroll bounce effect
-  useOverscrollBounce(feedPageRef);
 
   const [rawArticles, setRawArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +54,12 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
   const alive = useRef(true);
   const busy = useRef(false);
   const restoredScroll = useRef(false);
+  // Background reloads must not insert articles above the reader: iPhone
+  // Safari does not keep the scroll position when content is added above,
+  // so the list would jump. New articles wait behind a "new articles" button.
+  const articlesRef = useRef([]);
+  const pendingArticles = useRef(null);
+  const [pendingCount, setPendingCount] = useState(0);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   const {
@@ -68,17 +72,49 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
 
   const [isManagingPlatforms, setIsManagingPlatforms] = useState(false);
 
-  const loadFeed = useCallback(async () => {
+  const applyArticles = useCallback((articles) => {
+    articlesRef.current = articles;
+    pendingArticles.current = null;
+    setPendingCount(0);
+    setRawArticles(articles);
+  }, []);
+
+  const loadFeed = useCallback(async ({ background = false } = {}) => {
     try {
       const data = await getFeed({limit:500});
-      if (alive.current) setRawArticles((data.articles || []).map(mapFeedArticle));
-    } catch { if (alive.current) setError('Failed to load the latest news. Please try again.'); }
+      if (!alive.current) return;
+      const next = (data.articles || []).map(mapFeedArticle);
+      const known = new Set(articlesRef.current.map((a) => a.id));
+      const fresh = next.filter((a) => !known.has(a.id)).length;
+      if (background && fresh > 0 && window.scrollY > NEAR_TOP_PX) {
+        pendingArticles.current = next;
+        setPendingCount(fresh);
+      } else {
+        applyArticles(next);
+      }
+    } catch { if (alive.current && !background) setError('Failed to load the latest news. Please try again.'); }
     finally { if (alive.current) setLoading(false); }
-  }, [getFeed]);
+  }, [getFeed, applyArticles]);
   useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  const showPendingArticles = useCallback(() => {
+    if (pendingArticles.current) applyArticles(pendingArticles.current);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [applyArticles]);
+
+  // Back near the top: show waiting articles without moving the page.
+  useEffect(() => {
+    if (!pendingCount) return undefined;
+    const onScroll = () => {
+      if (window.scrollY <= NEAR_TOP_PX && pendingArticles.current) applyArticles(pendingArticles.current);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [pendingCount, applyArticles]);
+
 useEffect(() => {
     const tick = setInterval(() => setNowTick(Date.now()), 1000);
-    const reload = setInterval(loadFeed, 60000);
+    const reload = setInterval(() => loadFeed({ background: true }), 60000);
     return () => { clearInterval(tick); clearInterval(reload); };
   }, [loadFeed]);
 
@@ -191,6 +227,11 @@ useEffect(() => {
   return (
     <div ref={feedPageRef} className="feed-page">
       <BackToTopButton />
+      {pendingCount > 0 && (
+        <button type="button" className="new-articles-pill" onClick={showPendingArticles}>
+          ↑ {pendingCount} new article{pendingCount === 1 ? '' : 's'}
+        </button>
+      )}
       <div className="feed-wrapper">
         <div className="sidebar">
           <div className="sidebar-section">

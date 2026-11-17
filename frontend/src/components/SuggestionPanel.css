@@ -348,3 +348,18 @@
     font-size: 14px;
   }
 }
+
+@media (max-width: 600px) {
+  .suggestion-panel {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .suggestion-header p {
+    font-size: 12px;
+  }
+
+  .suggestion-message {
+    display: none;
+  }
+}

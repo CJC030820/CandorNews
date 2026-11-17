@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import FeedPage from './FeedPage';
 
 let mockTopics = ['Politics'];
+let mockFeedArticles = null;
 const mockUpdatePreferences = jest.fn();
 const articles = [
   { id: '1', title: 'Parliament passes budget', source: 'New Straits Times', date: '2026-11-18T01:00:00Z', categories: ['Politics'] },
@@ -11,10 +12,13 @@ const articles = [
   { id: '3', title: 'Ringgit strengthens', source: 'Free Malaysia Today', date: '2026-11-18T03:00:00Z', categories: ['Business', 'Finance'] },
 ];
 
+// Stable like the real context's useCallback, so the feed does not reload in a loop.
+const mockGetFeed = async () => ({ articles: mockFeedArticles || articles });
+
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     user: { name: 'Reader' }, logout: jest.fn(), refreshFeed: jest.fn(), getRefreshStatus: jest.fn(),
-    getFeed: async () => ({ articles }),
+    getFeed: mockGetFeed,
     selectedTopics: mockTopics,
     updatePreferences: (...args) => mockUpdatePreferences(...args),
   }),
@@ -25,11 +29,11 @@ jest.mock('../context/TrustedPlatformsContext', () => {
 });
 jest.mock('../context/BookmarkContext', () => ({ useBookmarks: () => ({ isBookmarked: () => false, toggleBookmark: jest.fn() }) }));
 jest.mock('../context/ReadArticlesContext', () => ({ useReadArticles: () => ({ isRead: () => false }) }));
-jest.mock('../hooks/useOverscrollBounce', () => ({ useOverscrollBounce: () => {} }));
 jest.mock('../components/DarkModeToggle', () => () => null);
 
 beforeEach(() => {
   mockTopics = ['Politics'];
+  mockFeedArticles = null;
   mockUpdatePreferences.mockImplementation(async (topics) => { mockTopics = topics; });
   window.scrollTo = jest.fn();
   Element.prototype.scrollIntoView = jest.fn();
@@ -63,4 +67,37 @@ test('with no interests, News For You shows all news', async () => {
   mockTopics = [];
   renderFeed();
   await waitFor(() => expect(titles()).toHaveLength(3));
+});
+
+const captureReload = () => {
+  const spy = jest.spyOn(window, 'setInterval');
+  return () => spy.mock.calls.filter(([, delay]) => delay === 60000).map(([fn]) => fn).pop();
+};
+const newStory = { id: '9', title: 'Breaking: new story', source: 'New Straits Times', date: '2026-11-18T09:00:00Z', categories: ['Politics'] };
+
+test('background reload does not insert articles above a reader who scrolled down', async () => {
+  mockTopics = [];
+  const reloader = captureReload();
+  renderFeed();
+  await waitFor(() => expect(titles()).toHaveLength(3));
+  Object.defineProperty(window, 'scrollY', { value: 1200, configurable: true });
+  mockFeedArticles = [newStory, ...articles];
+  await act(async () => { await reloader()(); });
+  expect(titles()).toHaveLength(3);                       // list unchanged while reading
+  fireEvent.click(await screen.findByText('↑ 1 new article'));
+  expect(titles()[0]).toBe('Breaking: new story');
+  expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'auto' });
+  Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+});
+
+test('background reload applies immediately when the reader is at the top', async () => {
+  mockTopics = [];
+  Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+  const reloader = captureReload();
+  renderFeed();
+  await waitFor(() => expect(titles()).toHaveLength(3));
+  mockFeedArticles = [newStory, ...articles];
+  await act(async () => { await reloader()(); });
+  await waitFor(() => expect(titles()[0]).toBe('Breaking: new story'));
+  expect(screen.queryByText(/new article/)).toBeNull();
 });
