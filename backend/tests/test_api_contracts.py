@@ -151,7 +151,7 @@ async def test_account_responses_never_expose_password_hash(api, reader_headers)
     response = await api.get("/api/auth/me", headers=reader_headers)
     assert response.status_code == 200
     assert set(response.json()) == {
-        "id", "email", "name", "preferred_topics", "email_notifications_enabled", "email_notification_schedule",
+        "id", "email", "name", "preferred_topics", "email_notifications_enabled", "email_notification_schedule", "email_notification_times",
     }
     assert "password" not in response.text and "hashed_password" not in response.text
 

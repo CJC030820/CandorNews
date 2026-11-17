@@ -187,16 +187,17 @@ def test_email_scheduler_async_timezone(monkeypatch):
     scheduler=Mock(running=False)
     monkeypatch.setattr(main,'email_scheduler',scheduler)
     main.start_email_scheduler()
-    assert scheduler.add_job.call_count==2
-    for call in scheduler.add_job.call_args_list:
-        assert call.args[0] is main._run_scheduled_email_job
-        assert str(call.args[1].timezone)=='Asia/Kuala_Lumpur'
+    assert scheduler.add_job.call_count==1
+    call=scheduler.add_job.call_args
+    assert call.args[0] is main._run_due_email_notifications
+    assert str(call.args[1].timezone)=='Asia/Kuala_Lumpur'
 
 
 async def test_email_settings_and_failure_without_sending(client,auth,monkeypatch):
     assert (await client.put('/api/notifications/email',headers=auth,json={'email_notification_schedule':'bad'})).status_code==400
     result=await client.put('/api/notifications/email',headers=auth,json={'email_notifications_enabled':True,'email_notification_schedule':'both'})
     assert result.json()['email_notification_schedule']=='both'
+    assert result.json()['email_notification_times']==['07:00','19:00']
     monkeypatch.setattr(main.email_service,'send_email',Mock(return_value={'success':False,'message':'SMTP unavailable'}))
     assert (await client.post('/api/notifications/email/test',headers=auth,json={})).status_code==502
 

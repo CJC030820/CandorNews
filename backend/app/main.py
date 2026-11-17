@@ -19,6 +19,7 @@ from apscheduler.triggers.cron import CronTrigger
 from fastapi.responses import FileResponse
 from app.services import email_service, image_cache
 from app.services.trust_scorer import SCORE_VERSION
+from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.core.config import settings
@@ -59,7 +60,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup():
     """Ensure database indexes exist so accounts persist reliably, start the
-    scheduled email notification jobs (7am and 7pm), and start the background
+    scheduled email notification checks (custom times), and start the background
     news ingestion worker that fetches the latest headlines from configured RSS feeds (runs immediately, then every WORKER_INTERVAL_MINUTES)."""
     try:
         await storage_service.ensure_indexes()
@@ -75,7 +76,7 @@ async def on_startup():
 
     try:
         start_email_scheduler()
-        print("Email notification scheduler started (7am and 7pm daily).")
+        print("Email notification scheduler started (checks custom delivery times every minute).")
     except Exception as exc:
         print(f"Warning: could not start email scheduler: {exc}")
 
@@ -136,6 +137,7 @@ class UserResponse(BaseModel):
     preferred_topics: list = []
     email_notifications_enabled: bool = False
     email_notification_schedule: str = "morning"
+    email_notification_times: List[str] = ["07:00"]
 
 class PreferencesUpdate(BaseModel):
     preferred_topics: List[str] = Field(default_factory=list, max_length=11)
@@ -156,7 +158,10 @@ class AccountDeleteRequest(BaseModel):
 
 class EmailSettingsUpdate(BaseModel):
     email_notifications_enabled: Optional[bool] = None
+    # Legacy preset (morning/night/both); prefer email_notification_times.
     email_notification_schedule: Optional[str] = None
+    # One to three "HH:MM" delivery times in EMAIL_TIMEZONE.
+    email_notification_times: Optional[List[str]] = Field(default=None, max_length=10)
 
 class EmailTestMessage(BaseModel):
     message: Optional[str] = None
@@ -170,7 +175,8 @@ def _user_to_response(user) -> UserResponse:
         name=user.name,
         preferred_topics=user.preferred_topics or [],
         email_notifications_enabled=getattr(user, "email_notifications_enabled", False),
-        email_notification_schedule=getattr(user, "email_notification_schedule", "morning") or "morning"
+        email_notification_schedule=getattr(user, "email_notification_schedule", "morning") or "morning",
+        email_notification_times=user_times(user)
     )
 
 
@@ -227,7 +233,8 @@ async def register(user: UserCreate):
                 password=user.password,
                 preferred_topics=[],
                 email_notifications_enabled=False,
-                email_notification_schedule="morning"
+                email_notification_schedule="morning",
+                email_notification_times=["07:00"]
             )
         )
     except DuplicateKeyError:
@@ -446,6 +453,9 @@ async def email_status(user=Depends(get_current_user)):
         "email": user.email,
         "email_notifications_enabled": getattr(user, "email_notifications_enabled", False),
         "email_notification_schedule": getattr(user, "email_notification_schedule", "morning") or "morning",
+        "email_notification_times": user_times(user),
+        "max_notification_times": MAX_TIMES,
+        "timezone": settings.EMAIL_TIMEZONE,
         "server_configured": email_service.is_configured()
     }
 
@@ -453,7 +463,8 @@ async def email_status(user=Depends(get_current_user)):
 @app.put("/api/notifications/email", response_model=UserResponse)
 async def update_email_settings(settings_update: EmailSettingsUpdate, user=Depends(get_current_user)):
     """Update the current user's email notification toggle and/or schedule
-    preference (morning 7am / night 7pm / both)."""
+    delivery times (one to three HH:MM times in Malaysian time; the legacy
+    morning/night/both presets are still accepted)."""
     update_data = {}
 
     if settings_update.email_notification_schedule is not None:
@@ -464,6 +475,13 @@ async def update_email_settings(settings_update: EmailSettingsUpdate, user=Depen
                 detail="email_notification_schedule must be one of: morning, night, both"
             )
         update_data["email_notification_schedule"] = schedule
+        update_data["email_notification_times"] = LEGACY_PRESETS[schedule]
+
+    if settings_update.email_notification_times is not None:
+        try:
+            update_data["email_notification_times"] = normalize_times(settings_update.email_notification_times)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
 
     if settings_update.email_notifications_enabled is not None:
         update_data["email_notifications_enabled"] = settings_update.email_notifications_enabled
@@ -531,7 +549,7 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
         text_body = f"{custom_message}\n\n{text_body}"
 
     # Run the blocking SMTP call in a worker thread so it never blocks the
-    # async event loop (important for the scheduled 7am/7pm jobs that may
+    # async event loop (important for the scheduled digest jobs that may
     # email many users in one run).
     import asyncio
     loop = asyncio.get_event_loop()
@@ -547,55 +565,72 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
 
 
 # ---------------------------------------------------------------------------
-# Scheduled email notifications (7am morning / 7pm night)
+# Scheduled email notifications (up to three custom times per user)
 # ---------------------------------------------------------------------------
 
 email_scheduler = AsyncIOScheduler()
+FRESH_NEWS_MAX_AGE = timedelta(minutes=10)
 
 
-async def _run_scheduled_email_job(job_period: str):
-    """Send digest emails to every user opted in for this time slot
-    (morning, night, or both). Before sending, first triggers a fresh news
-    fetch/refresh so users receive the latest articles at their preferred
-    time instead of whatever was last cached from the periodic background
-    worker run."""
-    logger.info(f"Running scheduled email job: {job_period}")
+async def _refresh_news_if_stale():
+    """Fetch the latest articles before a digest unless a run just finished."""
+    last = news_worker.last_run_at
     try:
-        try:
-            logger.info(f"Refreshing news before sending '{job_period}' digest emails...")
-            refresh_stats = await news_worker.fetch_and_process_news()
-            logger.info(f"News refresh before '{job_period}' digest completed: {refresh_stats}")
-        except Exception as refresh_exc:
-            logger.error(f"News refresh before '{job_period}' digest failed, sending with existing articles: {refresh_exc}", exc_info=True)
+        if last and datetime.utcnow() - datetime.fromisoformat(last) < FRESH_NEWS_MAX_AGE:
+            return
+    except ValueError:
+        pass
+    try:
+        stats = await news_worker.fetch_and_process_news()
+        logger.info(f"News refresh before digest emails completed: {stats}")
+    except Exception as exc:
+        logger.error(f"News refresh before digest emails failed, sending with existing articles: {exc}", exc_info=True)
 
-        cursor = storage_service.users.find({
-            "email_notifications_enabled": True,
-            "email_notification_schedule": {"$in": [job_period, "both"]}
-        })
-        count = 0
-        async for doc in cursor:
+
+async def _run_due_email_notifications(now: Optional[datetime] = None):
+    """Runs every minute. Sends one digest to each opted-in user whose
+    delivery time has just been reached and was not yet sent today."""
+    from zoneinfo import ZoneInfo
+    from app.models.user import UserInDB
+    now = now or datetime.now(ZoneInfo(settings.EMAIL_TIMEZONE))
+    try:
+        due = []
+        async for doc in storage_service.users.find({"email_notifications_enabled": True}):
             doc["_id"] = str(doc["_id"])
-            from app.models.user import UserInDB
             user = UserInDB(**doc)
-            label = "Morning" if job_period == "morning" else "Evening"
+            slots = due_times(user, now)
+            if slots:
+                due.append((user, slots))
+        if not due:
+            return 0
+        await _refresh_news_if_stale()
+        count = 0
+        today = now.date().isoformat()
+        for user, slots in due:
+            label = "Morning" if now.hour < 12 else "Afternoon" if now.hour < 18 else "Evening"
             result = await _send_digest_email_to_user(user, period_label=label)
             if result["success"]:
                 count += 1
+                sent = dict(user.email_notification_last_sent or {})
+                sent.update({slot: today for slot in slots})
+                await storage_service.update_user_by_email(user.email, {"email_notification_last_sent": sent})
             else:
                 logger.warning(f"Failed to send scheduled email to {user.email}: {result['message']}")
-        logger.info(f"Scheduled email job '{job_period}' completed. Sent to {count} user(s).")
+        logger.info(f"Scheduled digest emails sent to {count} of {len(due)} due user(s).")
+        return count
     except Exception as exc:
-        logger.error(f"Error running scheduled email job '{job_period}': {exc}", exc_info=True)
+        logger.error(f"Error running scheduled email notifications: {exc}", exc_info=True)
+        return 0
 
 
 def start_email_scheduler():
-    """Async jobs share the application's event loop and explicit Malaysian time."""
+    """One job checks every minute, in explicit Malaysian time, which users
+    are due for their custom delivery times."""
     if email_scheduler.running:
         return
-    for period, hour in (("morning", 7), ("night", 19)):
-        email_scheduler.add_job(
-            _run_scheduled_email_job,
-            CronTrigger(hour=hour, minute=0, timezone=settings.EMAIL_TIMEZONE),
-            args=[period], id=f"email_{period}_job", replace_existing=True,
-            coalesce=True, max_instances=1, misfire_grace_time=300)
+    email_scheduler.add_job(
+        _run_due_email_notifications,
+        CronTrigger(minute="*", timezone=settings.EMAIL_TIMEZONE),
+        id="email_due_check_job", replace_existing=True,
+        coalesce=True, max_instances=1, misfire_grace_time=60)
     email_scheduler.start()

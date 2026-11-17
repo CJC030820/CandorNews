@@ -7,6 +7,16 @@ import PageWrapper from '../components/PageWrapper';
 import BackToTopButton from '../components/BackToTopButton';
 import './ProfilePage.css';
 
+export const MAX_NOTIFICATION_TIMES = 3;
+
+// "19:30" -> "7:30 PM"
+export const formatTime = (value) => {
+  const [hour, minute] = value.split(':').map(Number);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return value;
+  const suffix = hour < 12 ? 'AM' : 'PM';
+  return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${suffix}`;
+};
+
 const ProfilePage = () => {
   const {
     user,
@@ -28,7 +38,9 @@ const ProfilePage = () => {
   const [nameError, setNameError] = useState('');
 
   const [emailEnabled, setEmailEnabled] = useState(user?.email_notifications_enabled || false);
-  const [emailSchedule, setEmailSchedule] = useState(user?.email_notification_schedule || 'morning');
+  const [savedTimes, setSavedTimes] = useState(user?.email_notification_times || ['07:00']);
+  const [draftTimes, setDraftTimes] = useState(user?.email_notification_times || ['07:00']);
+  const [maxTimes, setMaxTimes] = useState(MAX_NOTIFICATION_TIMES);
   const [emailServerConfigured, setEmailServerConfigured] = useState(true);
   const [togglingEmail, setTogglingEmail] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
@@ -51,7 +63,10 @@ const ProfilePage = () => {
       try {
         const status = await getEmailStatus();
         setEmailEnabled(status.email_notifications_enabled || false);
-        setEmailSchedule(status.email_notification_schedule || 'morning');
+        const times = status.email_notification_times?.length ? status.email_notification_times : ['07:00'];
+        setSavedTimes(times);
+        setDraftTimes(times);
+        setMaxTimes(status.max_notification_times || MAX_NOTIFICATION_TIMES);
         setEmailServerConfigured(status.server_configured);
       } catch (err) {
         // Non-fatal; keep whatever came from the user object
@@ -119,16 +134,46 @@ const ProfilePage = () => {
     }
   };
 
-  const handleChangeSchedule = async (schedule) => {
-    if (schedule === emailSchedule) return;
+  const timesChanged = [...draftTimes].sort().join(',') !== [...savedTimes].sort().join(',');
+
+  const handleTimeChange = (index, value) => {
+    setEmailStatusMessage(null);
+    setDraftTimes((times) => times.map((time, i) => (i === index ? value : time)));
+  };
+
+  const handleAddTime = () => {
+    if (draftTimes.length >= maxTimes) return;
+    const suggestion = ['12:00', '19:00', '07:00', '21:00'].find((t) => !draftTimes.includes(t)) || '12:00';
+    setEmailStatusMessage(null);
+    setDraftTimes((times) => [...times, suggestion]);
+  };
+
+  const handleRemoveTime = (index) => {
+    if (draftTimes.length <= 1) return;
+    setEmailStatusMessage(null);
+    setDraftTimes((times) => times.filter((_, i) => i !== index));
+  };
+
+  const handleSaveTimes = async () => {
+    if (draftTimes.some((time) => !time)) {
+      setEmailStatusMessage({ type: 'error', text: 'Please fill in every delivery time.' });
+      return;
+    }
+    if (new Set(draftTimes).size !== draftTimes.length) {
+      setEmailStatusMessage({ type: 'error', text: 'Each delivery time must be different.' });
+      return;
+    }
     setEmailStatusMessage(null);
     setSavingSchedule(true);
     try {
-      const updated = await updateEmailSettings({ emailNotificationSchedule: schedule });
-      setEmailSchedule(updated.email_notification_schedule);
+      const updated = await updateEmailSettings({ emailNotificationTimes: draftTimes });
+      const times = updated.email_notification_times?.length ? updated.email_notification_times : draftTimes;
+      setSavedTimes(times);
+      setDraftTimes(times);
+      setEmailStatusMessage({ type: 'success', text: `Delivery times saved: ${times.map(formatTime).join(', ')} (Malaysia time).` });
     } catch (err) {
-      const detail = err?.response?.data?.detail || 'Failed to update schedule.';
-      setEmailStatusMessage({ type: 'error', text: detail });
+      const detail = err?.response?.data?.detail;
+      setEmailStatusMessage({ type: 'error', text: typeof detail === 'string' ? detail : 'Failed to save delivery times.' });
     } finally {
       setSavingSchedule(false);
     }
@@ -290,34 +335,48 @@ const ProfilePage = () => {
             </div>
 
             <div className="email-schedule-row">
-              <label>Delivery Time</label>
-              <div className="email-schedule-options">
+              <label>Delivery Times <span className="schedule-hint">(Malaysia time, GMT+8 · up to {maxTimes})</span></label>
+              <div className="email-time-list">
+                {draftTimes.map((time, index) => (
+                  <div className="email-time-item" key={index}>
+                    <input
+                      type="time"
+                      className="email-time-input"
+                      value={time}
+                      onChange={(e) => handleTimeChange(index, e.target.value)}
+                      disabled={savingSchedule}
+                      aria-label={`Delivery time ${index + 1}`}
+                    />
+                    <span className="schedule-time">{time ? formatTime(time) : ''}</span>
+                    <button
+                      type="button"
+                      className="email-time-remove"
+                      onClick={() => handleRemoveTime(index)}
+                      disabled={savingSchedule || draftTimes.length <= 1}
+                      aria-label={`Remove delivery time ${index + 1}`}
+                      title={draftTimes.length <= 1 ? 'At least one time is required' : 'Remove this time'}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="email-time-actions">
                 <button
                   type="button"
-                  className={`schedule-option ${emailSchedule === 'morning' ? 'selected' : ''}`}
-                  onClick={() => handleChangeSchedule('morning')}
-                  disabled={savingSchedule}
+                  className="email-time-add"
+                  onClick={handleAddTime}
+                  disabled={savingSchedule || draftTimes.length >= maxTimes}
                 >
-                  ☀️ Morning
-                  <span className="schedule-time">7:00 AM</span>
+                  ＋ Add time{draftTimes.length >= maxTimes ? ` (maximum ${maxTimes})` : ''}
                 </button>
                 <button
                   type="button"
-                  className={`schedule-option ${emailSchedule === 'night' ? 'selected' : ''}`}
-                  onClick={() => handleChangeSchedule('night')}
-                  disabled={savingSchedule}
+                  className="email-time-save"
+                  onClick={handleSaveTimes}
+                  disabled={savingSchedule || !timesChanged}
                 >
-                  🌙 Night
-                  <span className="schedule-time">7:00 PM</span>
-                </button>
-                <button
-                  type="button"
-                  className={`schedule-option ${emailSchedule === 'both' ? 'selected' : ''}`}
-                  onClick={() => handleChangeSchedule('both')}
-                  disabled={savingSchedule}
-                >
-                  🔄 Day &amp; Night
-                  <span className="schedule-time">7 AM &amp; 7 PM</span>
+                  {savingSchedule ? 'Saving...' : 'Save times'}
                 </button>
               </div>
             </div>

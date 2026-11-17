@@ -41,9 +41,10 @@ export const AuthProvider = ({ children }) => {
     const {data} = await api.put('/api/users/profile', {name}); setUser(data); return data;
   };
   const getEmailStatus = async () => (await api.get('/api/notifications/email/status')).data;
-  const updateEmailSettings = async ({emailNotificationsEnabled, emailNotificationSchedule}) => {
+  const updateEmailSettings = async ({emailNotificationsEnabled, emailNotificationSchedule, emailNotificationTimes}) => {
     const {data} = await api.put('/api/notifications/email', {
-      email_notifications_enabled: emailNotificationsEnabled, email_notification_schedule: emailNotificationSchedule});
+      email_notifications_enabled: emailNotificationsEnabled, email_notification_schedule: emailNotificationSchedule,
+      email_notification_times: emailNotificationTimes});
     setUser(data); return data;
   };
   const sendEmailTest = async message => (await api.post('/api/notifications/email/test', {message})).data;

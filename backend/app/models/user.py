@@ -20,8 +20,11 @@ class UserBase(BaseModel):
     email: EmailStr
     preferred_topics: List[str] = []
     email_notifications_enabled: bool = False
-    # One of: "morning" (7am), "night" (7pm), "both" (7am and 7pm)
+    # Legacy preset: "morning" (7am), "night" (7pm), "both". Used only when no
+    # custom times are stored.
     email_notification_schedule: str = "morning"
+    # Up to three custom delivery times, "HH:MM" in EMAIL_TIMEZONE.
+    email_notification_times: List[str] = []
 
 class UserCreate(UserBase):
     password: str
@@ -33,6 +36,9 @@ class UserLogin(BaseModel):
 class UserInDB(UserBase):
     id: str = Field(alias="_id")
     hashed_password: str
+    # Delivery time -> date (YYYY-MM-DD) it was last sent, so each time slot
+    # is emailed at most once per day.
+    email_notification_last_sent: dict = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

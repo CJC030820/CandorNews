@@ -342,6 +342,115 @@
   opacity: 0.85;
 }
 
+.schedule-hint {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.email-time-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.email-time-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.email-time-input {
+  width: auto;
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  color-scheme: light dark;
+}
+
+.email-time-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.email-time-item .schedule-time {
+  flex: 1;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.email-time-remove {
+  width: auto;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.email-time-remove:hover:not(:disabled) {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.email-time-remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.email-time-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.email-time-add,
+.email-time-save {
+  flex: 1 1 140px;
+  width: auto;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.email-time-add {
+  background-color: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  color: var(--text-primary);
+}
+
+.email-time-add:hover:not(:disabled) {
+  border-color: var(--accent-color);
+}
+
+.email-time-save {
+  background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
+  border: 2px solid var(--accent-color);
+  color: white;
+}
+
+.email-time-add:disabled,
+.email-time-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .email-test-btn {
   width: 100%;
   margin-top: 15px;
