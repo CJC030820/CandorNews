@@ -45,3 +45,6 @@ test_write.txt
 
 # Local dependency download cache
 .npm-cache/
+
+# Locally stored article images
+backend/image_cache/

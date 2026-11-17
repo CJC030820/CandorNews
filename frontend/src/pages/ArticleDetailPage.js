@@ -5,6 +5,7 @@ import { useReadArticles } from '../context/ReadArticlesContext';
 import { useAuth } from '../context/AuthContext';
 import ArticleAnalysis from '../components/ArticleAnalysis';
 import ShareMenu from '../components/ShareMenu';
+import { useArticleImage } from '../utils/articleImage';
 import './ArticleDetailPage.css';
 
 const toneBadgeClass = (toneLabel) => {
@@ -31,7 +32,6 @@ const ArticleDetailPage = () => {
   const { id } = useParams();
   const { isBookmarked, toggleBookmark, bookmarks } = useBookmarks();
   const { markAsRead } = useReadArticles();
-  const [imageError, setImageError] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
   // Prefer article passed via navigation state; fall back to a bookmarked
@@ -41,6 +41,7 @@ const ArticleDetailPage = () => {
     location.state?.article ||
     bookmarks.find((a) => String(a.id) === String(id)) ||
     {};
+  const detailImage = useArticleImage(article);
 
   useEffect(() => {
     let active = true;
@@ -92,7 +93,7 @@ const ArticleDetailPage = () => {
           <div className="article-meta">
             <span>{article.source}</span>
             <span>{article.date}</span>
-            <span className="trust-score-detail">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 indicator`}</span>
+            <span className="trust-score-detail">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 trust`}</span>
           </div>
           {article.toneLabel && (
             <div className="tone-label-row">
@@ -108,12 +109,14 @@ const ArticleDetailPage = () => {
               ))}
             </div>
           )}
-          {article.image && !imageError ? (
+          {detailImage.src ? (
             <img
-              src={article.image}
+              src={detailImage.src}
               alt={article.title}
               className="article-image-detail"
-              onError={() => setImageError(true)}
+              ref={detailImage.ref}
+              onError={detailImage.onError}
+              onLoad={detailImage.onLoad}
             />
           ) : (
             <div className="article-image-detail article-image-placeholder">

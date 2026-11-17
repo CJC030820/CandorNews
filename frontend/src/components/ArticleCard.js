@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import ShareMenu from './ShareMenu';
+import { useArticleImage } from '../utils/articleImage';
 import './ArticleCard.css';
 
 const ArticleCard = ({ article }) => {
   const navigate = useNavigate();
-  const [imageSource, setImageSource] = useState(article.image);
-  const [imageError, setImageError] = useState(!article.image);
+  const { src: imageSource, ref: imageRef, onError: handleImageError, onLoad: handleImageLoad } = useArticleImage(article);
   const [showExpandedSummary, setShowExpandedSummary] = useState(false);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { isRead } = useReadArticles();
@@ -20,16 +20,6 @@ const ArticleCard = ({ article }) => {
     sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     navigate(`/article/${article.id}`, { state: { article } });
-  };
-
-  const handleImageError = () => {
-    // Try fallback image if available
-    if (article.fallbackImage && imageSource === article.image) {
-      setImageSource(article.fallbackImage);
-    } else {
-      // If fallback also fails, show placeholder
-      setImageError(true);
-    }
   };
 
   const handleBookmarkClick = (e) => {
@@ -49,12 +39,13 @@ const ArticleCard = ({ article }) => {
 
   return (
     <div className="article-card" onClick={handleClick}>
-      <div className="article-image">
-        {!imageError ? (
+      <div className="article-image" ref={imageRef}>
+        {imageSource ? (
           <img 
             src={imageSource} 
             alt={article.title}
             onError={handleImageError}
+            onLoad={handleImageLoad}
             loading="lazy"
           />
         ) : (
@@ -73,7 +64,7 @@ const ArticleCard = ({ article }) => {
         <div className="card-share-wrapper" onClick={(e) => e.stopPropagation()}>
           <ShareMenu article={article} variant="icon" />
         </div>
-        <span className="trust-score">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 indicator`}</span>
+        <span className="trust-score">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 trust`}</span>
         <div className="category-badges">
           {(article.categories && article.categories.length > 0 ? article.categories : [article.category])
             .filter(Boolean)
@@ -122,7 +113,7 @@ const ArticleCard = ({ article }) => {
             <div className="expanded-summary-meta">
               <span className="expanded-source">{article.source}</span>
               <span className="expanded-date">{article.date}</span>
-              <span className="expanded-trust">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 indicator`}</span>
+              <span className="expanded-trust">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 trust`}</span>
             </div>
             <div className="expanded-summary-body">
               {article.content || article.description}

@@ -4,9 +4,11 @@ from urllib.parse import urlparse
 import re
 from app.services.storage import storage_service
 
-SCORE_VERSION = "independent-publishers-v2"
-WEIGHTS = {"source_reputation": .40, "corroboration": .45,
-           "metadata_completeness": .05, "sentiment_neutrality": .10}
+SCORE_VERSION = "independent-publishers-v3"
+# Other-publisher coverage is a supporting signal only (20%); most of the
+# score comes from the publisher's own reputation and the article itself.
+WEIGHTS = {"source_reputation": .50, "corroboration": .20,
+           "metadata_completeness": .15, "sentiment_neutrality": .15}
 
 
 def publisher_domain(url):
@@ -70,7 +72,7 @@ class TrustScorerService:
                       "metadata_completeness": self.calculate_metadata_completeness(article),
                       "sentiment_neutrality": self.calculate_sentiment_neutrality(article)}
         score = round(min(95., 100 * sum(self.weights[key] * value for key, value in components.items())), 2)
-        label = "High indicator" if score >= 80 else "Moderate indicator" if score >= 60 else "Limited indicator" if score >= 40 else "Needs verification"
+        label = "High trust" if score >= 80 else "Medium trust" if score >= 60 else "Low trust" if score >= 40 else "Needs verification"
         evidence = [{"source": item.get("source") or domain, "domain": domain,
                      "url": item["url"], "title": item.get("title", ""),
                      "summary": item.get("summary") or item.get("description") or "",

@@ -12,6 +12,7 @@ from app.services.topic_classifier import TopicClassifierService
 from app.services.summarizer import SummarizerService
 from app.services.sentiment_analyzer import SentimentAnalyzerService
 from app.services.trust_scorer import TrustScorerService
+from app.services import image_cache
 from app.services.keyword_extractor import KeywordExtractorService
 from app.services.storage import storage_service
 from app.core.config import settings
@@ -234,7 +235,11 @@ class NewsWorker:
             # NewsFetcherService uses blocking requests/feedparser calls, so
             # run it in a worker thread to avoid stalling the event loop.
             loop = asyncio.get_event_loop()
-            all_articles = await loop.run_in_executor(None, self.news_fetcher.fetch_all_sources, selected_platforms)
+            # Articles already stored do not need their page re-opened to look
+            # up an image; this keeps repeated requests to publishers low.
+            known_urls = {a.url for a in await storage_service.get_latest_articles(limit=500)}
+            all_articles = await loop.run_in_executor(
+                None, self.news_fetcher.fetch_all_sources, selected_platforms, known_urls)
             stats["fetched"] = len(all_articles)
             logger.info(f"Total articles fetched: {len(all_articles)}")
 
@@ -245,11 +250,15 @@ class NewsWorker:
 
             # Process each article (skips ones already stored from prior runs)
             saved_count = 0
+            saved_images = []
             for article in unique_articles:
                 saved = await self.process_article(article)
                 if saved:
                     saved_count += 1
+                    saved_images.append(article.get("image"))
             stats["saved"] = saved_count
+            # Keep a local copy of new images while the publisher is reachable.
+            stats["images_cached"] = await loop.run_in_executor(None, image_cache.download_many, saved_images)
             stats["rescored"] = await self.rescore_recent_articles()
 
             logger.info(f"News fetch cycle completed. {saved_count} new article(s) saved.")

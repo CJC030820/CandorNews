@@ -36,7 +36,7 @@ const HelpPage = () => {
         },
         {
           question: 'What does the Trust Score mean?',
-          answer: 'The trust indicator combines configured source reputation, related coverage from other publishers, metadata and sentiment neutrality. The weighted score is capped at 95. Open an article to inspect its components and related reports. It is not an external fact check or a probability of truth.'
+          answer: 'The trust score combines configured source reputation (50%), related coverage from other publishers (20%), metadata completeness (15%) and sentiment neutrality (15%). The weighted score is capped at 95. Open an article to inspect its components and related reports. It is not an external fact check or a probability of truth.'
         },
         {
           question: 'How often is the news updated?',

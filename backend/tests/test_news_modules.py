@@ -165,7 +165,7 @@ def test_platform_selection_avoids_unselected_feeds(fetcher, monkeypatch):
     request = Mock(return_value=[{"source": "BERNAMA", "title": "City news"}])
     monkeypatch.setattr(fetcher, "fetch_from_rss", request)
     assert fetcher.fetch_all_sources([" Bernama "]) == [{"source": "BERNAMA", "title": "City news"}]
-    request.assert_called_once_with("https://bernama.test/feed")
+    request.assert_called_once_with("https://bernama.test/feed", None)
 
 
 @pytest.mark.parametrize("articles", [[], [{}], [{"title": "Missing URL"}], [{"url": "https://example.test/"}]])
@@ -269,7 +269,7 @@ async def test_missing_author_reduces_score_by_metadata_weight():
     incomplete = await scorer.calculate_trust_score({**full_article(), "author": None})
     assert complete["trust_components"]["metadata_completeness"] == 1.0
     assert incomplete["trust_components"]["metadata_completeness"] == .75
-    assert complete["trust_score"] - incomplete["trust_score"] == pytest.approx(1.25)
+    assert complete["trust_score"] - incomplete["trust_score"] == pytest.approx(3.75)
     for key in ("source_reputation", "corroboration", "sentiment_neutrality"):
         assert incomplete["trust_components"][key] == complete["trust_components"][key]
 

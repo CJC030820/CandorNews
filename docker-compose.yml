@@ -5,6 +5,8 @@ services:
       - "8080:8080"
     env_file:
       - ./backend/.env
+    volumes:
+      - image_cache:/app/image_cache
     depends_on:
       mongodb:
         condition: service_healthy
@@ -38,3 +40,4 @@ services:
 
 volumes:
   mongodb_data:
+  image_cache:

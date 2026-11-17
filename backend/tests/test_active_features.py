@@ -223,13 +223,13 @@ async def test_missing_publication_date_not_rewarded_after_rescore(monkeypatch):
     assert article.trust_components['metadata_completeness']==pytest.approx(.75)
 
 
-def test_digest_escapes_html_and_uses_indicator_language():
+def test_digest_escapes_html_and_uses_trust_language():
     result=main.email_service.build_news_digest_email('<script>user</script>',[
         {'title':'<script>title</script>','source':'<b>source</b>','url':'javascript:alert(1)',
          'description':'<img src=x onerror=alert(1)>','trustScore':60}])
     assert '<script>' not in result['html'] and '<img src=x' not in result['html']
     assert 'href="javascript:' not in result['html']
-    assert '60/100 indicator' in result['html']
+    assert '60/100 trust' in result['html']
 
 
 async def test_unknown_preference_rejected(client,auth):

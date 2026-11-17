@@ -142,7 +142,7 @@ class NewsFetcherService:
             logger.error(f"Error fetching from GNews: {e}")
             return []
 
-    def fetch_from_rss(self, feed_url: str) -> List[Dict]:
+    def fetch_from_rss(self, feed_url: str, known_urls: Optional[set] = None) -> List[Dict]:
         try:
             response = requests.get(
                 feed_url,
@@ -175,7 +175,9 @@ class NewsFetcherService:
             # Many RSS feeds omit media fields even though the article page
             # exposes an Open Graph image. Resolve those images concurrently
             # so one slow publisher does not block the entire feed refresh.
-            missing_images = [article for article in articles if not article.get("image") and article.get("url")]
+            known_urls = known_urls or set()
+            missing_images = [article for article in articles
+                              if not article.get("image") and article.get("url") and article["url"] not in known_urls]
             with ThreadPoolExecutor(max_workers=min(8, max(1, len(missing_images)))) as executor:
                 futures = {
                     executor.submit(self._fetch_og_image, article["url"]): article
@@ -269,7 +271,7 @@ class NewsFetcherService:
             logger.debug(f"Could not fetch OG image for {article_url}: {e}")
             return None
 
-    def fetch_all_sources(self, selected_platforms: Optional[List[str]] = None) -> List[Dict]:
+    def fetch_all_sources(self, selected_platforms: Optional[List[str]] = None, known_urls: Optional[set] = None) -> List[Dict]:
         """Fetch news from configured sources, optionally restricted to selected platforms."""
         all_articles = []
         selected = {name.strip().lower() for name in (selected_platforms or []) if name and name.strip()}
@@ -293,7 +295,7 @@ class NewsFetcherService:
             selected_feeds = [feed.strip() for feed in settings.RSS_FEEDS.split(",") if feed.strip()]
 
         def fetch_feed(feed_url):
-            return feed_url, self.fetch_from_rss(feed_url)
+            return feed_url, self.fetch_from_rss(feed_url, known_urls)
 
         with ThreadPoolExecutor(max_workers=min(6, max(1, len(selected_feeds)))) as executor:
             futures = [executor.submit(fetch_feed, feed_url) for feed_url in selected_feeds]

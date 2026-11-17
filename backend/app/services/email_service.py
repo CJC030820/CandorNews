@@ -126,7 +126,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             text_lines.append(text_line)
             text_lines.append(f"   Source: {source}")
             if trust_score is not None:
-                text_lines.append(f"   Trust indicator: {trust_score}/100 (not a truth probability)")
+                text_lines.append(f"   Trust: {trust_score}/100 (not a truth probability)")
             if date:
                 text_lines.append(f"   Published: {date}")
             
@@ -146,7 +146,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             text_lines.append("-" * 60)
             text_lines.append("")
 
-            score_label = f'{trust_score}/100 indicator' if trust_score is not None else 'Analysis pending'
+            score_label = f'{trust_score}/100 trust' if trust_score is not None else 'Analysis pending'
             title, source, description, date = [escape(str(value)) for value in (title, source, description, date)]
             url = escape(url, quote=True) if urlparse(url).scheme in {'http', 'https'} else ''
             # Build HTML version with rich formatting

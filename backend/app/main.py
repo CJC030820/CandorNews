@@ -16,7 +16,9 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 
-from app.services import email_service
+from fastapi.responses import FileResponse
+from app.services import email_service, image_cache
+from app.services.trust_scorer import SCORE_VERSION
 from app.services.storage import storage_service
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.core.config import settings
@@ -330,7 +332,7 @@ def _article_to_feed_dict(article) -> dict:
         "source": _clean_display_text(article.source),
         "description": _clean_display_text(article.summary or article.description or ""),
         "date": date_str,
-        "trustScore": article.trust_score if article.trust_version == "independent-publishers-v2" else None,
+        "trustScore": article.trust_score if article.trust_version == SCORE_VERSION else None,
         "category": article.topic,
         "categories": categories,
         "image": article.image_url or None,
@@ -412,6 +414,24 @@ async def article_detail(article_id: str, user=Depends(get_current_user)):
     if not article or article.processing_status != "completed":
         raise HTTPException(status_code=404, detail="Article not found")
     return _article_to_feed_dict(article)
+
+
+@app.get("/api/articles/{article_id}/image")
+async def article_image(article_id: str):
+    """Serve the locally stored copy of an article's image.
+
+    Public because <img> tags cannot send the bearer token; only images of
+    stored articles are served, never arbitrary URLs."""
+    article = await storage_service.get_article_by_id(article_id)
+    if not article or article.processing_status != "completed" or not article.image_url:
+        raise HTTPException(status_code=404, detail="Image not found")
+    hit = image_cache.cached(article.image_url)
+    if not hit and await asyncio.to_thread(image_cache.download, article.image_url):
+        hit = image_cache.cached(article.image_url)
+    if not hit:
+        raise HTTPException(status_code=404, detail="Image not available")
+    path, content_type = hit
+    return FileResponse(path, media_type=content_type, headers={"Cache-Control": "public, max-age=86400"})
 
 
 # ---------------------------------------------------------------------------
