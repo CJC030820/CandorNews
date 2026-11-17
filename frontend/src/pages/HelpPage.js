@@ -284,8 +284,12 @@ const HelpPage = () => {
               </div>
               <div className="support-option">
                 <div className="support-icon">📋</div>
-                <h4>Documentation</h4>
-                <p>Visit our full documentation</p>
+                <h4>Feedback Survey</h4>
+                <p>
+                  <a href="https://forms.cloud.microsoft/r/9MubZk7syv" target="_blank" rel="noopener noreferrer">
+                    Share your feedback
+                  </a>
+                </p>
               </div>
             </div>
           </div>
