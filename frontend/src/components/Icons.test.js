@@ -23,3 +23,11 @@ test('email icon is an outlined envelope in the text colour', () => {
   expect(container.querySelector('rect')).not.toBeNull();
   expect(container.querySelector('g').getAttribute('stroke')).toBe('currentColor');
 });
+
+test('share and back icons render in the text colour', () => {
+  const { ShareIcon, BackIcon } = require('./Icons');
+  const { container } = render(<><ShareIcon /><BackIcon /></>);
+  const [share, back] = container.querySelectorAll('svg');
+  expect(share.querySelector('path').getAttribute('fill')).toBe('currentColor');
+  expect(back.querySelector('path').getAttribute('stroke')).toBe('currentColor');
+});

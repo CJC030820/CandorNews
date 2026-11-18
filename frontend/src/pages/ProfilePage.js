@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import BackToTopButton from '../components/BackToTopButton';
 import './ProfilePage.css';
-import { EditIcon, EmailIcon, UserIcon } from '../components/Icons';
+import { BackIcon, EditIcon, EmailIcon, UserIcon } from '../components/Icons';
 
 export const MAX_NOTIFICATION_TIMES = 3;
 
@@ -271,6 +271,7 @@ const ProfilePage = () => {
       <BackToTopButton />
       <div className="profile-page-wrapper">
         <button className="back-btn" onClick={() => navigate('/feed')}>
+                    <BackIcon size={20} />
                     <span className="back-btn-label">Back to Main Page</span>
         </button>
 

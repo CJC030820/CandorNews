@@ -137,14 +137,3 @@
   background: var(--border-color, #e0e0e0);
   margin: 4px 2px;
 }
-
-/* Text label instead of an icon */
-.share-toggle {
-  width: auto;
-  height: auto;
-  border-radius: 999px;
-  font-weight: 600;
-  line-height: 1.2;
-  padding: 8px 12px;
-  font-size: 12px;
-}

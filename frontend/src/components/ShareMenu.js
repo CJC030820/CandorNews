@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ShareMenu.css';
-import { EmailIcon } from './Icons';
+import { EmailIcon, ShareIcon } from './Icons';
 
 /**
  * Reusable share button + menu.
@@ -102,9 +102,9 @@ const ShareMenu = ({ article, variant = 'button' }) => {
         aria-label="Share this article"
       >
         {variant === 'icon' ? (
-          <span className="share-toggle-icon">Share</span>
+          <span className="share-toggle-icon"><ShareIcon size={16} /></span>
         ) : (
-          'Share'
+          <><ShareIcon size={16} /> Share</>
         )}
       </button>
 

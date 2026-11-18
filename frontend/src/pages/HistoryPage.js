@@ -5,7 +5,7 @@ import { useReadArticles } from '../context/ReadArticlesContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './HistoryPage.css';
 import ArticleImage from '../components/ArticleImage';
-import { HistoryIcon } from '../components/Icons';
+import { BackIcon, HistoryIcon } from '../components/Icons';
 
 const formatReadAt = (isoString) => {
   if (!isoString) return '';
@@ -68,6 +68,7 @@ const HistoryPage = () => {
       <BackToTopButton />
       <div className="history-page-wrapper">
         <button className="back-btn" onClick={() => navigate('/feed')}>
+                    <BackIcon size={20} />
                     <span className="back-btn-label">Back to Main Page</span>
         </button>
 

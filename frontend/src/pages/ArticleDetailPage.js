@@ -8,7 +8,7 @@ import ShareMenu from '../components/ShareMenu';
 import { useArticleImage } from '../utils/articleImage';
 import { ImagePlaceholder } from '../components/ArticleImage';
 import './ArticleDetailPage.css';
-import { BookmarkIcon } from '../components/Icons';
+import { BackIcon, BookmarkIcon } from '../components/Icons';
 
 const toneBadgeClass = (toneLabel) => {
   if (!toneLabel) return '';
@@ -84,6 +84,7 @@ const ArticleDetailPage = () => {
     <div className="article-detail-page">
       <div className="article-detail-wrapper">
         <button className="back-button" onClick={handleBack}>
+                    <BackIcon size={20} />
                     <span className="back-button-label">Back</span>
         </button>
         <article className="article-detail">

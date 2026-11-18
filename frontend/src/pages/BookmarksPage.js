@@ -5,7 +5,7 @@ import { useBookmarks } from '../context/BookmarkContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './BookmarksPage.css';
 import ArticleImage from '../components/ArticleImage';
-import { BookmarkIcon } from '../components/Icons';
+import { BackIcon, BookmarkIcon } from '../components/Icons';
 
 const BookmarksPage = () => {
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ const BookmarksPage = () => {
       <BackToTopButton />
       <div className="bookmarks-page-wrapper">
         <button className="back-btn" onClick={() => navigate('/feed')}>
+                    <BackIcon size={20} />
                     <span className="back-btn-label">Back to Main Page</span>
         </button>
 
