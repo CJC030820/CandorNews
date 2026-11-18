@@ -4,6 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './HistoryPage.css';
+import ArticleImage from '../components/ArticleImage';
 
 const formatReadAt = (isoString) => {
   if (!isoString) return '';
@@ -98,7 +99,7 @@ const HistoryPage = () => {
                   onClick={() => handleOpenArticle(article)}
                 >
                   <div className="history-image">
-                    <img src={article.image} alt={article.title} />
+                    <ArticleImage article={article} compact />
                   </div>
                   <div className="history-details">
                     <h3>{article.title}</h3>

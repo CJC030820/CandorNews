@@ -10,6 +10,7 @@ loopback, link-local or reserved addresses are refused, including on
 redirects, so a feed cannot make the server fetch internal resources.
 """
 from concurrent.futures import ThreadPoolExecutor
+import glob
 import hashlib
 import ipaddress
 import logging
@@ -19,6 +20,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
+import certifi
 import requests
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,43 @@ MAX_BYTES = 5 * 1024 * 1024
 TIMEOUT = 8
 MAX_REDIRECTS = 3
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; CandorNewsBot/1.0)", "Accept": "image/*"}
+# Retry newly collected articles' images that are still missing (per cycle).
+BACKFILL_LIMIT = 60
+
+
+def _ca_bundle() -> str:
+    """Standard trusted roots plus intermediate certificates some publishers
+    forget to send (see app/certs). Verification stays fully enabled."""
+    extra = sorted(glob.glob(str(Path(__file__).resolve().parents[1] / "certs" / "*.pem")))
+    if not extra:
+        return certifi.where()
+    bundle = Path(os.getenv("IMAGE_CA_BUNDLE", Path(__file__).resolve().parents[2] / ".image-ca-bundle.pem"))
+    try:
+        parts = [Path(certifi.where()).read_text(encoding="utf-8")] + [Path(p).read_text(encoding="utf-8") for p in extra]
+        bundle.write_text("\n".join(parts), encoding="utf-8")
+        return str(bundle)
+    except OSError:
+        return certifi.where()
+
+
+CA_BUNDLE = _ca_bundle()
+
+
+def source_candidates(url: str) -> list:
+    """Addresses to try for an image. Bernama publishes og:image links on
+    www.bernama.com that return 404; the same photo is served by
+    web14.bernama.com (with or without the "-medium" size suffix)."""
+    candidates = []
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return [url]
+    host = (parsed.hostname or "").lower()
+    if host.endswith("bernama.com") and parsed.path.startswith("/storage/photos/"):
+        for path in dict.fromkeys([parsed.path, parsed.path.replace("-medium", "")]):
+            candidates.append(f"https://web14.bernama.com{path}")
+    candidates.append(url)
+    return list(dict.fromkeys(candidates))
 
 
 def _key(url: str) -> str:
@@ -61,15 +100,31 @@ def cached(url: Optional[str]) -> Optional[Tuple[Path, str]]:
 
 
 def download(url: Optional[str]) -> bool:
-    """Download one image into the cache. Returns True when a copy is stored."""
+    """Download one image into the cache (stored under the article's image
+    URL). Tries the publisher's working image address first, then the
+    original. Returns True when a copy is stored."""
     if not url or cached(url):
         return bool(url)
-    current = url
+    for candidate in source_candidates(url):
+        for _attempt in range(2):  # one retry for a slow/timed-out server
+            result = _fetch(candidate, url)
+            if result is not None:
+                if result:
+                    return True
+                break
+    return False
+
+
+def _fetch(source: str, key_url: str) -> Optional[bool]:
+    """True = stored; False = this address does not serve an image;
+    None = network error worth one retry."""
+    current = source
     try:
         for _ in range(MAX_REDIRECTS + 1):
             if not is_public_http_url(current):
                 return False
-            with requests.get(current, headers=HEADERS, timeout=TIMEOUT, stream=True, allow_redirects=False) as response:
+            with requests.get(current, headers=HEADERS, timeout=TIMEOUT, stream=True,
+                              allow_redirects=False, verify=CA_BUNDLE) as response:
                 if response.is_redirect or response.is_permanent_redirect:
                     current = urljoin(current, response.headers.get("Location", ""))
                     continue
@@ -82,15 +137,18 @@ def download(url: Optional[str]) -> bool:
                     if len(data) > MAX_BYTES:
                         return False
                 CACHE_DIR.mkdir(parents=True, exist_ok=True)
-                path = CACHE_DIR / _key(url)
+                path = CACHE_DIR / _key(key_url)
                 tmp = path.with_suffix(".part")
                 tmp.write_bytes(bytes(data))
                 path.with_suffix(".type").write_text(content_type, encoding="utf-8")
                 os.replace(tmp, path)
                 return True
         return False
-    except Exception as exc:  # network problems must never break collection
-        logger.debug(f"Could not cache image {url}: {exc}")
+    except requests.RequestException as exc:  # timeouts, resets: retry once
+        logger.debug(f"Could not fetch image {source}: {exc}")
+        return None
+    except Exception as exc:  # anything else must never break collection
+        logger.debug(f"Could not cache image {source}: {exc}")
         return False
 
 

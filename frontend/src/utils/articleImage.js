@@ -13,11 +13,12 @@ export const IMAGE_TIMEOUT_MS = 8000;
 // the browser or the link breaks).
 export const articleImageSources = (article = {}) => {
   if (!article.image) return [];
-  const sources = [article.image];
-  if (article.id !== undefined && article.id !== null) {
-    sources.push(`${API_URL}/api/articles/${encodeURIComponent(article.id)}/image`);
-  }
-  return sources;
+  const hasId = article.id !== undefined && article.id !== null;
+  const stored = hasId ? `${API_URL}/api/articles/${encodeURIComponent(article.id)}/image` : null;
+  // Prefer our own stored copy when the server has one: it does not depend on
+  // the publisher being reachable or allowing the browser to load it.
+  const order = article.imageStored ? [stored, article.image] : [article.image, stored];
+  return order.filter(Boolean);
 };
 
 // Returns the current image URL (or null for the placeholder) plus onLoad and

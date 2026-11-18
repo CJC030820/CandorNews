@@ -1,0 +1,52 @@
+.article-image-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.article-image-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-placeholder-card {
+  width: 100%;
+  height: 100%;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--gradient-1, #2563eb) 0%, var(--gradient-2, #1d4ed8) 100%);
+}
+
+.image-placeholder-card .placeholder-icon {
+  font-size: 40px;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.image-placeholder-card .placeholder-source {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+.image-placeholder-card .placeholder-category {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.image-placeholder-card.compact .placeholder-icon {
+  font-size: 22px;
+}
+
+.image-placeholder-card.compact .placeholder-source {
+  font-size: 11px;
+}

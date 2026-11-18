@@ -4,6 +4,7 @@ import { useBookmarks } from '../context/BookmarkContext';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import ShareMenu from './ShareMenu';
 import { useArticleImage } from '../utils/articleImage';
+import { ImagePlaceholder } from './ArticleImage';
 import './ArticleCard.css';
 
 const ArticleCard = ({ article }) => {
@@ -49,9 +50,7 @@ const ArticleCard = ({ article }) => {
             loading="lazy"
           />
         ) : (
-          <div className="image-placeholder">
-            <span className="placeholder-icon">📰</span>
-          </div>
+          <ImagePlaceholder article={article} />
         )}
         <button
           className={`bookmark-toggle ${bookmarked ? 'active' : ''}`}

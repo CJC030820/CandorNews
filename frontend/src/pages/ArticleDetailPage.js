@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import ArticleAnalysis from '../components/ArticleAnalysis';
 import ShareMenu from '../components/ShareMenu';
 import { useArticleImage } from '../utils/articleImage';
+import { ImagePlaceholder } from '../components/ArticleImage';
 import './ArticleDetailPage.css';
 
 const toneBadgeClass = (toneLabel) => {
@@ -125,7 +126,7 @@ const ArticleDetailPage = () => {
             />
           ) : (
             <div className="article-image-detail article-image-placeholder">
-              <span className="article-image-placeholder-icon">📰</span>
+              <ImagePlaceholder article={article} />
             </div>
           )}
           <div className="article-body">

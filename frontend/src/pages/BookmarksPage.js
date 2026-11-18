@@ -4,6 +4,7 @@ import PageWrapper from '../components/PageWrapper';
 import { useBookmarks } from '../context/BookmarkContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './BookmarksPage.css';
+import ArticleImage from '../components/ArticleImage';
 
 const BookmarksPage = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const BookmarksPage = () => {
                   onClick={() => handleOpenArticle(article)}
                 >
                   <div className="bookmark-image">
-                    <img src={article.image} alt={article.title} />
+                    <ArticleImage article={article} />
                     {article.trustScore !== undefined && (
                       <span className="bookmark-trust-score">{article.trustScore}% Trust</span>
                     )}

@@ -259,6 +259,11 @@ class NewsWorker:
             stats["saved"] = saved_count
             # Keep a local copy of new images while the publisher is reachable.
             stats["images_cached"] = await loop.run_in_executor(None, image_cache.download_many, saved_images)
+            # Self-repair: retry recent articles whose image is still missing.
+            recent = await storage_service.get_latest_articles(limit=500)
+            missing = [a.image_url for a in recent if a.image_url and not image_cache.cached(a.image_url)]
+            stats["images_backfilled"] = await loop.run_in_executor(
+                None, image_cache.download_many, missing[:image_cache.BACKFILL_LIMIT])
             stats["rescored"] = await self.rescore_recent_articles()
 
             logger.info(f"News fetch cycle completed. {saved_count} new article(s) saved.")

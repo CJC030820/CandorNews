@@ -348,6 +348,7 @@ def _article_to_feed_dict(article) -> dict:
         "category": article.topic,
         "categories": categories,
         "image": article.image_url or None,
+        "imageStored": bool(article.image_url and image_cache.cached(article.image_url)),
         "url": article.url,
         "author": article.author,
         "sentiment": article.sentiment,

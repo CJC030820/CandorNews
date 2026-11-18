@@ -51,3 +51,6 @@ backend/image_cache/
 
 # Production secrets (server only)
 deploy/production.env
+
+# Generated CA bundle for image downloads
+backend/.image-ca-bundle.pem

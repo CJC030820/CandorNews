@@ -24,7 +24,7 @@ test('falls back to the stored image copy, then to the placeholder',()=>{
   expect(img().getAttribute('src')).toBe('http://localhost:8080/api/articles/42/image');
   fireEvent.error(img());
   expect(img()).toBeNull();
-  expect(container.querySelector('.image-placeholder')).not.toBeNull();
+  expect(container.querySelector('.image-placeholder-card')).not.toBeNull();
 });
 test('shows the placeholder when an article has no image',()=>{
   const {container}=render(<MemoryRouter><ArticleCard article={article}/></MemoryRouter>);
