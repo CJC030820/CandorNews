@@ -62,8 +62,16 @@
 }
 
 .profile-avatar {
-  font-size: 80px;
-  margin-bottom: 20px;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
+  box-shadow: 0 4px 12px var(--shadow);
 }
 
 .profile-info h1 {
@@ -82,6 +90,7 @@
 
 .edit-name-btn {
   background: none;
+  color: var(--text-secondary);
   border: none;
   font-size: 16px;
   cursor: pointer;
@@ -761,4 +770,9 @@
   .profile-container {
     padding-top: 48px;
   }
+}
+
+.email-time-remove {
+  font-size: 13px;
+  font-weight: 600;
 }

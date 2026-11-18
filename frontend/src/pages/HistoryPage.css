@@ -275,3 +275,14 @@
     padding-top: 48px;
   }
 }
+
+/* Text label instead of an icon */
+.history-remove-btn {
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 6px 12px;
+  font-size: 13px;
+}

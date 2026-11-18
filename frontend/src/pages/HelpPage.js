@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './HelpPage.css';
+import { EmailIcon } from '../components/Icons';
 
 const HelpPage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
@@ -65,7 +66,7 @@ const HelpPage = () => {
         },
         {
           question: 'How do I bookmark an article?',
-          answer: 'Click the bookmark icon (♡) on any article card. Your bookmarks are saved to your account and you can view them anytime in the Bookmarks section.'
+          answer: 'Click the bookmark button on any article card. Your bookmarks are saved to your account and you can view them anytime in the Bookmarks section.'
         }
       ]
     },
@@ -189,7 +190,6 @@ const HelpPage = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
             />
-            <span className="search-icon">🔍</span>
           </div>
           {searchQuery && (
             <p className="search-results-info">
@@ -204,22 +204,18 @@ const HelpPage = () => {
             <h2>Quick Links</h2>
             <div className="quick-links-grid">
               <div className="quick-link-card">
-                <div className="quick-link-icon">🚀</div>
                 <h3>Getting Started</h3>
                 <p>New to News Intelligence? Learn the basics</p>
               </div>
               <div className="quick-link-card">
-                <div className="quick-link-icon">📰</div>
                 <h3>News Feed</h3>
                 <p>Understand how to use your personalized feed</p>
               </div>
               <div className="quick-link-card">
-                <div className="quick-link-icon">📧</div>
                 <h3>Notifications</h3>
                 <p>Set up email digests and alerts</p>
               </div>
               <div className="quick-link-card">
-                <div className="quick-link-icon">🔒</div>
                 <h3>Security</h3>
                 <p>Learn about your privacy and data</p>
               </div>
@@ -273,12 +269,11 @@ const HelpPage = () => {
             <p>Our support team is here to help. You can reach out to us with any questions or issues.</p>
             <div className="support-options">
               <div className="support-option">
-                <div className="support-icon">📧</div>
+                <div className="support-icon"><EmailIcon size={36} /></div>
                 <h4>Email Support</h4>
                 <p><a href="mailto:angrybird4408@gmail.com">angrybird4408@gmail.com</a></p>
               </div>
               <div className="support-option">
-                <div className="support-icon">📱</div>
                 <h4>WhatsApp</h4>
                 <p>
                   <a href="https://wa.me/601155553986" target="_blank" rel="noopener noreferrer">
@@ -287,7 +282,6 @@ const HelpPage = () => {
                 </p>
               </div>
               <div className="support-option">
-                <div className="support-icon">📋</div>
                 <h4>Feedback Survey</h4>
                 <p>
                   <a href="https://forms.cloud.microsoft/r/9MubZk7syv" target="_blank" rel="noopener noreferrer">

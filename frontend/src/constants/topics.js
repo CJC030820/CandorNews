@@ -13,17 +13,4 @@ export const REMOVED_TOPICS = new Set([
 export const normalizeTopics = (topics = []) => [...new Set(topics)]
   .filter((topic) => TOPICS.includes(topic) && !REMOVED_TOPICS.has(topic));
 
-export const TOPIC_EMOJIS = {
-  'Politics': '🏛️',
-  'Business': '💼',
-  'Health': '🏥',
-  'Sports': '🏆',
-  'Entertainment': '🎬',
-  'Technology': '💻',
-  'AI': '🤖',
-  'Finance': '💰',
-  'Crime': '🚨',
-  'Local Malaysia News': '🇲🇾'
-};
 
-export const getTopicEmoji = (topic) => TOPIC_EMOJIS[topic] || '📰';

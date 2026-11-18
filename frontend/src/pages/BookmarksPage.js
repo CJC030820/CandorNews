@@ -5,6 +5,7 @@ import { useBookmarks } from '../context/BookmarkContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './BookmarksPage.css';
 import ArticleImage from '../components/ArticleImage';
+import { BookmarkIcon } from '../components/Icons';
 
 const BookmarksPage = () => {
   const navigate = useNavigate();
@@ -25,12 +26,11 @@ const BookmarksPage = () => {
       <BackToTopButton />
       <div className="bookmarks-page-wrapper">
         <button className="back-btn" onClick={() => navigate('/feed')}>
-          <span className="back-btn-icon">←</span>
-          <span className="back-btn-label">Back to Main Page</span>
+                    <span className="back-btn-label">Back to Main Page</span>
         </button>
 
         <div className="bookmarks-header">
-          <h1>📑 My Bookmarks</h1>
+          <h1><BookmarkIcon filled size={28} /> My Bookmarks</h1>
           {bookmarks.length > 0 && (
             <p className="bookmarks-count">{bookmarks.length} article{bookmarks.length !== 1 ? 's' : ''} saved</p>
           )}
@@ -57,14 +57,14 @@ const BookmarksPage = () => {
                     className="remove-btn"
                     onClick={(e) => handleRemove(e, article.id)}
                   >
-                    🗑️ Remove
+                    Remove
                   </button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="empty-state">
-              <span className="empty-icon">📭</span>
+              <span className="empty-icon"><BookmarkIcon size={56} /></span>
               <p>No bookmarks yet. Start bookmarking articles!</p>
               <button className="browse-btn" onClick={() => navigate('/feed')}>
                 Browse News Feed

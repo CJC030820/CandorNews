@@ -5,6 +5,7 @@ import { useReadArticles } from '../context/ReadArticlesContext';
 import BackToTopButton from '../components/BackToTopButton';
 import './HistoryPage.css';
 import ArticleImage from '../components/ArticleImage';
+import { HistoryIcon } from '../components/Icons';
 
 const formatReadAt = (isoString) => {
   if (!isoString) return '';
@@ -67,14 +68,13 @@ const HistoryPage = () => {
       <BackToTopButton />
       <div className="history-page-wrapper">
         <button className="back-btn" onClick={() => navigate('/feed')}>
-          <span className="back-btn-icon">←</span>
-          <span className="back-btn-label">Back to Main Page</span>
+                    <span className="back-btn-label">Back to Main Page</span>
         </button>
 
         <div className="history-header">
           <div className="history-title-row">
             <div>
-              <h1>🕘 Reading History</h1>
+              <h1><HistoryIcon size={28} /> Reading History</h1>
               {history.length > 0 && (
                 <p className="history-count">
                   {history.length} article{history.length !== 1 ? 's' : ''} read
@@ -83,7 +83,7 @@ const HistoryPage = () => {
             </div>
             {history.length > 0 && (
               <button className="clear-history-btn" onClick={handleClearAll}>
-                🗑️ Clear All
+                Clear All
               </button>
             )}
           </div>
@@ -110,9 +110,9 @@ const HistoryPage = () => {
                       )}
                     </p>
                     <p className="history-read-at" title={formatExactDateTime(article.readAt)}>
-                      👁️ Viewed {formatReadAt(article.readAt)}
+                      Viewed {formatReadAt(article.readAt)}
                     </p>
-                    <p className="history-read-at-exact">📅 {formatExactDateTime(article.readAt)}</p>
+                    <p className="history-read-at-exact">{formatExactDateTime(article.readAt)}</p>
                   </div>
                   <button
                     className="history-remove-btn"
@@ -120,14 +120,14 @@ const HistoryPage = () => {
                     title="Remove from history"
                     aria-label="Remove from history"
                   >
-                    ✕
+                    Remove
                   </button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="empty-state">
-              <span className="empty-icon">🕘</span>
+              <span className="empty-icon"><HistoryIcon size={56} /></span>
               <p>No reading history yet. Articles you open will show up here.</p>
               <button className="browse-btn" onClick={() => navigate('/feed')}>
                 Browse News Feed

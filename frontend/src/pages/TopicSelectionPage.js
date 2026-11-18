@@ -44,7 +44,7 @@ const TopicSelectionPage = () => {
     <div className="topic-selection-container">
       <div className="topic-selection-box">
         <div className="topic-header">
-          <h1><span className="heading-icon">🎯</span> Select Your Interests</h1>
+          <h1>Select Your Interests</h1>
           <p>Choose topics you'd like to read about</p>
         </div>
 
@@ -55,9 +55,6 @@ const TopicSelectionPage = () => {
               className={`topic-button ${selectedTopics.includes(topic) ? 'selected' : ''}`}
               onClick={() => handleToggleTopic(topic)}
             >
-              <span className="topic-checkbox">
-                {selectedTopics.includes(topic) ? '✓' : '+'}
-              </span>
               <span className="topic-label">{topic}</span>
             </button>
           ))}
@@ -73,9 +70,9 @@ const TopicSelectionPage = () => {
             disabled={loading || selectedTopics.length === 0}
           >
             {loading ? (
-              <><span className="btn-icon">⏳</span> Saving...</>
+              <>Saving...</>
             ) : (
-              <><span className="btn-icon">✨</span> Continue to Feed</>
+              <>Continue to Feed</>
             )}
           </button>
         </div>

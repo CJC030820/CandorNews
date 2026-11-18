@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { TOPICS, getTopicEmoji, normalizeTopics } from '../constants/topics';
+import { TOPICS, normalizeTopics } from '../constants/topics';
 import './SuggestionPanel.css';
+import { EditIcon } from './Icons';
 
 const SuggestionPanel = ({ onSaved }) => {
   const { selectedTopics, updatePreferences } = useAuth();
@@ -45,11 +46,11 @@ const SuggestionPanel = ({ onSaved }) => {
     <div className="suggestion-panel">
       <div className="suggestion-header-row">
         <div className="suggestion-header">
-          <h3><span className="heading-icon">🎯</span> Your Interests</h3>
+          <h3>Your Interests</h3>
           <p>{selectedTopics.length ? '"News For You" shows the latest articles in these interests.' : 'No interests selected yet; "News For You" shows all news.'}</p>
         </div>
         <button className="edit-topics-btn" onClick={handleStartEdit} title="Edit interests">
-          <span className="btn-icon">✏️</span> Edit
+          <span className="btn-icon"><EditIcon size={16} /></span> Edit
         </button>
       </div>
 
@@ -71,7 +72,6 @@ const SuggestionPanel = ({ onSaved }) => {
                 className={`topic-editor-chip ${draftTopics.includes(topic) ? 'selected' : ''}`}
                 onClick={() => handleToggleTopic(topic)}
               >
-                <span className="tag-emoji">{getTopicEmoji(topic)}</span>
                 <span className="tag-label">{topic}</span>
               </button>
             ))}
@@ -79,10 +79,10 @@ const SuggestionPanel = ({ onSaved }) => {
           {error && <p className="suggestion-error">{error}</p>}
           <div className="topic-editor-actions">
             <button className="topic-editor-save" onClick={handleSave} disabled={saving || draftTopics.length === 0} title={draftTopics.length === 0 ? 'Select at least one topic' : 'Save changes'}>
-              <span className="btn-icon">✓</span> {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
             <button className="topic-editor-cancel" onClick={() => setIsEditing(false)} disabled={saving}>
-              <span className="btn-icon">✕</span> Cancel
+              Cancel
             </button>
           </div>
         </>
@@ -91,7 +91,6 @@ const SuggestionPanel = ({ onSaved }) => {
           <div className="suggestion-tags">
             {selectedTopics.map((topic, index) => (
               <span key={`${topic}-${index}`} className="suggestion-tag">
-                <span className="tag-emoji">{getTopicEmoji(topic)}</span>
                 <span className="tag-label">{topic}</span>
               </span>
             ))}

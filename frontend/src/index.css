@@ -73,3 +73,20 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(0, 0, 0, 0.5);
 }
+
+/* SVG icons (components/Icons.js) sit on the text line and use its colour. */
+.app-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -0.2em;
+}
+
+h1 .app-icon {
+  vertical-align: -0.15em;
+  margin-right: 4px;
+}
+
+h2 .app-icon {
+  vertical-align: -0.15em;
+  margin-right: 4px;
+}

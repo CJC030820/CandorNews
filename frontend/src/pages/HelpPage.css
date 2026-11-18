@@ -411,3 +411,8 @@
 .support-option a:hover {
   text-decoration: underline;
 }
+
+.support-icon {
+  color: var(--accent-color);
+  line-height: 1;
+}

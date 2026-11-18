@@ -42,7 +42,7 @@ const LoginPage = () => {
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <h1>📰 CandorNews</h1>
+          <h1>CandorNews</h1>
           <p>Trusted Malaysia English News</p>
         </div>
         

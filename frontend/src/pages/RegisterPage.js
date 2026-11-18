@@ -55,7 +55,7 @@ const RegisterPage = () => {
     <div className="register-container">
       <div className="register-box">
         <div className="register-header">
-          <h1>📰 CandorNews</h1>
+          <h1>CandorNews</h1>
           <p>Create Your Account</p>
         </div>
 

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import BackToTopButton from '../components/BackToTopButton';
 import './ProfilePage.css';
+import { EditIcon, EmailIcon, UserIcon } from '../components/Icons';
 
 export const MAX_NOTIFICATION_TIMES = 3;
 
@@ -212,7 +213,7 @@ const ProfilePage = () => {
       const updated = await confirmEmailVerification(verificationCode.trim());
       setEmailVerified(Boolean(updated.email_verified));
       setVerificationCode('');
-      setEmailStatusMessage({ type: 'success', text: '✅ Email verified. You will now receive digests at your delivery times.' });
+      setEmailStatusMessage({ type: 'success', text: 'Email verified. You will now receive digests at your delivery times.' });
     } catch (err) {
       setEmailStatusMessage({ type: 'error', text: errorText(err, 'Verification failed. Please try again.') });
     } finally {
@@ -225,7 +226,7 @@ const ProfilePage = () => {
     setSendingEmailNow(true);
     try {
       await sendEmailTest();
-      setEmailStatusMessage({ type: 'success', text: '✅ Notification email sent! Check your inbox.' });
+      setEmailStatusMessage({ type: 'success', text: 'Notification email sent! Check your inbox.' });
     } catch (err) {
       setEmailStatusMessage({ type: 'error', text: errorText(err, 'Failed to send notification email.') });
     } finally {
@@ -270,13 +271,12 @@ const ProfilePage = () => {
       <BackToTopButton />
       <div className="profile-page-wrapper">
         <button className="back-btn" onClick={() => navigate('/feed')}>
-          <span className="back-btn-icon">←</span>
-          <span className="back-btn-label">Back to Main Page</span>
+                    <span className="back-btn-label">Back to Main Page</span>
         </button>
 
         <div className="profile-container">
           <div className="profile-card">
-            <div className="profile-avatar">👤</div>
+            <div className="profile-avatar"><UserIcon size={44} /></div>
             <div className="profile-info">
               {isEditingName ? (
                 <div className="name-edit-group">
@@ -296,14 +296,14 @@ const ProfilePage = () => {
                       onClick={handleSaveName}
                       disabled={savingName || !nameInput.trim()}
                     >
-                      {savingName ? 'Saving...' : '✓ Save'}
+                      {savingName ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       className="name-cancel-btn"
                       onClick={handleCancelEditName}
                       disabled={savingName}
                     >
-                      ✕ Cancel
+                      Cancel
                     </button>
                   </div>
                   {nameError && <p className="name-error">{nameError}</p>}
@@ -317,7 +317,7 @@ const ProfilePage = () => {
                     title="Edit name"
                     aria-label="Edit name"
                   >
-                    ✏️
+                    <EditIcon size={18} />
                   </button>
                 </h1>
               )}
@@ -362,7 +362,7 @@ const ProfilePage = () => {
           </div>
 
           <div className="profile-section">
-            <h2>✉️ Email Notifications</h2>
+            <h2><EmailIcon size={22} /> Email Notifications</h2>
 
             {!emailVerified && (
               <div className="email-verify-box">
@@ -434,7 +434,7 @@ const ProfilePage = () => {
                       aria-label={`Remove delivery time ${index + 1}`}
                       title={draftTimes.length <= 1 ? 'At least one time is required' : 'Remove this time'}
                     >
-                      ✕
+                      Remove
                     </button>
                   </div>
                 ))}
@@ -465,7 +465,7 @@ const ProfilePage = () => {
               disabled={sendingEmailNow || !emailVerified}
               title={emailVerified ? 'Send a digest to your email now' : 'Verify your email address first'}
             >
-              {sendingEmailNow ? 'Sending...' : '📨 Send Notification Now'}
+              {sendingEmailNow ? 'Sending...' : 'Send Notification Now'}
             </button>
 
             {emailStatusMessage && (
@@ -478,13 +478,13 @@ const ProfilePage = () => {
           <button className="logout-button" onClick={handleLogout}>Logout</button>
 
           <div className="danger-zone">
-            <h2>⚠️ Danger Zone</h2>
+            <h2>Danger Zone</h2>
             <p className="danger-zone-desc">
               Deleting your account is permanent and cannot be undone. All your
               profile data will be removed immediately.
             </p>
             <button className="delete-account-btn" onClick={handleOpenDeleteModal}>
-              🗑️ Delete Account
+              Delete Account
             </button>
           </div>
         </div>
@@ -493,7 +493,7 @@ const ProfilePage = () => {
       {showDeleteModal && (
         <div className="delete-modal-overlay" onClick={handleCloseDeleteModal}>
           <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>🗑️ Delete Account</h3>
+            <h3>Delete Account</h3>
             <p>
               This will <strong>permanently delete</strong> your account
               (<strong>{user?.email}</strong>) and cannot be undone. Enter your

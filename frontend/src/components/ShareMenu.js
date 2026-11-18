@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ShareMenu.css';
+import { EmailIcon } from './Icons';
 
 /**
  * Reusable share button + menu.
@@ -76,22 +77,18 @@ const ShareMenu = ({ article, variant = 'button' }) => {
   const shareLinks = [
     {
       name: 'Twitter / X',
-      icon: '🐦',
       url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`
     },
     {
       name: 'Facebook',
-      icon: '📘',
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
     },
     {
       name: 'LinkedIn',
-      icon: '💼',
       url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
     },
     {
       name: 'Email',
-      icon: '✉️',
       url: `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareMessage)}`
     }
   ];
@@ -105,9 +102,9 @@ const ShareMenu = ({ article, variant = 'button' }) => {
         aria-label="Share this article"
       >
         {variant === 'icon' ? (
-          <span className="share-toggle-icon">📤</span>
+          <span className="share-toggle-icon">Share</span>
         ) : (
-          '📤 Share'
+          'Share'
         )}
       </button>
 
@@ -117,7 +114,6 @@ const ShareMenu = ({ article, variant = 'button' }) => {
             className="share-option copy-link"
             onClick={(e) => handleCopyLink(e, shareMessage, 'site')}
           >
-            <span className="share-option-icon">{copiedKey === 'site' ? '✅' : '🔗'}</span>
             {copiedKey === 'site' ? 'Copied!' : 'Copy title and link'}
           </button>
 
@@ -128,7 +124,7 @@ const ShareMenu = ({ article, variant = 'button' }) => {
               className="share-option"
               onClick={(e) => openShareWindow(e, link.url)}
             >
-              <span className="share-option-icon">{link.icon}</span>
+              {link.name === 'Email' && <EmailIcon size={16} />}
               {link.name}
             </button>
           ))}

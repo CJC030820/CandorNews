@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import './DarkModeToggle.css';
+import { MoonIcon, SunIcon } from './Icons';
 
 const DarkModeToggle = () => {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -30,7 +31,7 @@ const DarkModeToggle = () => {
       type="button"
     >
       <span className="theme-icon">
-        {isDarkMode ? '☀️' : '🌙'}
+        {isDarkMode ? <SunIcon /> : <MoonIcon />}
       </span>
     </button>
   );

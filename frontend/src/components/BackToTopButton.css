@@ -53,3 +53,9 @@
     font-size: 18px;
   }
 }
+
+/* Text label instead of an arrow */
+.back-to-top-btn,
+.back-to-top-btn:hover {
+  font-size: 14px;
+}

@@ -17,7 +17,6 @@ export const ImagePlaceholder = ({ article = {}, compact = false }) => {
   const category = (article.categories && article.categories[0]) || article.category;
   return (
     <div className={`image-placeholder-card${compact ? ' compact' : ''}`} role="img" aria-label={`${name} news`}>
-      <span className="placeholder-icon" aria-hidden="true">📰</span>
       <span className="placeholder-source">{name}</span>
       {!compact && category && <span className="placeholder-category">{category}</span>}
     </div>

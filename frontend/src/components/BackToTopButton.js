@@ -43,7 +43,7 @@ const BackToTopButton = () => {
         display: isVisible ? 'flex' : 'none'
       }}
     >
-      ↑
+      Top
     </button>
   );
 };

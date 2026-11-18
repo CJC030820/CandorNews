@@ -7,19 +7,8 @@ import SuggestionPanel from '../components/SuggestionPanel';
 import BackToTopButton from '../components/BackToTopButton';
 import { useTrustedPlatforms } from '../context/TrustedPlatformsContext';
 import './FeedPage.css';
+import { RefreshIcon } from '../components/Icons';
 
-const CATEGORY_ICONS = {
-  'Local Malaysia News': '🇲🇾',
-  'Politics': '🏛️',
-  'Business': '💼',
-  'Health': '🏥',
-  'Technology': '💻',
-  'AI': '🤖',
-  'Entertainment': '🎬',
-  'Finance': '💰',
-  'Sports': '🏆',
-  'Crime': '🚨'
-};
 
 const formatRelativeDate = (isoString, now = Date.now()) => {
   if (!isoString) return '';
@@ -229,19 +218,18 @@ useEffect(() => {
       <BackToTopButton />
       {pendingCount > 0 && (
         <button type="button" className="new-articles-pill" onClick={showPendingArticles}>
-          ↑ {pendingCount} new article{pendingCount === 1 ? '' : 's'}
+          {pendingCount} new article{pendingCount === 1 ? '' : 's'}
         </button>
       )}
       <div className="feed-wrapper">
         <div className="sidebar">
           <div className="sidebar-section">
-            <h3><span className="section-icon">📂</span> Categories</h3>
+            <h3>Categories</h3>
             <div className="sidebar-items">
               <button
                 className={`sidebar-item ${filter === 'all' ? 'active' : ''}`}
                 onClick={() => setFilter('all')}
               >
-                <span className="icon">📰</span>
                 <span className="text">News For You</span>
               </button>
               {availableCategories.map(category => (
@@ -250,7 +238,6 @@ useEffect(() => {
                   className={`sidebar-item ${filter === category ? 'active' : ''}`}
                   onClick={() => setFilter(category)}
                 >
-                  <span className="icon">{CATEGORY_ICONS[category] || '📰'}</span>
                   <span className="text">{category}</span>
                 </button>
               ))}
@@ -259,13 +246,13 @@ useEffect(() => {
 
           <div className="sidebar-section">
             <div className="sidebar-section-header">
-              <h3><span className="section-icon">📡</span> Trusted Platforms</h3>
+              <h3>Trusted Platforms</h3>
               <button
                 className="manage-platforms-btn"
                 onClick={() => setIsManagingPlatforms((prev) => !prev)}
                 title={isManagingPlatforms ? 'Done managing' : 'Manage platforms'}
               >
-                {isManagingPlatforms ? '✓ Done' : '⚙️ Manage'}
+                {isManagingPlatforms ? 'Done' : 'Manage'}
               </button>
             </div>
 
@@ -281,7 +268,7 @@ useEffect(() => {
                           className={`follow-toggle-btn ${following ? 'following' : ''}`}
                           onClick={() => toggleFollow(platform.id)}
                         >
-                          {following ? '✓ Following' : '+ Follow'}
+                          {following ? 'Following' : 'Follow'}
                         </button>
                       </>
                     ) : following ? (
@@ -300,7 +287,7 @@ useEffect(() => {
 
               {!isManagingPlatforms && platforms.every((p) => !isFollowing(p.id)) && (
                 <p className="no-platforms-message">
-                  You're not following any platforms yet. Click "⚙️ Manage" to follow some.
+                  You're not following any platforms yet. Click "Manage" to follow some.
                 </p>
               )}
             </div>
@@ -311,7 +298,7 @@ useEffect(() => {
                 className="reset-platforms-btn"
                 onClick={handleResetPlatforms}
               >
-                ↺ Reset to Defaults
+                Reset to Defaults
               </button>
             )}
           </div>
@@ -335,7 +322,7 @@ useEffect(() => {
                       Fetching...
                     </>
                   ) : (
-                    <>🔄 Refresh News</>
+                    <><RefreshIcon size={18} /> Refresh News</>
                   )}
                 </button>
                 
@@ -350,8 +337,7 @@ useEffect(() => {
 
           {loading ? (
             <div className="feed-loading">
-              <span className="feed-loading-icon">📡</span>
-              <p>Fetching the latest news...</p>
+                            <p>Fetching the latest news...</p>
             </div>
           ) : (
             <div className="articles-grid">
@@ -361,8 +347,7 @@ useEffect(() => {
                 ))
               ) : (
                 <div className="no-results">
-                  <span className="no-results-icon">🔍</span>
-                  <h3>No articles found</h3>
+                                    <h3>No articles found</h3>
                   <p>{filter === 'all' && selectedTopics?.length && !searchQuery.trim()
                     ? 'No recent articles match your interests yet. Try adding more interests, or hit "Refresh News" to fetch the latest.'
                     : 'Try adjusting your search or filters, or hit "Refresh News" to fetch the latest.'}</p>

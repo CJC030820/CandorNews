@@ -609,3 +609,14 @@
     transform: none;
   }
 }
+
+/* Text label instead of an icon */
+.expanded-summary-close {
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 6px 14px;
+  font-size: 14px;
+}

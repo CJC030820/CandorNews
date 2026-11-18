@@ -8,19 +8,13 @@ import ShareMenu from '../components/ShareMenu';
 import { useArticleImage } from '../utils/articleImage';
 import { ImagePlaceholder } from '../components/ArticleImage';
 import './ArticleDetailPage.css';
+import { BookmarkIcon } from '../components/Icons';
 
 const toneBadgeClass = (toneLabel) => {
   if (!toneLabel) return '';
   if (toneLabel.includes('Neutral')) return 'tone-neutral';
   if (toneLabel.includes('Mildly')) return 'tone-mild';
   return 'tone-charged';
-};
-
-const toneIcon = (toneLabel) => {
-  if (!toneLabel) return '';
-  if (toneLabel.includes('Neutral')) return '⚖️';
-  if (toneLabel.includes('Mildly')) return '🗣️';
-  return '🔥';
 };
 
 const ArticleDetailPage = () => {
@@ -90,8 +84,7 @@ const ArticleDetailPage = () => {
     <div className="article-detail-page">
       <div className="article-detail-wrapper">
         <button className="back-button" onClick={handleBack}>
-          <span className="back-button-icon">←</span>
-          <span className="back-button-label">Back</span>
+                    <span className="back-button-label">Back</span>
         </button>
         <article className="article-detail">
           <h1>{article.title}</h1>
@@ -104,7 +97,7 @@ const ArticleDetailPage = () => {
           {article.toneLabel && (
             <div className="tone-label-row">
               <span className={`tone-badge ${toneBadgeClass(article.toneLabel)}`}>
-                {toneIcon(article.toneLabel)} {article.toneLabel}
+                {article.toneLabel}
               </span>
             </div>
           )}
@@ -141,7 +134,7 @@ const ArticleDetailPage = () => {
                 rel="noopener noreferrer"
                 className="original-source-btn"
               >
-                🔗 Read Original Article on {article.source || 'Source Site'}
+                Read Original Article on {article.source || 'Source Site'}
               </a>
             </div>
           )}
@@ -153,7 +146,7 @@ const ArticleDetailPage = () => {
               className={`bookmark-btn ${bookmarked ? 'active' : ''}`}
               onClick={handleBookmarkClick}
             >
-              {bookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}
+              <BookmarkIcon filled={bookmarked} size={18} /> {bookmarked ? 'Bookmarked' : 'Bookmark'}
             </button>
             {article.id !== undefined && <ShareMenu article={article} variant="button" />}
           </div>

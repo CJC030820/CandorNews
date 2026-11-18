@@ -1,5 +1,6 @@
 .dark-mode-toggle {
   background: none;
+  color: var(--text-primary);
   border: 2px solid var(--border-color);
   font-size: 20px;
   cursor: pointer;

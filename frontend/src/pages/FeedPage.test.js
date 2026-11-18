@@ -84,7 +84,7 @@ test('background reload does not insert articles above a reader who scrolled dow
   mockFeedArticles = [newStory, ...articles];
   await act(async () => { await reloader()(); });
   expect(titles()).toHaveLength(3);                       // list unchanged while reading
-  fireEvent.click(await screen.findByText('↑ 1 new article'));
+  fireEvent.click(await screen.findByText('1 new article'));
   expect(titles()[0]).toBe('Breaking: new story');
   expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'auto' });
   Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });

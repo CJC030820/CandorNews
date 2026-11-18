@@ -6,6 +6,7 @@ import ShareMenu from './ShareMenu';
 import { useArticleImage } from '../utils/articleImage';
 import { ImagePlaceholder } from './ArticleImage';
 import './ArticleCard.css';
+import { BookmarkIcon } from './Icons';
 
 const ArticleCard = ({ article }) => {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ const ArticleCard = ({ article }) => {
           title={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
           aria-label={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
         >
-          <span className="bookmark-toggle-icon">{bookmarked ? '🔖' : '📑'}</span>
+          <span className="bookmark-toggle-icon"><BookmarkIcon filled={bookmarked} size={18} /></span>
         </button>
         <div className="card-share-wrapper" onClick={(e) => e.stopPropagation()}>
           <ShareMenu article={article} variant="icon" />
@@ -72,7 +73,7 @@ const ArticleCard = ({ article }) => {
               <span key={cat} className="category-badge">{cat}</span>
             ))}
         </div>
-        {read && <span className="read-badge">✓ Read</span>}
+        {read && <span className="read-badge">Read</span>}
       </div>
       <div className="article-content">
         <h3 className="article-title">{article.title}</h3>
@@ -89,10 +90,10 @@ const ArticleCard = ({ article }) => {
               onClick={handleExpandClick}
               title="View full summary"
             >
-              📖 Expand
+              Expand
             </button>
           )}
-          <button className="read-more">Read More →</button>
+          <button className="read-more">Read More</button>
         </div>
       </div>
 
@@ -106,7 +107,7 @@ const ArticleCard = ({ article }) => {
                 onClick={handleCloseExpanded}
                 title="Close"
               >
-                ✕
+                Close
               </button>
             </div>
             <div className="expanded-summary-meta">
@@ -119,7 +120,7 @@ const ArticleCard = ({ article }) => {
             </div>
             <div className="expanded-summary-footer">
               <button className="expanded-read-more" onClick={handleClick}>
-                🔗 Read Full Article →
+                Read Full Article
               </button>
             </div>
           </div>
