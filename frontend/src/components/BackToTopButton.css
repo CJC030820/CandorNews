@@ -54,8 +54,11 @@
   }
 }
 
-/* Text label instead of an arrow */
-.back-to-top-btn,
-.back-to-top-btn:hover {
-  font-size: 14px;
+/* Arrow icon (components/Icons.js UpIcon) takes the white text colour */
+.back-to-top-btn {
+  padding: 0;
+}
+
+.back-to-top-btn .app-icon {
+  vertical-align: middle;
 }

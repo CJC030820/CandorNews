@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './BackToTopButton.css';
+import { UpIcon } from './Icons';
 
 const BackToTopButton = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,7 +44,7 @@ const BackToTopButton = () => {
         display: isVisible ? 'flex' : 'none'
       }}
     >
-      Top
+      <UpIcon size={24} />
     </button>
   );
 };

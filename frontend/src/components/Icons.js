@@ -74,6 +74,14 @@ export const BackIcon = (props) => (
   </Svg>
 );
 
+// Up chevron for "back to top": pointed tip, rounded ends. Drawn as an
+// original vector shape (no bitmap or watermark).
+export const UpIcon = (props) => (
+  <Svg {...props}>
+    <path d="M5.5 15.5 12 9l6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="miter" strokeMiterlimit="10" />
+  </Svg>
+);
+
 // Envelope (outline) for email.
 export const EmailIcon = (props) => (
   <Svg {...props}>

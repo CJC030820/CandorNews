@@ -31,3 +31,11 @@ test('share and back icons render in the text colour', () => {
   expect(share.querySelector('path').getAttribute('fill')).toBe('currentColor');
   expect(back.querySelector('path').getAttribute('stroke')).toBe('currentColor');
 });
+
+test('up arrow is a vector chevron in the text colour', () => {
+  const { UpIcon } = require('./Icons');
+  const { container } = render(<UpIcon />);
+  const path = container.querySelector('path');
+  expect(path.getAttribute('stroke')).toBe('currentColor');
+  expect(container.querySelector('image')).toBeNull();
+});
