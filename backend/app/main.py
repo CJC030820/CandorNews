@@ -146,6 +146,13 @@ class UserResponse(BaseModel):
 PLATFORMS = {"bernama": "Bernama", "nst": "New Straits Times", "fmt": "Free Malaysia Today"}
 
 
+def _followed_names(user):
+    """Names of the publishers a user follows (None = all publishers)."""
+    ids = getattr(user, "followed_platforms", None) or []
+    names = [PLATFORMS[i] for i in ids if i in PLATFORMS]
+    return names or None
+
+
 def from_followed(articles, platform_ids):
     """Keep articles from the followed publishers (all when none chosen)."""
     names = [PLATFORMS[i].lower() for i in (platform_ids or []) if i in PLATFORMS]
@@ -485,15 +492,18 @@ async def search_articles(q: str = Query(..., min_length=2, max_length=100), lim
                           user=Depends(get_current_user)):
     """Search every stored article (not only the latest batch) by headline,
     summary or publisher, newest first."""
-    articles = await storage_service.search_articles(q, limit=limit)
-    return {"articles": [_article_to_feed_dict(a) for a in articles], "query": q}
+    articles = await storage_service.search_articles(q, limit=limit, publishers=_followed_names(user))
+    total = await storage_service.count_search(q, _followed_names(user))
+    return {"articles": [_article_to_feed_dict(a) for a in articles], "query": q, "total": total}
 
 
 @app.get("/api/articles/suggest")
 async def suggest_keywords(q: str = Query("", max_length=60), user=Depends(get_current_user)):
     """Keyword suggestions for the search box: completions of what is typed,
-    or trending topics of the last two days when the box is empty."""
-    return await suggest.suggest(q)
+    or trending topics of the last two days when the box is empty. Every
+    suggestion is checked with the real search, limited to the user's
+    followed publishers, so its count is exactly what the search shows."""
+    return await suggest.suggest(q, _followed_names(user))
 
 
 refresh_jobs = {}

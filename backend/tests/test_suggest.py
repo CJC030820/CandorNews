@@ -52,7 +52,7 @@ def test_common_words_and_exact_query_are_not_suggested():
 def test_plural_and_singular_are_one_suggestion_and_acronyms_stay_upper():
     out = build_suggestions(["Floods hit Kelantan", "More floods in Pahang", "Flood relief arrives",
                              "COP31 talks open", "COP31 ends with deal", "Cop arrested"], "f")
-    assert [s["text"] for s in out] == ["floods"] and out[0]["count"] == 3
+    assert [s["text"] for s in out] == ["flood"] and out[0]["count"] == 3     # "flood" also finds "floods"
     assert build_suggestions(["COP31 talks open", "COP31 ends with deal"], "cop")[0]["text"] == "COP31"
 
 
@@ -89,3 +89,45 @@ async def test_suggest_endpoint(api):
     assert (await api.get("/api/articles/suggest", params={"q": "clim"})).status_code == 401
     # regex characters are treated literally
     assert (await api.get("/api/articles/suggest", params={"q": ".*"}, headers=h)).json()["suggestions"] == []
+
+
+async def test_every_suggestion_count_equals_its_search_results(api):
+    await storage_service.create_user(UserCreate(name="R", email="m@example.com", password="Test-password-123"))
+    h = {"Authorization": f"Bearer {create_access_token({'sub': 'm@example.com'})}"}
+    now = datetime.utcnow()
+    rows = [("Floods hit Kelantan villages", "New Straits Times"), ("Flood victims get aid", "BERNAMA - English Version"),
+            ("Flash floods close roads in Penang", "Free Malaysia Today"), ("Flash floods hit Kuantan", "New Straits Times"),
+            ("Flights delayed by storm", "New Straits Times"), ("Floods: Sabah opens relief centres", "Free Malaysia Today")]
+    for i, (t, src) in enumerate(rows):
+        await storage_service.create_article(article_data(title=t, source=src, url=f"https://example.com/f{i}",
+                                                          published_date=now - timedelta(hours=i)))
+
+    async def check(params):
+        data = (await api.get("/api/articles/suggest", params=params, headers=h)).json()
+        assert data["suggestions"], params
+        for s in data["suggestions"] + ([data["query"]] if data["query"] else []):
+            found = (await api.get("/api/articles/search", params={"q": s["text"], "limit": 200}, headers=h)).json()
+            assert s["count"] == found["total"] == len(found["articles"]), (s, found["total"])
+        return data
+
+    data = await check({"q": "fl"})
+    assert data["query"] == {"text": "fl", "count": 6}          # what the user typed comes first
+    assert data["suggestions"][0]["text"] == "flood"
+    await check({"q": "flash fl"})
+    await check({"q": ""})
+
+    # only followed publishers count: following NST alone changes every number
+    await api.put("/api/users/platforms", json={"platform_ids": ["nst"]}, headers=h)
+    data = await check({"q": "fl"})
+    assert data["query"]["count"] == 3
+    assert all(s["count"] <= 3 for s in data["suggestions"])
+
+
+async def test_suggestions_with_no_results_are_dropped(api):
+    await storage_service.create_user(UserCreate(name="R", email="n@example.com", password="Test-password-123"))
+    h = {"Authorization": f"Bearer {create_access_token({'sub': 'n@example.com'})}"}
+    await storage_service.create_article(article_data(title="Clinic opens in Kuching", source="New Straits Times",
+                                                      url="https://example.com/c1", published_date=datetime.utcnow()))
+    await api.put("/api/users/platforms", json={"platform_ids": ["fmt"]}, headers=h)   # NST not followed
+    data = (await api.get("/api/articles/suggest", params={"q": "cli"}, headers=h)).json()
+    assert data["suggestions"] == [] and data["query"] == {"text": "cli", "count": 0}

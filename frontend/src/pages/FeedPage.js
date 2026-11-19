@@ -151,7 +151,7 @@ useEffect(() => {
     setSearching(true);
     const timer = setTimeout(() => {
       searchRef.current(query, 200)
-        .then((data) => { if (active) setSearchResults({ query, articles: (data.articles || []).map(mapFeedArticle) }); })
+        .then((data) => { if (active) setSearchResults({ query, total: data.total, articles: (data.articles || []).map(mapFeedArticle) }); })
         .catch(() => { if (active) setSearchResults(null); })
         .finally(() => { if (active) setSearching(false); });
     }, 350);
@@ -173,6 +173,15 @@ useEffect(() => {
   const interestKey = (selectedTopics || []).join('|');
   const searchActive = query !== '';
   const serverMatches = searchResults && searchResults.query === query ? searchResults.articles : null;
+  const serverTotal = serverMatches ? searchResults.total : null;
+
+  // A search looks through every category, so a suggestion's count matches
+  // what is shown; the category view comes back when the search is cleared.
+  const wasSearching = useRef(false);
+  useEffect(() => {
+    if (searchActive && !wasSearching.current) setFilter('all');
+    wasSearching.current = searchActive;
+  }, [searchActive]);
   const filteredArticles = useMemo(() => {
     const interests = interestKey ? interestKey.split('|') : [];
     const categoriesOf = (a) => (a.categories && a.categories.length > 0 ? a.categories : [a.category]);
@@ -198,15 +207,20 @@ useEffect(() => {
   }, []);
 
   // Filter by search query
+  // Same rule as the server search: every word starts a word somewhere in the
+  // headline, summary or publisher ("ring" finds "ringgit", not "during").
+  // Articles the server found are kept as is.
   const searchedArticles = useMemo(() => {
-    return searchQuery.trim() === ''
-      ? filteredArticles
-      : filteredArticles.filter(a =>
-          a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (a.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.source.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-  }, [filteredArticles, searchQuery]);
+    const words = query.split(/\s+/).filter(Boolean);
+    if (!words.length) return filteredArticles;
+    const patterns = words.map((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'));
+    const fromServer = new Set((serverMatches || []).map((a) => a.id));
+    return filteredArticles.filter((a) => {
+      if (fromServer.has(a.id)) return true;
+      const text = `${a.title || ''} ${a.description || ''} ${a.source || ''}`;
+      return patterns.every((p) => p.test(text));
+    });
+  }, [filteredArticles, query, serverMatches]);
 
   // News For You: personal order from reading history and bookmarks
   // (falls back to newest first). Other views and searches: newest first.
@@ -385,7 +399,10 @@ useEffect(() => {
           {searchActive && (
             <p className="feed-status" role="status">
               {searching ? 'Searching all saved articles...'
-                : serverMatches ? `${displayArticles.length} result${displayArticles.length === 1 ? '' : 's'} from all saved articles`
+                : serverMatches
+                  ? (serverTotal > displayArticles.length
+                    ? `Showing the newest ${displayArticles.length} of ${serverTotal} results`
+                    : `${displayArticles.length} result${displayArticles.length === 1 ? '' : 's'} from all saved articles`)
                   : 'Showing matches from the latest articles'}
             </p>
           )}

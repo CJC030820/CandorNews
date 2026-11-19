@@ -26,13 +26,13 @@ STOP_WORDS = {
     # Bernama headline prefixes ("General : ...") and other filler
     "general", "business", "sports", "world", "politics", "news", "watch", "video", "live", "updated",
 }
-_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9'\-.]*[A-Za-z0-9]|[A-Za-z0-9]")
+_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9'’\-.]*[A-Za-z0-9]|[A-Za-z0-9]")
 _PREFIX = re.compile(r"^\s*[A-Za-z &]+\s:\s+")       # "General : " at the start of Bernama titles
 
 
 def tokens(title: str) -> List[str]:
     """Words of a headline, without the "General : " prefix or possessive 's."""
-    return [re.sub(r"['’]s$", "", t) for t in _TOKEN.findall(_PREFIX.sub("", title or ""))]
+    return [re.sub(r"['’-]s$", "", t) for t in _TOKEN.findall(_PREFIX.sub("", title or ""))]
 
 
 def _keep(word: str) -> bool:
@@ -128,7 +128,8 @@ def build_suggestions(titles: Iterable[str], query: str, limit: int = MAX_SUGGES
         # a two-word phrase must appear at least twice to be worth suggesting
         if " " in key and n < 2:
             continue
-        form = forms[key].most_common(1)[0][0]
+        # the shortest spelling ("flood") also finds the longer ones ("floods") in search
+        form = min(forms[key].items(), key=lambda kv: (len(kv[0]), -kv[1]))[0]
         text = " ".join(lead + [casing.show(w) for w in form.split()])
         if text.lower() == query.strip().lower():
             continue
@@ -184,17 +185,51 @@ def trending(titles: Iterable[str], limit: int = MAX_SUGGESTIONS) -> List[Dict]:
     return [{"text": t, "count": n} for n, t in results]
 
 
-async def suggest(query: str) -> Dict:
+def _clean(query: dict) -> dict:
+    """MongoDB rejects an empty $and."""
+    if not query.get("$and"):
+        query = {k: v for k, v in query.items() if k != "$and"}
+    return query
+
+
+async def _verified(candidates: List[Dict], publishers, limit: int = MAX_SUGGESTIONS) -> List[Dict]:
+    """Keep suggestions that the real search finds, with the exact result count."""
+    out, seen = [], set()
+    for c in candidates:
+        key = c["text"].lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        n = await storage_service.count_search(c["text"], publishers)
+        if n > 0:
+            out.append({"text": c["text"], "count": n})
+    # Order stays as in the headlines (most common first): sorting by result
+    # count would promote loose word pairs that are rarely a real phrase.
+    return out[:limit]
+
+
+async def suggest(query: str, publishers=None) -> Dict:
+    """Suggestions for the search box. Candidates come from headlines on this
+    website (only the user's followed publishers) and each one is checked
+    with the same search the feed uses, so every count is the number of
+    articles the search will show. The typed text is reported first."""
     query = (query or "")[:60]
     col = storage_service.articles
-    base = {"processing_status": "completed"}
+    base = storage_service.visible_filter(publishers)             # same filters as search
     if not query.strip():
         since = datetime.utcnow() - timedelta(hours=TRENDING_HOURS)
-        cursor = col.find({**base, "published_date": {"$gte": since}}, {"title": 1}).sort("published_date", -1).limit(SCAN_LIMIT)
+        base["published_date"] = {"$gte": since}
+        cursor = col.find(_clean(base), {"title": 1}).sort("published_date", -1).limit(SCAN_LIMIT)
         titles = [doc.get("title", "") async for doc in cursor]
-        return {"kind": "trending", "suggestions": trending(titles)}
+        return {"kind": "trending", "query": None,
+                "suggestions": await _verified(trending(titles, limit=MAX_SUGGESTIONS * 2), publishers)}
     words = query.lower().split()
     filters = [{"title": {"$regex": r"\b" + re.escape(w), "$options": "i"}} for w in words[:5]]
-    cursor = col.find({**base, "$and": filters}, {"title": 1}).sort("published_date", -1).limit(SCAN_LIMIT)
+    base["$and"] += filters
+    cursor = col.find(_clean(base), {"title": 1}).sort("published_date", -1).limit(SCAN_LIMIT)
     titles = [doc.get("title", "") async for doc in cursor]
-    return {"kind": "completions", "suggestions": build_suggestions(titles, query)}
+    typed = query.strip()
+    typed_result = {"text": typed, "count": await storage_service.count_search(typed, publishers)} if len(typed) >= 2 else None
+    candidates = [c for c in build_suggestions(titles, query, limit=MAX_SUGGESTIONS * 2) if c["text"].lower() != typed.lower()]
+    return {"kind": "completions", "query": typed_result,
+            "suggestions": await _verified(candidates, publishers)}

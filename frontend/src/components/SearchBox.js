@@ -30,7 +30,9 @@ const SearchBox = ({ value, onChange }) => {
       try {
         const data = await fetchRef.current(q);
         if (id !== request.current) return;           // a newer request is on its way
-        setItems(data.suggestions || []);
+        // What the user typed comes first, then words and phrases that complete it.
+        const typedRow = data.query ? [{ ...data.query, typed: true }] : [];
+        setItems([...typedRow, ...(data.suggestions || [])]);
         setKind(data.kind || 'completions');
         setActive(-1);
       } catch {
@@ -69,6 +71,7 @@ const SearchBox = ({ value, onChange }) => {
     return <strong>{text}</strong>;
   };
   const showList = open && items.length > 0;
+  const countText = (n) => (n === 0 ? 'no articles' : `${n} ${n === 1 ? 'article' : 'articles'}`);
 
   return (
     <div className="search-bar-container search-box">
@@ -107,13 +110,15 @@ const SearchBox = ({ value, onChange }) => {
               id={`search-suggestion-${i}`}
               role="option"
               aria-selected={i === active}
-              className={`search-suggestion${i === active ? ' active' : ''}`}
+              className={`search-suggestion${i === active ? ' active' : ''}${item.typed ? ' typed' : ''}${item.count === 0 ? ' empty' : ''}`}
               // mousedown keeps the input focused, so the click is not lost to onBlur
               onMouseDown={(e) => { e.preventDefault(); choose(item.text); }}
               onMouseEnter={() => setActive(i)}
             >
-              <span className="search-suggestion-text">{label(item.text)}</span>
-              <span className="search-suggestion-count">{item.count} {item.count === 1 ? 'article' : 'articles'}</span>
+              <span className="search-suggestion-text">
+                {item.typed ? <>Search &ldquo;{item.text}&rdquo;</> : label(item.text)}
+              </span>
+              <span className="search-suggestion-count">{countText(item.count)}</span>
             </li>
           ))}
         </ul>

@@ -21,8 +21,9 @@ const Harness = ({ start = '/feed' }) => {
 
 beforeEach(() => {
   mockAuth.suggestKeywords = jest.fn(async (q) => (q
-    ? { kind: 'completions', suggestions: [{ text: 'climate', count: 9 }, { text: 'climate change', count: 4 }] }
-    : { kind: 'trending', suggestions: [{ text: 'floods', count: 30 }, { text: 'budget', count: 12 }] }));
+    ? { kind: 'completions', query: { text: q.trim(), count: q === 'zzz' ? 0 : 11 },
+        suggestions: q === 'zzz' ? [] : [{ text: 'climate', count: 9 }, { text: 'climate change', count: 4 }] }
+    : { kind: 'trending', query: null, suggestions: [{ text: 'floods', count: 30 }, { text: 'budget', count: 12 }] }));
 });
 
 const box = () => screen.getByRole('combobox', { name: 'Search articles' });
@@ -36,27 +37,35 @@ test('an empty box shows trending topics', async () => {
   expect(mockAuth.suggestKeywords).toHaveBeenCalledWith('');
 });
 
-test('typing shows completions; the typed part is plain and the rest bold', async () => {
+test('what the user typed comes first, then completions with the typed part plain', async () => {
   render(<Harness />);
   fireEvent.change(box(), { target: { value: 'cli' } });
-  await waitFor(() => expect(options()).toHaveLength(2));
+  await waitFor(() => expect(options()).toHaveLength(3));
   expect(mockAuth.suggestKeywords).toHaveBeenLastCalledWith('cli');
-  expect(screen.getAllByRole('option')[1].querySelector('strong').textContent).toBe('mate change');
+  expect(options()[0]).toBe('Search “cli”11 articles');
+  expect(screen.getAllByRole('option')[2].querySelector('strong').textContent).toBe('mate change');
+});
+
+test('a search with no articles says so', async () => {
+  render(<Harness />);
+  fireEvent.change(box(), { target: { value: 'zzz' } });
+  await waitFor(() => expect(options()).toEqual(['Search “zzz”no articles']));
 });
 
 test('keyboard: arrows move, Enter picks, Escape closes', async () => {
   render(<Harness />);
   fireEvent.change(box(), { target: { value: 'cli' } });
-  await waitFor(() => expect(options()).toHaveLength(2));
+  await waitFor(() => expect(options()).toHaveLength(3));
   fireEvent.keyDown(box(), { key: 'ArrowDown' });
   fireEvent.keyDown(box(), { key: 'ArrowDown' });
-  expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
+  fireEvent.keyDown(box(), { key: 'ArrowDown' });
+  expect(screen.getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true');
   fireEvent.keyDown(box(), { key: 'Enter' });
   expect(screen.getByTestId('query').textContent).toBe('climate change');
   expect(options()).toEqual([]);
 
   fireEvent.change(box(), { target: { value: 'cl' } });
-  await waitFor(() => expect(options()).toHaveLength(2));
+  await waitFor(() => expect(options()).toHaveLength(3));
   fireEvent.keyDown(box(), { key: 'Escape' });
   expect(options()).toEqual([]);
 });
@@ -64,8 +73,8 @@ test('keyboard: arrows move, Enter picks, Escape closes', async () => {
 test('clicking a suggestion on another page searches it on the feed', async () => {
   render(<Harness start="/history" />);
   fireEvent.change(box(), { target: { value: 'cli' } });
-  await waitFor(() => expect(options()).toHaveLength(2));
-  fireEvent.mouseDown(screen.getAllByRole('option')[0]);
+  await waitFor(() => expect(options()).toHaveLength(3));
+  fireEvent.mouseDown(screen.getAllByRole('option')[1]);
   expect(screen.getByTestId('query').textContent).toBe('climate');
   expect(where).toBe('/feed');
 });

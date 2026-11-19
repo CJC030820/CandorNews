@@ -65,3 +65,13 @@
     font-size: 15px;
   }
 }
+
+/* The row with exactly what the user typed */
+.search-suggestion.typed {
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 4px;
+}
+
+.search-suggestion.empty .search-suggestion-count {
+  color: var(--alert-color);
+}

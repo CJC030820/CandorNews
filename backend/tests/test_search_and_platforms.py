@@ -68,3 +68,10 @@ def test_digest_uses_followed_publishers():
     items = [A("Bernama"), A("New Straits Times"), A("BERNAMA - English Version")]
     assert [a.source for a in main.from_followed(items, ["bernama"])] == ["Bernama", "BERNAMA - English Version"]
     assert len(main.from_followed(items, None)) == 3
+
+
+async def test_search_matches_the_start_of_words_only(api, headers):
+    await add("Ringgit opens higher")
+    await add("Rain during the night")
+    found = (await api.get("/api/articles/search", params={"q": "ring"}, headers=headers)).json()
+    assert [a["title"] for a in found["articles"]] == ["Ringgit opens higher"] and found["total"] == 1

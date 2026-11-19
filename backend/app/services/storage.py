@@ -155,27 +155,56 @@ class StorageService:
             articles.append(ArticleInDB(**doc))
         return articles
 
-    async def search_articles(self, text: str, limit: int = 100) -> List[ArticleInDB]:
-        """Completed articles whose headline, summary, description or
-        publisher contains every word of `text` (case-insensitive)."""
+    @staticmethod
+    def visible_filter(publishers: Optional[List[str]] = None) -> dict:
+        """Articles a reader can see: completed, in a shown topic, and from
+        one of `publishers` (all publishers when None)."""
         import re as _re
-        words = [w for w in text.split() if w][:6]
-        if not words:
-            return []
         excluded_topics = ["Education", "Lifestyle", "Property", "Malaysia", "World"]
-        fields = ("title", "summary", "description", "source")
         query = {
             "processing_status": "completed",
             "topic": {"$nin": excluded_topics},
             "topics": {"$nin": excluded_topics},
-            "$and": [{"$or": [{f: {"$regex": _re.escape(w), "$options": "i"}} for f in fields]} for w in words],
+            "$and": [],
         }
+        if publishers:
+            query["$and"].append({"$or": [{"source": {"$regex": _re.escape(p), "$options": "i"}} for p in publishers]})
+        return query
+
+    @staticmethod
+    def search_query(text: str, publishers: Optional[List[str]] = None) -> Optional[dict]:
+        """The one search rule used by search, suggestions and their counts:
+        a completed article matches when every word of `text` starts a word
+        (case-insensitive) in its headline, summary, description or publisher
+        ("ring" finds "ringgit" but not "during"), and it comes from one of
+        `publishers` (all publishers when None)."""
+        import re as _re
+        words = [w for w in (text or "").split() if w][:6]
+        if not words:
+            return None
+        fields = ("title", "summary", "description", "source")
+        query = StorageService.visible_filter(publishers)
+        query["$and"] += [{"$or": [{f: {"$regex": r"\b" + _re.escape(w), "$options": "i"}} for f in fields]}
+                          for w in words]
+        return query
+
+    async def search_articles(self, text: str, limit: int = 100,
+                              publishers: Optional[List[str]] = None) -> List[ArticleInDB]:
+        """Matching articles (see search_query), newest first."""
+        query = self.search_query(text, publishers)
+        if query is None:
+            return []
         cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
         articles = []
         async for doc in cursor:
             doc["_id"] = str(doc["_id"])
             articles.append(ArticleInDB(**doc))
         return articles
+
+    async def count_search(self, text: str, publishers: Optional[List[str]] = None) -> int:
+        """Exact number of articles a search for `text` returns."""
+        query = self.search_query(text, publishers)
+        return await self.articles.count_documents(query) if query else 0
 
     async def count_articles(self) -> int:
         return await self.articles.count_documents({})

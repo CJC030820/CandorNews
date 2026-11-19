@@ -106,7 +106,7 @@ test('background reload applies immediately when the reader is at the top', asyn
 
 
 test('search looks through all saved articles, beyond the latest batch and interests', async () => {
-  mockSearch.mockResolvedValue({ articles: [
+  mockSearch.mockResolvedValue({ total: 1, articles: [
     { id: '9', title: 'Old budget debate recap', source: 'New Straits Times', date: '2026-05-01T01:00:00Z', categories: ['Business'] },
   ] });
   render(<MemoryRouter><FeedPage searchQuery="budget" /></MemoryRouter>);
@@ -120,4 +120,34 @@ test('News For You can be switched to newest first', async () => {
   await waitFor(() => expect(titles()).toEqual(['Parliament passes budget']));
   fireEvent.change(screen.getByLabelText('Order of News For You'), { target: { value: 'newest' } });
   expect(screen.getByLabelText('Order of News For You').value).toBe('newest');
+});
+
+
+test('search matches every word anywhere, not only the exact phrase', async () => {
+  mockSearch.mockResolvedValue({ total: 0, articles: [] });
+  render(<MemoryRouter><FeedPage searchQuery="ringgit strengthens" /></MemoryRouter>);
+  await waitFor(() => expect(titles()).toEqual(['Ringgit strengthens']));
+  const { unmount } = render(<MemoryRouter><FeedPage searchQuery="strengthens ringgit" /></MemoryRouter>);
+  await waitFor(() => expect(titles()).toContain('Ringgit strengthens'));
+  unmount();
+});
+
+test('starting a search leaves a category view so every result is shown', async () => {
+  mockSearch.mockResolvedValue({ total: 1, articles: [] });
+  const { rerender } = render(<MemoryRouter><FeedPage searchQuery="" /></MemoryRouter>);
+  await waitFor(() => expect(titles()).toEqual(['Parliament passes budget']));
+  fireEvent.click(screen.getByText('Sports'));
+  await waitFor(() => expect(titles()).toEqual(['Harimau Malaya wins final']));
+  rerender(<MemoryRouter><FeedPage searchQuery="budget" /></MemoryRouter>);
+  await waitFor(() => expect(titles()).toEqual(['Parliament passes budget']));
+});
+
+test('search matches the start of words only', async () => {
+  mockSearch.mockResolvedValue({ total: 0, articles: [] });
+  mockFeedArticles = [
+    { id: 'r1', title: 'Ringgit opens higher', source: 'New Straits Times', date: '2026-11-18T01:00:00Z', categories: ['Politics'] },
+    { id: 'r2', title: 'Rain during the night', source: 'New Straits Times', date: '2026-11-18T02:00:00Z', categories: ['Politics'] },
+  ];
+  render(<MemoryRouter><FeedPage searchQuery="ring" /></MemoryRouter>);
+  await waitFor(() => expect(titles()).toEqual(['Ringgit opens higher']));
 });
