@@ -25,6 +25,19 @@ export const AuthProvider = ({ children }) => {
     return () => { active = false; };
   }, [api, token, logout]);
 
+  // Coming back to the tab: reload the profile so settings changed on
+  // another device (followed publishers, interests) show here too.
+  useEffect(() => {
+    if (!token) return undefined;
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      api.get('/api/auth/me').then(({data}) => setUser(data))
+        .catch(error => { if (error.response?.status === 401) logout(); });
+    };
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, [api, token, logout]);
+
   const login = async (email, password) => {
     try {
       const { data } = await api.post('/api/auth/login', { email, password });
@@ -73,10 +86,17 @@ export const AuthProvider = ({ children }) => {
   const removeLibraryItem = useCallback(async (kind, id) =>
     (await api.delete(`/api/me/${kind}/${encodeURIComponent(id)}`)).data, [api]);
   const clearLibrary = useCallback(async kind => (await api.delete(`/api/me/${kind}`)).data, [api]);
+  // Followed publishers saved to the account (shared by all devices).
+  const updateFollowedPlatforms = useCallback(async platformIds => {
+    const {data} = await api.put('/api/users/platforms', {platform_ids: platformIds}); setUser(data); return data;
+  }, [api]);
+  // Search every stored article, not only the latest loaded batch.
+  const searchArticles = useCallback(async (q, limit = 100) =>
+    (await api.get('/api/articles/search', {params: {q, limit}})).data, [api]);
   const selectedTopics = user?.preferred_topics || [];
   return <AuthContext.Provider value={{token,user,loading,topicsCompleted:selectedTopics.length > 0,selectedTopics,
     login,logout,register,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
     getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,requestEmailVerification,confirmEmailVerification,deleteAccount,
-    getFeed,getArticle,refreshFeed,getRefreshStatus,getLibrary,importLibrary,saveLibraryItem,removeLibraryItem,clearLibrary}}>{!loading && children}</AuthContext.Provider>;
+    getFeed,getArticle,refreshFeed,getRefreshStatus,getLibrary,importLibrary,saveLibraryItem,removeLibraryItem,clearLibrary,updateFollowedPlatforms,searchArticles}}>{!loading && children}</AuthContext.Provider>;
 };
 export const useAuth = () => useContext(AuthContext);

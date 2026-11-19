@@ -6,6 +6,9 @@ import DarkModeToggle from '../components/DarkModeToggle';
 import SuggestionPanel from '../components/SuggestionPanel';
 import BackToTopButton from '../components/BackToTopButton';
 import { useTrustedPlatforms } from '../context/TrustedPlatformsContext';
+import { useBookmarks } from '../context/BookmarkContext';
+import { useReadArticles } from '../context/ReadArticlesContext';
+import { rankForYou } from '../utils/personalRanking';
 import './FeedPage.css';
 import { RefreshIcon } from '../components/Icons';
 
@@ -28,9 +31,18 @@ export const mapFeedArticle = article => ({...article, rawDate:article.date,
   categories:article.categories?.length ? article.categories : (article.category ? [article.category] : [])});
 
 const NEAR_TOP_PX = 300;
+const SORT_KEY = 'feedSortMode';
+const readSort = () => { try { return localStorage.getItem(SORT_KEY) === 'newest' ? 'newest' : 'foryou'; } catch { return 'foryou'; } };
 
 const FeedPage = ({ searchQuery = '', onSearchChange }) => {
-  const { user, logout, getFeed, refreshFeed, getRefreshStatus, selectedTopics } = useAuth();
+  const { user, logout, getFeed, refreshFeed, getRefreshStatus, selectedTopics, searchArticles } = useAuth();
+  const { bookmarks = [] } = useBookmarks();
+  const { history = [] } = useReadArticles();
+  const [sortMode, setSortMode] = useState(readSort);
+  const changeSort = (mode) => { setSortMode(mode); try { localStorage.setItem(SORT_KEY, mode); } catch { /* private mode */ } };
+  // Server search over every stored article: { query, articles } or null.
+  const [searchResults, setSearchResults] = useState(null);
+  const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
   const feedPageRef = useRef(null);
   const [filter, setFilter] = useState('all');
@@ -128,6 +140,24 @@ useEffect(() => {
     finally { busy.current = false; if (alive.current) setRefreshing(false); }
   };
 
+  // Searching looks through every stored article on the server, not only
+  // the latest batch loaded here (waits until typing pauses).
+  const query = searchQuery.trim();
+  const searchRef = useRef(searchArticles);
+  searchRef.current = searchArticles;
+  useEffect(() => {
+    if (query.length < 2 || !searchRef.current) { setSearchResults(null); setSearching(false); return undefined; }
+    let active = true;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchRef.current(query, 200)
+        .then((data) => { if (active) setSearchResults({ query, articles: (data.articles || []).map(mapFeedArticle) }); })
+        .catch(() => { if (active) setSearchResults(null); })
+        .finally(() => { if (active) setSearching(false); });
+    }, 350);
+    return () => { active = false; clearTimeout(timer); };
+  }, [query]);
+
   // Categories actually present in the fetched articles (falls back to a
   // sensible default list while loading). Since an article can belong to
   // up to 3 categories, flatten across the `categories` array.
@@ -141,19 +171,25 @@ useEffect(() => {
   // article's up-to-3 categories). "News For You" ('all') shows articles in
   // any of the user's interests, and updates as soon as the interests change.
   const interestKey = (selectedTopics || []).join('|');
+  const searchActive = query !== '';
+  const serverMatches = searchResults && searchResults.query === query ? searchResults.articles : null;
   const filteredArticles = useMemo(() => {
     const interests = interestKey ? interestKey.split('|') : [];
     const categoriesOf = (a) => (a.categories && a.categories.length > 0 ? a.categories : [a.category]);
-    const trustedArticles = rawArticles.filter((article) =>
+    // While searching, include matches from all stored articles.
+    const seen = new Set(rawArticles.map((a) => a.id));
+    const pool = serverMatches ? [...rawArticles, ...serverMatches.filter((a) => !seen.has(a.id))] : rawArticles;
+    const trustedArticles = pool.filter((article) =>
       followedPlatforms.some((platform) =>
         (article.source || '').toLowerCase().includes(platform.name.toLowerCase())
       )
     );
     if (filter !== 'all') return trustedArticles.filter(a => categoriesOf(a).includes(filter));
-    return interests.length
+    // A search under News For You looks beyond the chosen interests.
+    return interests.length && !searchActive
       ? trustedArticles.filter(a => categoriesOf(a).some(category => interests.includes(category)))
       : trustedArticles;
-  }, [rawArticles, filter, followedPlatforms, interestKey]);
+  }, [rawArticles, serverMatches, searchActive, filter, followedPlatforms, interestKey]);
 
   // After interests are saved, show the updated "News For You" list.
   const handleInterestsSaved = useCallback(() => {
@@ -172,10 +208,16 @@ useEffect(() => {
         );
   }, [filteredArticles, searchQuery]);
 
-  // Sort articles
-  const sortedArticles = useMemo(() => {
-    return [...searchedArticles].sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
-  }, [searchedArticles]);
+  // News For You: personal order from reading history and bookmarks
+  // (falls back to newest first). Other views and searches: newest first.
+  const personalOn = filter === 'all' && !searchActive && sortMode === 'foryou';
+  const { sortedArticles, personalised } = useMemo(() => {
+    if (personalOn) {
+      const ranked = rankForYou(searchedArticles, history, bookmarks);
+      return { sortedArticles: ranked.articles, personalised: ranked.personalised };
+    }
+    return { sortedArticles: [...searchedArticles].sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate)), personalised: false };
+  }, [searchedArticles, personalOn, history, bookmarks]);
 
   // Compute the live, ticking "X minutes ago" label at render time so it
   // stays accurate without needing to re-fetch the feed.
@@ -329,10 +371,27 @@ useEffect(() => {
               </div>
               
               {refreshing && <p role="status">Collecting and analyzing articles. This may take a few minutes.</p>}
-
             </div>
+            {filter === 'all' && !searchActive && (
+              <label className="feed-sort">
+                <span>Order</span>
+                <select value={sortMode} onChange={(e) => changeSort(e.target.value)} aria-label="Order of News For You">
+                  <option value="foryou">Recommended for you</option>
+                  <option value="newest">Newest first</option>
+                </select>
+              </label>
+            )}
           </div>
-
+          {searchActive && (
+            <p className="feed-status" role="status">
+              {searching ? 'Searching all saved articles...'
+                : serverMatches ? `${displayArticles.length} result${displayArticles.length === 1 ? '' : 's'} from all saved articles`
+                  : 'Showing matches from the latest articles'}
+            </p>
+          )}
+          {personalOn && !personalised && !loading && (
+            <p className="feed-status">Read or bookmark a few stories and News For You will be ordered for you.</p>
+          )}
           {error && <div className="feed-error">{error}</div>}
 
           {loading ? (

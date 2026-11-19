@@ -21,7 +21,7 @@ from app.services import email_service, email_verification, image_cache, library
 from app.services.trust_scorer import SCORE_VERSION
 from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.security import get_password_hash, verify_password, create_access_token, issued_before_account
 from app.core.config import settings
 from app.models.user import UserCreate as DBUserCreate
 from app.worker import news_worker
@@ -140,6 +140,29 @@ class UserResponse(BaseModel):
     email_notification_schedule: str = "morning"
     email_notification_times: List[str] = ["07:00"]
     email_verified: bool = False
+    followed_platforms: Optional[List[str]] = None
+
+# Publishers users can follow: id -> name used in article sources.
+PLATFORMS = {"bernama": "Bernama", "nst": "New Straits Times", "fmt": "Free Malaysia Today"}
+
+
+def from_followed(articles, platform_ids):
+    """Keep articles from the followed publishers (all when none chosen)."""
+    names = [PLATFORMS[i].lower() for i in (platform_ids or []) if i in PLATFORMS]
+    if not names:
+        return list(articles)
+    return [a for a in articles if any(n in (a.source or "").lower() for n in names)]
+
+
+class PlatformsUpdate(BaseModel):
+    platform_ids: List[str] = Field(min_length=1, max_length=len(PLATFORMS))
+
+    @field_validator("platform_ids")
+    @classmethod
+    def known_platforms(cls, values):
+        if any(value not in PLATFORMS for value in values):
+            raise ValueError("Unknown platform")
+        return list(dict.fromkeys(values))
 
 class PreferencesUpdate(BaseModel):
     preferred_topics: List[str] = Field(default_factory=list, max_length=11)
@@ -182,7 +205,8 @@ def _user_to_response(user) -> UserResponse:
         email_notifications_enabled=getattr(user, "email_notifications_enabled", False),
         email_notification_schedule=getattr(user, "email_notification_schedule", "morning") or "morning",
         email_notification_times=user_times(user),
-        email_verified=bool(getattr(user, "email_verified", False))
+        email_verified=bool(getattr(user, "email_verified", False)),
+        followed_platforms=getattr(user, "followed_platforms", None),
     )
 
 
@@ -205,6 +229,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
     user = await storage_service.get_user_by_email(email)
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
+    if issued_before_account(payload, user.created_at):
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
     return user
 
 # Routes
@@ -279,6 +305,13 @@ async def update_preferences(preferences: PreferencesUpdate, user=Depends(get_cu
         {"preferred_topics": allowed_topics}
     )
 
+    return _user_to_response(updated_user)
+
+
+@app.put("/api/users/platforms", response_model=UserResponse)
+async def update_platforms(update: PlatformsUpdate, user=Depends(get_current_user)):
+    """Save the followed publishers to the account (shared by all devices)."""
+    updated_user = await storage_service.update_user_by_email(user.email, {"followed_platforms": update.platform_ids})
     return _user_to_response(updated_user)
 
 
@@ -445,6 +478,15 @@ async def get_feed(user=Depends(get_current_user), topic: str = None, limit: int
         "total_articles_in_db": total,
         "last_fetch_run": news_worker.last_run_stats or None
     }
+
+
+@app.get("/api/articles/search")
+async def search_articles(q: str = Query(..., min_length=2, max_length=100), limit: int = Query(100, ge=1, le=200),
+                          user=Depends(get_current_user)):
+    """Search every stored article (not only the latest batch) by headline,
+    summary or publisher, newest first."""
+    articles = await storage_service.search_articles(q, limit=limit)
+    return {"articles": [_article_to_feed_dict(a) for a in articles], "query": q}
 
 
 refresh_jobs = {}
@@ -646,14 +688,15 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
     if preferred_topics:
         removed_topics = {"Education", "Lifestyle", "Property", "Malaysia", "World"}
         allowed_topics = [topic for topic in preferred_topics if topic not in removed_topics]
-        articles = await storage_service.get_latest_articles_for_topics(
-            allowed_topics, limit=MAX_DIGEST_ARTICLES * 2
-        )
+        articles = from_followed(await storage_service.get_latest_articles_for_topics(
+            allowed_topics, limit=MAX_DIGEST_ARTICLES * 4
+        ), getattr(user, "followed_platforms", None))
         logger.info(f"Found {len(articles)} articles from preferred topics for {user.email}")
     
     # If not enough articles from preferred topics, fall back to all latest articles
     if len(articles) < MAX_DIGEST_ARTICLES:
-        all_articles = await storage_service.get_latest_articles(limit=MAX_DIGEST_ARTICLES * 2)
+        all_articles = from_followed(await storage_service.get_latest_articles(limit=MAX_DIGEST_ARTICLES * 4),
+                                     getattr(user, "followed_platforms", None))
         # Prioritize articles from user's topics if they exist
         if preferred_topics:
             # Add any additional articles from topics that weren't already included

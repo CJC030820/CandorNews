@@ -151,7 +151,7 @@ async def test_account_responses_never_expose_password_hash(api, reader_headers)
     response = await api.get("/api/auth/me", headers=reader_headers)
     assert response.status_code == 200
     assert set(response.json()) == {
-        "id", "email", "name", "preferred_topics", "email_notifications_enabled", "email_notification_schedule", "email_notification_times", "email_verified",
+        "id", "email", "name", "preferred_topics", "email_notifications_enabled", "email_notification_schedule", "email_notification_times", "email_verified", "followed_platforms",
     }
     assert "password" not in response.text and "hashed_password" not in response.text
 
@@ -186,7 +186,7 @@ async def test_refresh_without_platforms_does_not_start_work(api, reader_headers
     worker.assert_not_called()
 
 
-@pytest.mark.xfail(strict=True, reason="SEC-01: JWT subject is a reusable email; old tokens revive after re-registration")
+# SEC-01 fixed: tokens carry their issue time and are rejected if older than the account.
 async def test_deleted_account_token_stays_invalid_after_email_reuse(api, reader_headers):
     response = await api.request("DELETE", "/api/users/me", headers=reader_headers,
                                  json={"password": "Test-password-123"})
@@ -196,5 +196,4 @@ async def test_deleted_account_token_stays_invalid_after_email_reuse(api, reader
         "name": "New Account", "email": "api-reader@example.com", "password": "New-password-456",
     })
     assert response.status_code == 200
-    # Desired security contract. Currently returns 200 with the new account.
     assert (await api.get("/api/auth/me", headers=reader_headers)).status_code == 401

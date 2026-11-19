@@ -677,3 +677,40 @@
     scroll-snap-align: start;
   }
 }
+
+/* News For You order (Recommended / Newest) */
+.feed-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.feed-sort select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.feed-status {
+  margin: -8px 0 16px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .feed-sort {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .feed-sort select {
+    flex: 1;
+    max-width: 240px;
+    font-size: 16px; /* avoids iPhone zoom on focus */
+  }
+}

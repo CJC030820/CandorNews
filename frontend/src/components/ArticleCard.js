@@ -81,6 +81,7 @@ const ArticleCard = ({ article }) => {
           <span className="source">{article.source}</span>
           <span className="date">{article.date}</span>
         </p>
+        {article.forYouReason && <p className="for-you-reason">{article.forYouReason}</p>}
         <p className="article-sentiment">Sentiment: {article.sentiment || 'Unavailable'}</p>
         <p className="article-description">{article.description}</p>
         <div className="article-actions">

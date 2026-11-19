@@ -1,8 +1,6 @@
 """Open security defects, isolated from networks and SMTP.
 
-Strict xfails represent unmet security requirements, not successful checks. A fix
-must make the corresponding test pass and remove its xfail marker. Only assertion
-failures are expected; fixture/import/runtime failures must still fail the suite.
+SEC-01 to SEC-04 are fixed; these tests keep them fixed.
 """
 import logging
 from unittest.mock import Mock
@@ -15,10 +13,7 @@ from app import main
 from app.services.news_fetcher import NewsFetcherService
 
 
-@pytest.mark.xfail(
-    strict=True, raises=AssertionError,
-    reason="SEC-02: RSS image fallback fetches private article destinations",
-)
+# SEC-02 fixed: the page lookup only requests public addresses (redirects included).
 def test_rss_image_fallback_does_not_request_loopback(monkeypatch):
     feed_url = "https://publisher.example/feed"
     private_url = "http://127.0.0.1:8080/internal"
@@ -43,10 +38,7 @@ def test_rss_image_fallback_does_not_request_loopback(monkeypatch):
     assert all(call.args[0] != private_url for call in get.call_args_list)
 
 
-@pytest.mark.xfail(
-    strict=True, raises=AssertionError,
-    reason="SEC-04: provider retry errors log credential-bearing request URLs",
-)
+# SEC-04 fixed: credential values in URLs are redacted before logging.
 def test_provider_retry_redacts_query_credentials(monkeypatch, caplog):
     fake_secret = "FAKE-TEST-KEY-DO-NOT-USE"
     response = requests.Response()
@@ -94,3 +86,19 @@ async def test_unverified_account_cannot_send_digest(monkeypatch):
 
     assert response.status_code == 403, "Sending must require verified address ownership"
     send.assert_not_called()
+
+
+def test_page_lookup_refuses_redirect_to_private_address(monkeypatch):
+    from app.services import news_fetcher
+    monkeypatch.setattr("app.services.image_cache.is_public_http_url", lambda url: "127.0.0.1" not in url)
+    redirect = Mock(status_code=302, headers={"Location": "http://127.0.0.1/admin"})
+    get = Mock(return_value=redirect)
+    monkeypatch.setattr("app.services.news_fetcher.requests.get", get)
+    assert news_fetcher.NewsFetcherService()._fetch_og_image("https://publisher.example/story") is None
+    assert [c.args[0] for c in get.call_args_list] == ["https://publisher.example/story"]
+
+
+def test_redact_hides_credentials():
+    from app.services.news_fetcher import _redact
+    text = _redact("401 for url: https://x.example/a?q=1&apiKey=SECRET1&token=SECRET2")
+    assert "SECRET" not in text and "q=1" in text and "apiKey=***" in text

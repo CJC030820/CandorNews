@@ -44,6 +44,8 @@ class UserInDB(UserBase):
     email_verified: bool = False
     email_verification: dict = {}
     last_on_demand_email_at: Optional[datetime] = None
+    # Publishers the user follows (ids from PLATFORMS); None = not chosen yet.
+    followed_platforms: Optional[List[str]] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

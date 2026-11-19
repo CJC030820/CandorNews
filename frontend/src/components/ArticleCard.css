@@ -620,3 +620,11 @@
   padding: 6px 14px;
   font-size: 14px;
 }
+
+/* Why a story is recommended in News For You */
+.for-you-reason {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-color);
+}

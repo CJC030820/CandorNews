@@ -14,11 +14,13 @@ const articles = [
 
 // Stable like the real context's useCallback, so the feed does not reload in a loop.
 const mockGetFeed = async () => ({ articles: mockFeedArticles || articles });
+const mockSearch = jest.fn();
 
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     user: { name: 'Reader' }, logout: jest.fn(), refreshFeed: jest.fn(), getRefreshStatus: jest.fn(),
     getFeed: mockGetFeed,
+    searchArticles: (...args) => mockSearch(...args),
     selectedTopics: mockTopics,
     updatePreferences: (...args) => mockUpdatePreferences(...args),
   }),
@@ -100,4 +102,22 @@ test('background reload applies immediately when the reader is at the top', asyn
   await act(async () => { await reloader()(); });
   await waitFor(() => expect(titles()[0]).toBe('Breaking: new story'));
   expect(screen.queryByText(/new article/)).toBeNull();
+});
+
+
+test('search looks through all saved articles, beyond the latest batch and interests', async () => {
+  mockSearch.mockResolvedValue({ articles: [
+    { id: '9', title: 'Old budget debate recap', source: 'New Straits Times', date: '2026-05-01T01:00:00Z', categories: ['Business'] },
+  ] });
+  render(<MemoryRouter><FeedPage searchQuery="budget" /></MemoryRouter>);
+  await waitFor(() => expect(titles()).toEqual(['Parliament passes budget', 'Old budget debate recap']));
+  expect(mockSearch).toHaveBeenCalledWith('budget', 200);
+  await waitFor(() => expect(document.querySelector('.feed-status')?.textContent).toBe('2 results from all saved articles'));
+});
+
+test('News For You can be switched to newest first', async () => {
+  renderFeed();
+  await waitFor(() => expect(titles()).toEqual(['Parliament passes budget']));
+  fireEvent.change(screen.getByLabelText('Order of News For You'), { target: { value: 'newest' } });
+  expect(screen.getByLabelText('Order of News For You').value).toBe('newest');
 });

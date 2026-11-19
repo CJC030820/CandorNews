@@ -181,7 +181,6 @@ def test_similar_titles_merge_only_within_publisher():
     assert DeduplicatorService().remove_duplicates([first, revised, other, unrelated]) == [first, other, unrelated]
 
 
-@pytest.mark.xfail(strict=True, raises=ValueError, reason="Known defect: malformed URL aborts dedup before later valid articles are processed")
 def test_malformed_article_url_does_not_abort_valid_batch():
     invalid = {"title": "Malformed publisher URL", "url": "https://[invalid"}
     valid = {"title": "City library opens this week", "url": "https://example.test/good"}
@@ -236,10 +235,19 @@ def test_long_article_summary_is_generated_without_inventing_sentences():
     assert SummarizerService().summarize(text) == lead
 
 
-@pytest.mark.xfail(strict=True, reason="Known limitation: punctuation-only splitting corrupts abbreviations and decimal amounts")
 def test_summary_preserves_decimal_amounts_and_abbreviations():
     text = "Dr. Lee announced 3.5 million in funding. Schools will receive grants."
     assert SummarizerService(max_sentences=2).summarize(text) == text
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("Petronas posted RM2.3 bil profit. Shares rose. Analysts agree.", "Petronas posted RM2.3 bil profit. Shares rose."),
+    ("Maybank Bhd. reported gains. The U.S. market fell. Others waited.", "Maybank Bhd. reported gains. The U.S. market fell."),
+    ('He said "we will win." Fans cheered. Later news.', 'He said "we will win." Fans cheered.'),
+    ("No full stop at the end", "No full stop at the end."),
+])
+def test_summary_sentence_boundaries(text, expected):
+    assert SummarizerService(max_sentences=2).summarize(text) == expected
 
 
 @pytest.mark.parametrize("article,expected", [

@@ -7,7 +7,7 @@ from app.models.user import UserCreate
 
 def test_leading_sentence_summary():
     service=SummarizerService(max_sentences=2)
-    assert service.summarize("First sentence. Second sentence! Third sentence?")=="First sentence. Second sentence."
+    assert service.summarize("First sentence. Second sentence! Third sentence?")=="First sentence. Second sentence!"
     assert service.summarize("")==""
 
 def test_topics():

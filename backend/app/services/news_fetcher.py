@@ -11,6 +11,29 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_SECRET_PARAM = re.compile(r"((?:api[_-]?key|apikey|token|key|secret|password)=)[^&\s'\"]+", re.I)
+
+
+def _redact(text) -> str:
+    """Hide credential values in URLs before they reach the logs."""
+    return _SECRET_PARAM.sub(lambda m: m.group(1) + "***", str(text))
+
+
+def _safe_page_get(url: str, max_redirects: int = 3, **kwargs):
+    """GET a publisher page only if it (and every redirect) is on the public
+    internet, so a feed link cannot make the server reach private addresses."""
+    from app.services.image_cache import is_public_http_url
+    for _ in range(max_redirects + 1):
+        if not is_public_http_url(url):
+            return None
+        response = requests.get(url, allow_redirects=False, **kwargs)
+        location = response.headers.get("Location") if hasattr(response, "headers") and response.headers else None
+        if response.status_code in (301, 302, 303, 307, 308) and location:
+            url = urljoin(url, location)
+            continue
+        return response
+    return None
+
 
 def _repair_mojibake(value: str) -> str:
     """Repair common UTF-8-as-Windows-1252 corruption from RSS feeds."""
@@ -66,10 +89,10 @@ class NewsFetcherService:
             except requests.RequestException as e:
                 if attempt < max_retries:
                     wait_time = backoff_factor * (2 ** attempt)
-                    logger.warning(f"Request failed (attempt {attempt + 1}/{max_retries + 1}): {e}. Retrying in {wait_time:.1f}s...")
+                    logger.warning(f"Request failed (attempt {attempt + 1}/{max_retries + 1}): {_redact(e)}. Retrying in {wait_time:.1f}s...")
                     time.sleep(wait_time)
                 else:
-                    logger.error(f"Request failed after {max_retries + 1} attempts: {e}")
+                    logger.error(f"Request failed after {max_retries + 1} attempts: {_redact(e)}")
                     raise
 
     def fetch_from_newsapi(self, query: str = "", category: str = "", language: str = "en", country: str = "my") -> List[Dict]:
@@ -105,7 +128,7 @@ class NewsFetcherService:
             # Already logged in helper
             return []
         except Exception as e:
-            logger.error(f"Error fetching from NewsAPI: {e}")
+            logger.error(f"Error fetching from NewsAPI: {_redact(e)}")
             return []
 
     def fetch_from_gnews(self, query: str = "", category: str = "", language: str = "en", country: str = "my") -> List[Dict]:
@@ -139,7 +162,7 @@ class NewsFetcherService:
             return articles
         except Exception as e:
             # Already logged in helper for request errors, but catch any other exceptions
-            logger.error(f"Error fetching from GNews: {e}")
+            logger.error(f"Error fetching from GNews: {_redact(e)}")
             return []
 
     def fetch_from_rss(self, feed_url: str, known_urls: Optional[set] = None) -> List[Dict]:
@@ -250,12 +273,12 @@ class NewsFetcherService:
         Fails silently (returns None) so a slow/broken page never blocks
         ingestion of the rest of the batch."""
         try:
-            response = requests.get(
+            response = _safe_page_get(
                 article_url,
                 timeout=6,
                 headers={"User-Agent": "Mozilla/5.0 (compatible; CandorNewsBot/1.0)"}
             )
-            if response.status_code != 200:
+            if response is None or response.status_code != 200:
                 return None
             html = response.text
             for pattern in (

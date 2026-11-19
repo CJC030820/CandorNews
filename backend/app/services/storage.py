@@ -155,6 +155,28 @@ class StorageService:
             articles.append(ArticleInDB(**doc))
         return articles
 
+    async def search_articles(self, text: str, limit: int = 100) -> List[ArticleInDB]:
+        """Completed articles whose headline, summary, description or
+        publisher contains every word of `text` (case-insensitive)."""
+        import re as _re
+        words = [w for w in text.split() if w][:6]
+        if not words:
+            return []
+        excluded_topics = ["Education", "Lifestyle", "Property", "Malaysia", "World"]
+        fields = ("title", "summary", "description", "source")
+        query = {
+            "processing_status": "completed",
+            "topic": {"$nin": excluded_topics},
+            "topics": {"$nin": excluded_topics},
+            "$and": [{"$or": [{f: {"$regex": _re.escape(w), "$options": "i"}} for f in fields]} for w in words],
+        }
+        cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
     async def count_articles(self) -> int:
         return await self.articles.count_documents({})
 

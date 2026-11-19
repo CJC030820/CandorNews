@@ -33,11 +33,17 @@ class DeduplicatorService:
             if not url or not title:
                 continue
 
-            if self.is_duplicate_url(url, seen_urls):
+            try:
+                domain = (urlparse(url).hostname or "").lower().removeprefix("www.")
+                duplicate = self.is_duplicate_url(url, seen_urls)
+            except ValueError:
+                # A malformed link skips only this article, not the rest of the batch.
+                logger.warning(f"Skipping article with malformed URL: {url!r}")
+                continue
+            if duplicate:
                 logger.debug(f"Skipping duplicate URL: {url}")
                 continue
 
-            domain = (urlparse(url).hostname or "").lower().removeprefix("www.")
             if self.is_similar_title(title, seen_titles.get(domain, [])):
                 logger.debug(f"Skipping similar title: {title}")
                 continue
