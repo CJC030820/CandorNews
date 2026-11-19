@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import hashlib
 import hmac
 import html
+
+from app.services import email_layout as layout
 import secrets
 
 from app.core.config import settings
@@ -74,14 +76,20 @@ def check_code(state: dict, email: str, code: str, now: datetime) -> tuple[str, 
     return "wrong", {**state, "attempts": state.get("attempts", 0) + 1}
 
 
-def build_code_email(name: str, code: str) -> dict:
+def build_code_email(name: str, code: str, site_url: str = "") -> dict:
     minutes = int(CODE_TTL.total_seconds() // 60)
     text = (f"Hi {name},\n\nYour CandorNews verification code is: {code}\n\n"
             f"Enter it on your Profile page within {minutes} minutes to start receiving news digests.\n"
             "If you did not request this, you can ignore this email.")
     safe_name = html.escape(name or "")
-    body = (f"<p>Hi {safe_name},</p><p>Your CandorNews verification code is:</p>"
-            f"<p style=\"font-size:28px;font-weight:700;letter-spacing:6px\">{code}</p>"
-            f"<p>Enter it on your Profile page within {minutes} minutes to start receiving news digests.</p>"
-            "<p style=\"color:#666\">If you did not request this, you can ignore this email.</p>")
+    content = (f'<p style="margin:0 0 12px 0;">Hi {safe_name},</p>'
+               '<p style="margin:0 0 12px 0;">Your CandorNews verification code is:</p>'
+               f'<p style="margin:0 0 16px 0;text-align:center;"><span style="display:inline-block;padding:12px 20px;'
+               f'background-color:{layout.BG};border:1px solid {layout.BORDER};border-radius:10px;color:{layout.ACCENT};'
+               f'font-size:30px;font-weight:700;letter-spacing:8px;">{code}</span></p>'
+               f'<p style="margin:0 0 12px 0;">Enter it on your Profile page within {minutes} minutes to start receiving news digests.</p>'
+               f'<p style="margin:0;color:{layout.TEXT_SECONDARY};font-size:13px;">If you did not request this, you can ignore this email.</p>')
+    body = layout.page("Verify your email", "One step before your news digests start", content,
+                       "This code was requested from your CandorNews Profile page.", site_url,
+                       preheader=f"Your code is {code}")
     return {"subject": "Your CandorNews verification code", "text": text, "html": body}

@@ -18,6 +18,7 @@ class StorageService:
         self.articles = self.db.articles
         self.interactions = self.db.interactions
         self.source_credibility = self.db.source_credibility
+        self.user_library = self.db.user_library
 
     async def ensure_indexes(self):
         """Create indexes needed for data integrity (safe to call repeatedly)."""

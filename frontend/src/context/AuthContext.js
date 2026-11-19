@@ -55,8 +55,9 @@ export const AuthProvider = ({ children }) => {
   };
   const deleteAccount = async password => {
     await api.delete('/api/users/me', {data: {password}});
-    ['bookmarkedArticles', 'readArticleHistory', 'followedPlatformIds'].forEach(key =>
-      localStorage.removeItem(`${key}:${user.email.toLowerCase()}`));
+    const email = user.email.toLowerCase();
+    ['bookmarkedArticles', 'readArticleHistory', 'followedPlatformIds'].forEach(key => localStorage.removeItem(`${key}:${email}`));
+    ['bookmarks', 'history'].forEach(kind => localStorage.removeItem(`librarySynced:${email}:${kind}`));
     logout(); return true;
   };
   const getFeed = useCallback(async ({topic, limit} = {}) =>
@@ -64,10 +65,18 @@ export const AuthProvider = ({ children }) => {
   const getArticle = useCallback(async id => (await api.get(`/api/articles/${encodeURIComponent(id)}`)).data, [api]);
   const refreshFeed = useCallback(async platforms => (await api.post('/api/articles/refresh', {platforms})).data, [api]);
   const getRefreshStatus = useCallback(async id => (await api.get(`/api/articles/refresh/${encodeURIComponent(id)}`)).data, [api]);
+  // Bookmarks and history saved to the account (shared by all devices). kind: 'bookmarks' | 'history'
+  const getLibrary = useCallback(async () => (await api.get('/api/me/library')).data, [api]);
+  const importLibrary = useCallback(async lists => (await api.post('/api/me/library/import', lists)).data, [api]);
+  const saveLibraryItem = useCallback(async (kind, article) =>
+    (await api.put(`/api/me/${kind}/${encodeURIComponent(article.id)}`, {article})).data, [api]);
+  const removeLibraryItem = useCallback(async (kind, id) =>
+    (await api.delete(`/api/me/${kind}/${encodeURIComponent(id)}`)).data, [api]);
+  const clearLibrary = useCallback(async kind => (await api.delete(`/api/me/${kind}`)).data, [api]);
   const selectedTopics = user?.preferred_topics || [];
   return <AuthContext.Provider value={{token,user,loading,topicsCompleted:selectedTopics.length > 0,selectedTopics,
     login,logout,register,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
     getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,requestEmailVerification,confirmEmailVerification,deleteAccount,
-    getFeed,getArticle,refreshFeed,getRefreshStatus}}>{!loading && children}</AuthContext.Provider>;
+    getFeed,getArticle,refreshFeed,getRefreshStatus,getLibrary,importLibrary,saveLibraryItem,removeLibraryItem,clearLibrary}}>{!loading && children}</AuthContext.Provider>;
 };
 export const useAuth = () => useContext(AuthContext);

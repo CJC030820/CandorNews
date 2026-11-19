@@ -17,7 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 from fastapi.responses import FileResponse
-from app.services import email_service, email_verification, image_cache
+from app.services import email_service, email_verification, image_cache, library
 from app.services.trust_scorer import SCORE_VERSION
 from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
@@ -64,6 +64,7 @@ async def on_startup():
     news ingestion worker that fetches the latest headlines from configured RSS feeds (runs immediately, then every WORKER_INTERVAL_MINUTES)."""
     try:
         await storage_service.ensure_indexes()
+        await library.ensure_indexes()
         print("MongoDB indexes ensured. User accounts will persist across restarts.")
     except Exception as exc:
         print(f"Warning: could not ensure MongoDB indexes: {exc}")
@@ -307,10 +308,78 @@ async def delete_account(request: AccountDeleteRequest, user=Depends(get_current
         raise HTTPException(status_code=401, detail="Incorrect password.")
 
     deleted = await storage_service.delete_user_by_email(user.email)
+    if deleted:
+        await library.delete_user(user.id)
     if not deleted:
         raise HTTPException(status_code=500, detail="Failed to delete account. Please try again.")
 
     return {"status": "deleted", "detail": "Your account has been permanently deleted."}
+
+
+# ---- Bookmarks and reading history, saved per account (shared by all devices) ----
+
+class LibraryArticle(BaseModel):
+    article: dict = Field(default_factory=dict)
+
+
+class LibraryImport(BaseModel):
+    bookmarks: List[dict] = Field(default_factory=list, max_length=500)
+    history: List[dict] = Field(default_factory=list, max_length=300)
+
+
+def _library_id(article_id: str) -> str:
+    valid = library.valid_article_id(article_id)
+    if not valid:
+        raise HTTPException(status_code=400, detail="Invalid article id.")
+    return valid
+
+
+async def _library(user) -> dict:
+    return {"bookmarks": await library.list_items(user.id, "bookmark"),
+            "history": await library.list_items(user.id, "history")}
+
+
+@app.get("/api/me/library")
+async def get_library(user=Depends(get_current_user)):
+    return await _library(user)
+
+
+@app.post("/api/me/library/import")
+async def import_library(payload: LibraryImport, user=Depends(get_current_user)):
+    """Merge records kept on a device into the account (no duplicates)."""
+    await library.merge(user.id, "bookmark", payload.bookmarks)
+    await library.merge(user.id, "history", payload.history)
+    return await _library(user)
+
+
+@app.put("/api/me/bookmarks/{article_id}")
+async def save_bookmark(article_id: str, payload: LibraryArticle, user=Depends(get_current_user)):
+    await library.save(user.id, "bookmark", _library_id(article_id), payload.article)
+    return {"status": "saved"}
+
+
+@app.delete("/api/me/bookmarks/{article_id}")
+async def delete_bookmark(article_id: str, user=Depends(get_current_user)):
+    await library.remove(user.id, "bookmark", _library_id(article_id))
+    return {"status": "removed"}
+
+
+@app.put("/api/me/history/{article_id}")
+async def save_history(article_id: str, payload: LibraryArticle, user=Depends(get_current_user)):
+    await library.save(user.id, "history", _library_id(article_id), payload.article)
+    return {"status": "saved"}
+
+
+@app.delete("/api/me/history/{article_id}")
+async def delete_history_item(article_id: str, user=Depends(get_current_user)):
+    await library.remove(user.id, "history", _library_id(article_id))
+    return {"status": "removed"}
+
+
+@app.delete("/api/me/history")
+async def clear_history(user=Depends(get_current_user)):
+    await library.clear(user.id, "history")
+    return {"status": "cleared"}
 
 def _repair_mojibake(value: str) -> str:
     """Repair common UTF-8-as-Windows-1252 corruption in stored text."""
@@ -529,7 +598,7 @@ async def send_verification_code(user=Depends(get_current_user)):
     if not allowed:
         raise HTTPException(status_code=429, detail=reason)
     code = email_verification.new_code()
-    message = email_verification.build_code_email(user.name, code)
+    message = email_verification.build_code_email(user.name, code, site_url=settings.site_url)
     result = await asyncio.to_thread(
         email_service.send_email, user.email, message["subject"], message["text"], message["html"])
     if not result["success"]:

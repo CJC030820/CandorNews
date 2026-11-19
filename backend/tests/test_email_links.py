@@ -64,3 +64,13 @@ async def test_sent_digest_uses_site_links(monkeypatch):
     text, html = send.call_args.kwargs["body_text"], send.call_args.kwargs["body_html"]
     assert f"{SITE}/article/{created.id}" in text and f"{SITE}/article/{created.id}" in html
     assert ORIGINAL not in text and ORIGINAL not in html
+
+
+def test_emails_use_site_design():
+    from app.services import email_verification
+    for html_body in (_digest()["html"], email_verification.build_code_email("Reader", "123456", SITE)["html"]):
+        assert "#2563EB" in html_body and f"{SITE}/CandorNews-removebg-preview.png" in html_body
+        assert "#667eea" not in html_body.lower() and "#764ba2" not in html_body.lower()
+        assert "\U0001F4F0" not in html_body
+    assert "\U0001F4F0" not in _digest()["subject"]
+    assert f'href="{SITE}/profile"' in _digest()["html"]

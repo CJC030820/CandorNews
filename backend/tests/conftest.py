@@ -10,6 +10,7 @@ def isolated_database(monkeypatch):
     db = client.fyp_tests
     for name, value in {"client": client, "db": db, "users": db.users,
                         "articles": db.articles, "interactions": db.interactions,
-                        "source_credibility": db.source_credibility}.items():
+                        "source_credibility": db.source_credibility,
+                        "user_library": db.user_library}.items():
         monkeypatch.setattr(storage_service, name, value)
     return storage_service

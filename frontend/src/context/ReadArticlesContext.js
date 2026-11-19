@@ -1,37 +1,38 @@
 import React, { createContext, useContext, useCallback } from 'react';
-import { useAccountStorage } from '../hooks/useAccountStorage';
+import { useAuth } from './AuthContext';
+import { useSyncedLibrary } from '../hooks/useSyncedLibrary';
 
 const ReadArticlesContext = createContext();
 
 const EMPTY = [];
+const same = (a, b) => String(a) === String(b);
 
+// Reading history is saved to the account, so the PC and phone show the same list.
 export const ReadArticlesProvider = ({ children }) => {
-  const [history, setHistory] = useAccountStorage('readArticleHistory', EMPTY);
+  const { saveLibraryItem, removeLibraryItem, clearLibrary } = useAuth();
+  const [history, change] = useSyncedLibrary('readArticleHistory', 'history', EMPTY);
 
   const isRead = useCallback((articleId) => {
     if (articleId === undefined || articleId === null) return false;
-    return history.some((entry) => String(entry.id) === String(articleId));
+    return history.some((entry) => same(entry.id, articleId));
   }, [history]);
 
-  // Records (or re-records) an article as read. Every time the user views
-  // the article, this bumps it to the top of the history with a fresh
-  // timestamp, so History reflects real-time viewing activity.
+  // Every view moves the article to the top of History with a fresh time.
   const markAsRead = useCallback((article) => {
     if (!article || article.id === undefined || article.id === null) return;
-    setHistory((prev) => {
-      const withoutThis = prev.filter((entry) => String(entry.id) !== String(article.id));
-      const entry = { ...article, readAt: new Date().toISOString() };
-      return [entry, ...withoutThis];
-    });
-  }, [setHistory]);
+    const entry = { ...article, readAt: new Date().toISOString() };
+    change((prev) => [entry, ...prev.filter((e) => !same(e.id, article.id))],
+      () => saveLibraryItem('history', entry));
+  }, [change, saveLibraryItem]);
 
   const removeFromHistory = useCallback((articleId) => {
-    setHistory((prev) => prev.filter((entry) => String(entry.id) !== String(articleId)));
-  }, [setHistory]);
+    change((prev) => prev.filter((e) => !same(e.id, articleId)),
+      () => removeLibraryItem('history', articleId));
+  }, [change, removeLibraryItem]);
 
   const clearHistory = useCallback(() => {
-    setHistory([]);
-  }, [setHistory]);
+    change(() => [], () => clearLibrary('history'));
+  }, [change, clearLibrary]);
 
   const value = {
     history,

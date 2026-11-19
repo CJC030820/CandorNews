@@ -1,4 +1,6 @@
 from html import escape
+
+from app.services import email_layout as layout
 from urllib.parse import quote, urlparse
 """
 Email notification service using SMTP (works with Gmail, Outlook, or any
@@ -116,7 +118,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
     Returns {"subject": str, "text": str, "html": str}
     """
     heading = f"Your {period_label} News Digest" if period_label else "Your News Digest"
-    subject = f"📰 {heading} - CandorNews ({len(articles)} articles)"
+    subject = f"{heading} - CandorNews ({len(articles)} articles)"
 
     text_lines = [f"Hi {user_name},", "", f"Here are the {len(articles)} recent stories, prioritizing your interests:", "", "=" * 60, ""]
     html_articles = []
@@ -158,27 +160,22 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             score_label = f'{trust_score}/100 trust' if trust_score is not None else 'Analysis pending'
             title, source, description, date = [escape(str(value)) for value in (title, source, description, date)]
             url = escape(url, quote=True) if urlparse(url).scheme in {'http', 'https'} else ''
-            # Build HTML version with rich formatting
-            html_articles.append(
-                f"""
-                <div style="margin-bottom: 24px; padding: 16px; background: #f9f9f9; border-left: 4px solid #667eea; border-radius: 4px;">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                    <span style="font-size: 18px; font-weight: 600; color: #333;">{idx}.</span>
-                    <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{score_label}</span>
-                  </div>
-                  <h3 style="margin: 0 0 10px 0; font-size: 16px; line-height: 1.4; color: #0f172a;">{title}</h3>
-                  <div style="color: #666; font-size: 12px; margin-bottom: 12px;">
-                    <span>{source}</span>
-                    {f' • <span>{date}</span>' if date else ''}
-                  </div>
-                  {f'<p style="color: #555; font-size: 14px; line-height: 1.6; margin: 12px 0; color: #444;">{description}</p>' if description else ''}
-                  {f'<a href="{url}" style="display: inline-block; background: #667eea; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">Read on CandorNews →</a>' if url else ''}
-                </div>
-                """
+            divider = f"border-top:1px solid {layout.BORDER};" if idx > 1 else ""
+            meta = source + (f" &middot; {date}" if date else "")
+            html_articles.append(f"""
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td style="padding:18px 0;{divider}">
+                {layout.badge(score_label)}
+                <h3 style="margin:10px 0 6px 0;font-size:17px;line-height:1.4;color:{layout.TEXT};font-weight:700;">{title}</h3>
+                <p style="margin:0 0 10px 0;color:{layout.TEXT_SECONDARY};font-size:13px;">{meta}</p>
+                {f'<p style="margin:0 0 14px 0;color:{layout.TEXT};font-size:14px;line-height:1.6;">{description}</p>' if description else ''}
+                {layout.button(url, "Read on CandorNews") if url else ''}
+              </td>
+            </tr></table>"""
             )
     else:
         text_lines.append("No new articles right now - check the app for the latest news!")
-        html_articles.append('<div style="text-align: center; padding: 20px; color: #999;">No new articles right now - check the app for the latest news!</div>')
+        html_articles.append(f'<p style="text-align:center;padding:20px 0;color:{layout.TEXT_SECONDARY};">No new articles right now - check the app for the latest news!</p>')
 
     text_lines.append("")
     text_lines.append("")
@@ -187,28 +184,18 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
     text_body = "\n".join(text_lines)
 
     user_name = escape(user_name)
-    html_body = f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0 0 10px 0; font-size: 28px;">📰 {heading}</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">Top {len(articles)} recent stories</p>
-      </div>
-      <div style="padding: 30px;">
-        <p style="color: #333; font-size: 16px; margin-bottom: 20px;">Hi {user_name},</p>
-        <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Here are the {len(articles)} recent news articles, prioritizing your interests and including other recent stories when needed. Each includes a brief summary for quick reading.</p>
-        <div style="border-top: 2px solid #eee; padding-top: 20px;">
-          {''.join(html_articles)}
-        </div>
-      </div>
-      <div style="background: #f5f5f5; padding: 20px; text-align: center; border-top: 1px solid #ddd;">
-        <p style="color: #999; font-size: 12px; margin: 0 0 10px 0;">
-          You're receiving this because you enabled email notifications in CandorNews.
-        </p>
-        <p style="color: #999; font-size: 12px; margin: 0;">
-          Manage your preferences anytime in your Profile settings.
-        </p>
-      </div>
-    </div>
-    """
+    count = len(articles)
+    content = (
+        f'<p style="margin:0 0 8px 0;">Hi {user_name},</p>'
+        f'<p style="margin:0 0 8px 0;color:{layout.TEXT_SECONDARY};font-size:14px;">'
+        f'Here are {count} recent news articles, with your interests first. Each has a short summary for quick reading.</p>'
+        + "".join(html_articles))
+    profile = f"{site_url.rstrip('/')}/profile" if site_url else ""
+    manage = (f'<a href="{escape(profile, quote=True)}" style="color:{layout.ACCENT};text-decoration:none;">Profile settings</a>'
+              if profile else "Profile settings")
+    footer = ("You're receiving this because you turned on email notifications in CandorNews.<br>"
+              f"Change delivery times or turn them off anytime in your {manage}.")
+    html_body = layout.page(heading, f"Top {count} recent stories", content, footer, site_url,
+                            preheader=f"{count} recent stories picked for you")
 
     return {"subject": subject, "text": text_body, "html": html_body}
