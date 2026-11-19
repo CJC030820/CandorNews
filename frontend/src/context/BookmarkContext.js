@@ -15,7 +15,7 @@ export const BookmarkProvider = ({ children }) => {
   const addBookmark = (article) => {
     setBookmarks((prev) => {
       if (prev.some((a) => a.id === article.id)) return prev;
-      return [...prev, article];
+      return [...prev, { ...article, savedAt: new Date().toISOString() }];
     });
   };
 

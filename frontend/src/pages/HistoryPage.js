@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { useReadArticles } from '../context/ReadArticlesContext';
@@ -6,6 +6,8 @@ import BackToTopButton from '../components/BackToTopButton';
 import './HistoryPage.css';
 import ArticleImage from '../components/ArticleImage';
 import { BackIcon, HistoryIcon } from '../components/Icons';
+import ArticleFilters from '../components/ArticleFilters';
+import { EMPTY_FILTERS, filterHistory, historyCategories } from '../utils/historyFilter';
 
 const formatReadAt = (isoString) => {
   if (!isoString) return '';
@@ -46,6 +48,11 @@ const formatExactDateTime = (isoString) => {
 const HistoryPage = () => {
   const navigate = useNavigate();
   const { history, removeFromHistory, clearHistory } = useReadArticles();
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+
+  const categories = useMemo(() => historyCategories(history), [history]);
+  const visible = useMemo(() => filterHistory(history, filters), [history, filters]);
+  const clearFilters = () => setFilters(EMPTY_FILTERS);
 
   const handleOpenArticle = (article) => {
     navigate(`/article/${article.id}`, { state: { article } });
@@ -90,10 +97,27 @@ const HistoryPage = () => {
           </div>
         </div>
 
+        {history.length > 0 && (
+          <ArticleFilters
+            value={filters}
+            onChange={setFilters}
+            categories={categories}
+            total={history.length}
+            shown={visible.length}
+            timeLabel="Time viewed"
+            label="Filter reading history"
+          />
+        )}
+
         <div className="history-content">
-          {history.length > 0 ? (
+          {history.length > 0 && visible.length === 0 ? (
+            <div className="empty-state">
+              <p>No articles in your history match these filters.</p>
+              <button className="browse-btn" onClick={clearFilters}>Clear filters</button>
+            </div>
+          ) : history.length > 0 ? (
             <div className="history-list">
-              {history.map((article) => (
+              {visible.map((article) => (
                 <div
                   key={article.id}
                   className="history-item"

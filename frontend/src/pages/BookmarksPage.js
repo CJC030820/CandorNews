@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import { useBookmarks } from '../context/BookmarkContext';
@@ -6,10 +6,24 @@ import BackToTopButton from '../components/BackToTopButton';
 import './BookmarksPage.css';
 import ArticleImage from '../components/ArticleImage';
 import { BackIcon, BookmarkIcon } from '../components/Icons';
+import ArticleFilters from '../components/ArticleFilters';
+import { EMPTY_FILTERS, bookmarkTime, filterBookmarks, historyCategories } from '../utils/historyFilter';
+
+// "Saved 19 Nov 2026" (older bookmarks without a saved time show the publish date)
+const bookmarkDateLabel = (article) => {
+  const when = bookmarkTime(article);
+  const d = when ? new Date(when) : null;
+  if (!d || Number.isNaN(d.getTime())) return article.date || '';
+  const text = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  return article.savedAt ? `Saved ${text}` : `Published ${text}`;
+};
 
 const BookmarksPage = () => {
   const navigate = useNavigate();
   const { bookmarks, removeBookmark } = useBookmarks();
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const categories = useMemo(() => historyCategories(bookmarks), [bookmarks]);
+  const visible = useMemo(() => filterBookmarks(bookmarks, filters), [bookmarks, filters]);
 
   const handleOpenArticle = (article) => {
     navigate(`/article/${article.id}`, { state: { article } });
@@ -37,10 +51,27 @@ const BookmarksPage = () => {
           )}
         </div>
 
+        {bookmarks.length > 0 && (
+          <ArticleFilters
+            value={filters}
+            onChange={setFilters}
+            categories={categories}
+            total={bookmarks.length}
+            shown={visible.length}
+            timeLabel="Time saved"
+            label="Filter bookmarks"
+          />
+        )}
+
         <div className="bookmarks-content">
-          {bookmarks.length > 0 ? (
+          {bookmarks.length > 0 && visible.length === 0 ? (
+            <div className="empty-state">
+              <p>No bookmarks match these filters.</p>
+              <button className="browse-btn" onClick={() => setFilters(EMPTY_FILTERS)}>Clear filters</button>
+            </div>
+          ) : bookmarks.length > 0 ? (
             <div className="bookmarks-grid">
-              {bookmarks.map(article => (
+              {visible.map(article => (
                 <div
                   key={article.id}
                   className="bookmark-item"
@@ -53,7 +84,7 @@ const BookmarksPage = () => {
                     )}
                   </div>
                   <h3>{article.title}</h3>
-                  <p>{article.source} • {article.date}</p>
+                  <p>{article.source} • {bookmarkDateLabel(article)}</p>
                   <button
                     className="remove-btn"
                     onClick={(e) => handleRemove(e, article.id)}
