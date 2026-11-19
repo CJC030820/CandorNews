@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import DarkModeToggle from '../components/DarkModeToggle';
+import SearchBox from './SearchBox';
 import './NavBar.css';
 import { BookmarkIcon, HistoryIcon, HelpIcon, UserIcon } from './Icons';
 
@@ -26,26 +27,7 @@ const NavBar = ({ searchQuery, onSearchChange }) => {
           </button>
         </div>
 
-        <div className="search-bar-container">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search articles..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="search-input"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => onSearchChange('')}
-                className="search-clear"
-                title="Clear search"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
+        <SearchBox value={searchQuery} onChange={onSearchChange} />
 
         <div className="navbar-actions">
           {user && (

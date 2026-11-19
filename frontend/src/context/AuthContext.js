@@ -93,10 +93,13 @@ export const AuthProvider = ({ children }) => {
   // Search every stored article, not only the latest loaded batch.
   const searchArticles = useCallback(async (q, limit = 100) =>
     (await api.get('/api/articles/search', {params: {q, limit}})).data, [api]);
+  // Keyword suggestions for the search box (trending topics when q is empty).
+  const suggestKeywords = useCallback(async q =>
+    (await api.get('/api/articles/suggest', {params: {q}})).data, [api]);
   const selectedTopics = user?.preferred_topics || [];
   return <AuthContext.Provider value={{token,user,loading,topicsCompleted:selectedTopics.length > 0,selectedTopics,
     login,logout,register,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
     getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,requestEmailVerification,confirmEmailVerification,deleteAccount,
-    getFeed,getArticle,refreshFeed,getRefreshStatus,getLibrary,importLibrary,saveLibraryItem,removeLibraryItem,clearLibrary,updateFollowedPlatforms,searchArticles}}>{!loading && children}</AuthContext.Provider>;
+    getFeed,getArticle,refreshFeed,getRefreshStatus,getLibrary,importLibrary,saveLibraryItem,removeLibraryItem,clearLibrary,updateFollowedPlatforms,searchArticles,suggestKeywords}}>{!loading && children}</AuthContext.Provider>;
 };
 export const useAuth = () => useContext(AuthContext);

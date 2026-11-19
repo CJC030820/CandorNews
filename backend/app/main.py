@@ -17,7 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 from fastapi.responses import FileResponse
-from app.services import email_service, email_verification, image_cache, library
+from app.services import email_service, email_verification, image_cache, library, suggest
 from app.services.trust_scorer import SCORE_VERSION
 from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
@@ -487,6 +487,13 @@ async def search_articles(q: str = Query(..., min_length=2, max_length=100), lim
     summary or publisher, newest first."""
     articles = await storage_service.search_articles(q, limit=limit)
     return {"articles": [_article_to_feed_dict(a) for a in articles], "query": q}
+
+
+@app.get("/api/articles/suggest")
+async def suggest_keywords(q: str = Query("", max_length=60), user=Depends(get_current_user)):
+    """Keyword suggestions for the search box: completions of what is typed,
+    or trending topics of the last two days when the box is empty."""
+    return await suggest.suggest(q)
 
 
 refresh_jobs = {}
