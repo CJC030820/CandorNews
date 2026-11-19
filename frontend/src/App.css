@@ -114,14 +114,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 1s ease, color 1s ease;
 }
 
-html.theme-color-transition,
-html.theme-color-transition body,
-html.theme-color-transition body * {
-  transition: background-color 1s ease, color 1s ease, border-color 1s ease,
-    fill 1s ease, stroke 1s ease, box-shadow 1s ease !important;
+/* Light/dark switch: the whole page crossfades as one picture (see
+   ThemeContext). While switching, element transitions are paused so no part
+   of the page fades on its own. */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: ease-in-out;
 }
 
 code {

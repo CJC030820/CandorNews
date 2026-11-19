@@ -66,7 +66,7 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.58);
   border: none;
   color: white;
   width: 36px;
@@ -80,8 +80,7 @@
   line-height: 0;
   transition: all 0.3s;
   z-index: 2;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  /* no backdrop blur: repeated on every card, it slowed scrolling and theme changes */
   flex-shrink: 0;
 }
 
@@ -122,8 +121,7 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  /* no backdrop blur: repeated on every card, it slowed scrolling and theme changes */
   white-space: nowrap;
 }
 
@@ -148,8 +146,7 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  /* no backdrop blur: repeated on every card, it slowed scrolling and theme changes */
   z-index: 2;
 }
 

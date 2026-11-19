@@ -1,76 +1,77 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
-  const initialThemeApplied = useRef(false);
-  const transitionTimer = useRef(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage for saved preference
+const readSaved = () => {
+  try {
     const saved = localStorage.getItem('darkMode');
-    if (saved !== null) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing theme from localStorage:', e);
-        return false; // Default to light mode
-      }
-    }
-    // Default to light mode (false = light, true = dark)
+    return saved !== null ? JSON.parse(saved) === true : false;   // default: light
+  } catch {
     return false;
-  });
+  }
+};
 
-  // Apply theme on mount and when isDarkMode changes
-  useEffect(() => {
+const applyTheme = (dark) => {
+  if (dark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.body.removeAttribute('data-theme');
+  }
+  try { localStorage.setItem('darkMode', JSON.stringify(dark)); } catch { /* private mode */ }
+};
+
+const reducedMotion = () =>
+  typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Light/dark switch. The whole page changes as one: the browser takes a
+// snapshot and crossfades it to the new colours in a single short fade
+// (View Transitions), instead of every element fading on its own, which is
+// slow on long feeds and looks layered. Browsers without View Transitions
+// switch instantly.
+export const ThemeProvider = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = useState(readSaved);
+  const switching = useRef(false);
+
+  useEffect(() => { applyTheme(isDarkMode); }, [isDarkMode]);
+
+  const changeTheme = useCallback((next) => {
     const root = document.documentElement;
-    const animateThemeChange = initialThemeApplied.current;
-    if (transitionTimer.current) {
-      window.clearTimeout(transitionTimer.current);
-      transitionTimer.current = null;
-    }
-    if (animateThemeChange) {
-      root.classList.add('theme-color-transition');
-    }
-    initialThemeApplied.current = true;
-
-    // Save preference in the browser and apply both theme attributes together.
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      document.body.removeAttribute('data-theme');
-    }
-    
-    if (animateThemeChange) {
-      transitionTimer.current = window.setTimeout(() => {
-        root.classList.remove('theme-color-transition');
-        transitionTimer.current = null;
-      }, 1100);
-    }
-
-    console.log('Theme updated:', isDarkMode ? 'dark' : 'light');
-    return () => {
-      if (transitionTimer.current) {
-        window.clearTimeout(transitionTimer.current);
-        transitionTimer.current = null;
-      }
+    const update = () => {
+      // Per-element transitions are paused so nothing fades separately.
+      root.classList.add('theme-switching');
+      flushSync(() => setIsDarkMode(next));
+      applyTheme(next);
     };
-  }, [isDarkMode]);
+    const done = () => {
+      root.classList.remove('theme-switching');
+      switching.current = false;
+    };
+    if (switching.current || typeof document.startViewTransition !== 'function' || reducedMotion()) {
+      update();
+      // Let the browser paint the new colours, then restore normal hover
+      // effects (a timer, so it also finishes in a background tab).
+      window.setTimeout(done, 100);
+      return;
+    }
+    switching.current = true;
+    try {
+      document.startViewTransition(update).finished.finally(done);
+    } catch {
+      update();
+      done();
+    }
+  }, []);
 
-  const toggleDarkMode = () => {
-    console.log('Toggle dark mode clicked');
-    setIsDarkMode(prev => {
-      console.log('Toggling from:', prev, 'to:', !prev);
-      return !prev;
-    });
-  };
+  const toggleDarkMode = useCallback(() => changeTheme(!(document.documentElement.getAttribute('data-theme') === 'dark')),
+    [changeTheme]);
 
   const value = {
     isDarkMode,
     toggleDarkMode,
-    setIsDarkMode // Allow direct setting if needed
+    setIsDarkMode: changeTheme,
   };
 
   return (

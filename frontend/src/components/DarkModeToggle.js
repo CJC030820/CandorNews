@@ -14,7 +14,6 @@ const DarkModeToggle = () => {
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Button clicked, current isDarkMode:', isDarkMode);
     toggleDarkMode();
   };
 
