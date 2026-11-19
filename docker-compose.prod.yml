@@ -4,6 +4,8 @@
 # Only Caddy is reachable from the internet (ports 80/443). The backend,
 # frontend and MongoDB talk to each other on the private Docker network.
 # Tuned to fit a 1 GB server (Azure B1s / B2ats v2) with a swap file.
+# Each container has a memory cap: if one grows too large, only that
+# container is restarted instead of the whole server running out of memory.
 
 x-logging: &default-logging
   driver: json-file
@@ -27,6 +29,7 @@ services:
     depends_on:
       - frontend
       - backend
+    mem_limit: 128m
     restart: unless-stopped
 
   backend:
@@ -41,6 +44,7 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    mem_limit: 400m
     restart: unless-stopped
     # Keep exactly one backend container: refresh jobs and the email
     # scheduler run inside this single process.
@@ -52,6 +56,7 @@ services:
       args:
         # Empty = the browser calls the same site, e.g. https://DOMAIN/api/...
         REACT_APP_API_URL: ""
+    mem_limit: 64m
     restart: unless-stopped
 
   mongodb:
@@ -61,14 +66,16 @@ services:
     command: ["--wiredTigerCacheSizeGB", "0.25"]
     volumes:
       - mongodb_data:/data/db
-    # mongosh is slow to start on a busy 1 GB server (for example during a
-    # rebuild), so allow more time before calling the database unhealthy.
+    # Lightweight check: is MongoDB accepting connections? (about 5 ms).
+    # The previous mongosh check used ~100 MB per run; on a busy 1 GB server
+    # overrunning checks piled up and exhausted memory (2026-11-19 outage).
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ["CMD-SHELL", "timeout 3 bash -c '</dev/tcp/127.0.0.1/27017' || exit 1"]
       interval: 30s
-      timeout: 20s
+      timeout: 5s
       retries: 5
       start_period: 60s
+    mem_limit: 450m
     restart: unless-stopped
 
 volumes:

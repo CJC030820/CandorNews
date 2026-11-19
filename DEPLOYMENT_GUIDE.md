@@ -112,6 +112,18 @@ docker compose --env-file deploy/production.env -f docker-compose.prod.yml ps
 
 The first build takes **10–20 minutes** on a 1 GB server. All four services should show `running`.
 
+## 6b. Make the server recover by itself
+
+```bash
+sudo bash deploy/harden-server.sh
+```
+
+This makes the server reboot within 10 seconds if it ever runs out of memory
+(instead of freezing), and installs a watchdog that restarts any part of the site
+that fails three health checks in a row. Each container also has a memory cap
+(`mem_limit` in `docker-compose.prod.yml`), so one misbehaving part restarts on its
+own without affecting the others.
+
 ## 7. Check it works
 
 1. Open `https://<DOMAIN>`. The padlock should show and the login page should load.
