@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     # The versioned heuristic weights are defined in services/trust_scorer.py.
 
     # Worker interval in minutes
-    WORKER_INTERVAL_MINUTES: int = 30
+    WORKER_INTERVAL_MINUTES: int = 15
 
     class Config:
         env_file = str(_ENV_FILE)

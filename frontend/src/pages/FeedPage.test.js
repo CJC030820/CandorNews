@@ -151,3 +151,17 @@ test('search matches the start of words only', async () => {
   render(<MemoryRouter><FeedPage searchQuery="ring" /></MemoryRouter>);
   await waitFor(() => expect(titles()).toEqual(['Ringgit opens higher']));
 });
+
+test('article times update once a minute, not every second', async () => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-11-20T10:00:30Z'));
+  mockFeedArticles = [{ id: 't1', title: 'Timed story', source: 'New Straits Times', date: '2026-11-20T09:58:00Z', categories: ['Politics'] }];
+  renderFeed();
+  await act(async () => { await Promise.resolve(); });
+  await waitFor(() => expect(screen.getByText('2 minutes ago')).toBeInTheDocument());
+  act(() => { jest.advanceTimersByTime(20 * 1000); });        // 10:00:50, same minute: no change
+  expect(screen.getByText('2 minutes ago')).toBeInTheDocument();
+  act(() => { jest.advanceTimersByTime(15 * 1000); });        // 10:01:05, past the minute: updated
+  expect(screen.getByText('3 minutes ago')).toBeInTheDocument();
+  jest.useRealTimers();
+});

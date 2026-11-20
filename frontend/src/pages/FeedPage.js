@@ -31,6 +31,7 @@ export const mapFeedArticle = article => ({...article, rawDate:article.date,
   categories:article.categories?.length ? article.categories : (article.category ? [article.category] : [])});
 
 const NEAR_TOP_PX = 300;
+const MINUTE_MS = 60 * 1000;
 const SORT_KEY = 'feedSortMode';
 const readSort = () => { try { return localStorage.getItem(SORT_KEY) === 'newest' ? 'newest' : 'foryou'; } catch { return 'foryou'; } };
 
@@ -113,10 +114,24 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
     return () => window.removeEventListener('scroll', onScroll);
   }, [pendingCount, applyArticles]);
 
-useEffect(() => {
-    const tick = setInterval(() => setNowTick(Date.now()), 1000);
-    const reload = setInterval(() => loadFeed({ background: true }), 60000);
-    return () => { clearInterval(tick); clearInterval(reload); };
+  // Article times ("5 minutes ago") count in whole minutes, so they are
+  // refreshed once a minute, on the minute (not every second).
+  useEffect(() => {
+    let tick;
+    const align = setTimeout(() => {
+      setNowTick(Date.now());
+      tick = setInterval(() => setNowTick(Date.now()), MINUTE_MS);
+    }, MINUTE_MS - (Date.now() % MINUTE_MS));
+    // Returning to the tab shows up-to-date times at once.
+    const onVisible = () => { if (document.visibilityState === 'visible') setNowTick(Date.now()); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearTimeout(align); clearInterval(tick); document.removeEventListener('visibilitychange', onVisible); };
+  }, []);
+
+  // Check for newly collected articles every minute (nothing is downloaded if none are new).
+  useEffect(() => {
+    const reload = setInterval(() => loadFeed({ background: true }), MINUTE_MS);
+    return () => clearInterval(reload);
   }, [loadFeed]);
 
   const handleManualRefresh = async () => {
