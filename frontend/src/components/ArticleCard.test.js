@@ -5,9 +5,10 @@ import ArticleCard from './ArticleCard';
 jest.mock('../context/BookmarkContext',()=>({useBookmarks:()=>({isBookmarked:()=>false,toggleBookmark:jest.fn()})}));
 jest.mock('../context/ReadArticlesContext',()=>({useReadArticles:()=>({isRead:()=>false})}));
 const article={id:'42',title:'Transport funding',source:'News outlet',date:'15 Oct 2026',description:'Original report summary',category:'Politics',sentiment:'Neutral',trustScore:70};
-test('renders source-linked summary, polarity and heuristic score',()=>{
-  render(<MemoryRouter><ArticleCard article={article}/></MemoryRouter>);
-  expect(screen.getByText('Sentiment: Neutral')).toBeInTheDocument();
+test('renders the summary and trust score; sentiment and tone are left to the article page',()=>{
+  render(<MemoryRouter><ArticleCard article={{...article,toneLabel:'Neutral / Objective'}}/></MemoryRouter>);
+  expect(screen.queryByText(/Sentiment/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Neutral/)).not.toBeInTheDocument();
   expect(screen.getByText('70/100 trust')).toBeInTheDocument();
   expect(screen.getByText('Original report summary')).toBeInTheDocument();
 });

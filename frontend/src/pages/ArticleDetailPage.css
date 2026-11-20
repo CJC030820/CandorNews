@@ -82,43 +82,6 @@
   font-weight: 600;
 }
 
-.tone-label-row {
-  margin: -10px 0 20px 0;
-}
-
-.tone-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1.5px solid transparent;
-}
-
-.tone-badge.tone-neutral {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-}
-
-[data-theme="dark"] .tone-badge.tone-neutral {
-  background-color: rgba(96, 165, 250, 0.15);
-}
-
-.tone-badge.tone-mild {
-  background-color: rgba(217, 119, 6, 0.12);
-  color: var(--highlight-color);
-  border-color: var(--highlight-color);
-}
-
-.tone-badge.tone-charged {
-  background-color: var(--error-bg);
-  color: var(--alert-color);
-  border-color: var(--alert-color);
-}
-
 .article-categories-detail {
   display: flex;
   flex-wrap: wrap;

@@ -10,13 +10,6 @@ import { ImagePlaceholder } from '../components/ArticleImage';
 import './ArticleDetailPage.css';
 import { BackIcon, BookmarkIcon } from '../components/Icons';
 
-const toneBadgeClass = (toneLabel) => {
-  if (!toneLabel) return '';
-  if (toneLabel.includes('Neutral')) return 'tone-neutral';
-  if (toneLabel.includes('Mildly')) return 'tone-mild';
-  return 'tone-charged';
-};
-
 const ArticleDetailPage = () => {
   const location = useLocation();
   const { getArticle } = useAuth();
@@ -95,13 +88,6 @@ const ArticleDetailPage = () => {
             <span>{article.date}</span>
             <span className="trust-score-detail">{article.trustScore == null ? 'Analysis pending' : `${article.trustScore}/100 trust`}</span>
           </div>
-          {article.toneLabel && (
-            <div className="tone-label-row">
-              <span className={`tone-badge ${toneBadgeClass(article.toneLabel)}`}>
-                {article.toneLabel}
-              </span>
-            </div>
-          )}
           {(article.categories && article.categories.length > 0) && (
             <div className="article-categories-detail">
               {article.categories.slice(0, 3).map((cat) => (

@@ -40,3 +40,12 @@ test('Back returns to the previous page when opened inside the app',async()=>{
  fireEvent.click(screen.getByRole('button',{name:/Back/}));
  expect(await screen.findByText('Bookmarks page')).toBeInTheDocument();
 });
+
+test('tone appears only once, inside Article Analysis', async () => {
+  mockGetArticle.mockResolvedValue({ ...stored, toneLabel: 'Neutral / Objective', categories: ['Politics'] });
+  render(<MemoryRouter initialEntries={['/article/abc']}><Routes><Route path="/article/:id" element={<ArticleDetailPage />} /></Routes></MemoryRouter>);
+  await screen.findByText('Retrieved article');
+  expect(screen.getAllByText(/Neutral \/ Objective/)).toHaveLength(1);
+  expect(screen.getByText(/Neutral \/ Objective/).closest('.article-analysis, section, div')).toBeTruthy();
+  expect(document.querySelector('.tone-badge')).toBeNull();
+});
