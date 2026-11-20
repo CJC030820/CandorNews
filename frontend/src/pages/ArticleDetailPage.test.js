@@ -49,3 +49,11 @@ test('tone appears only once, inside Article Analysis', async () => {
   expect(screen.getByText(/Neutral \/ Objective/).closest('.article-analysis, section, div')).toBeTruthy();
   expect(document.querySelector('.tone-badge')).toBeNull();
 });
+
+test('the original article button just says Read Original Article', async () => {
+  mockGetArticle.mockResolvedValue({ ...stored, url: 'https://www.nst.com.my/news/x' });
+  render(<MemoryRouter initialEntries={['/article/abc']}><Routes><Route path="/article/:id" element={<ArticleDetailPage />} /></Routes></MemoryRouter>);
+  const link = await screen.findByRole('link', { name: /Read Original Article/ });
+  expect(link.textContent).toBe('Read Original Article');
+  expect(link).toHaveAttribute('href', 'https://www.nst.com.my/news/x');
+});

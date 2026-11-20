@@ -120,8 +120,9 @@ const ArticleDetailPage = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="original-source-btn"
+                aria-label={`Read Original Article on ${article.source || 'the publisher\'s site'} (opens in a new tab)`}
               >
-                Read Original Article on {article.source || 'Source Site'}
+                Read Original Article
               </a>
             </div>
           )}
