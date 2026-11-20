@@ -38,6 +38,15 @@ class StorageService:
         except Exception as exc:
             logger.warning(f"Could not ensure articles.url unique index: {exc}")
 
+        try:
+            # Feed, search and digests read the newest completed articles: this
+            # index lets MongoDB read them in order instead of sorting them all.
+            await self.articles.create_index([("processing_status", 1), ("published_date", -1)])
+            # Related-report lookup during trust scoring (shared keywords, last 72 h).
+            await self.articles.create_index([("keywords", 1), ("published_date", -1)])
+        except Exception as exc:
+            logger.warning(f"Could not ensure article query indexes: {exc}")
+
     # User methods
     async def create_user(self, user: UserCreate) -> UserInDB:
         from app.core.security import get_password_hash
@@ -93,6 +102,7 @@ class StorageService:
             return None
         article_dict = article.dict()
         article_dict["_id"] = str(result.inserted_id)
+        self.bump_articles_version()
         return ArticleInDB(**article_dict)
 
     async def get_article_by_id(self, article_id: str) -> Optional[ArticleInDB]:
@@ -245,6 +255,7 @@ class StorageService:
             {"_id": ObjectId(article_id)},
             {"$set": update_dict}
         )
+        self.bump_articles_version()
 
     async def update_article_fields(self, article_id: str, update_data: dict):
         from bson import ObjectId
@@ -252,6 +263,14 @@ class StorageService:
             {"_id": ObjectId(article_id)},
             {"$set": update_data}
         )
+        self.bump_articles_version()
+
+    # Articles change only when the news worker saves or rescores them. This
+    # counter lets readers (the cached feed) know when their copy is stale.
+    articles_version = 0
+
+    def bump_articles_version(self):
+        self.articles_version += 1
 
     # Interaction methods
     async def create_interaction(self, interaction: InteractionCreate) -> InteractionInDB:

@@ -3,9 +3,21 @@ import './ArticleAnalysis.css';
 
 const labels = {source_reputation:'Configured source reputation',corroboration:'Other-publisher coverage',
   metadata_completeness:'Metadata completeness',sentiment_neutrality:'Sentiment neutrality'};
-export default function ArticleAnalysis({article}) {
+export default function ArticleAnalysis({article, loading = false}) {
   const components = article.trustComponents || {};
   const weights = article.trustWeights || {};
+  // News lists carry only a summary of the analysis; the article page loads the rest.
+  const hasDetail = article.relatedReports !== undefined || article.trustExplanation !== undefined;
+  if (!hasDetail) {
+    return <section className="article-analysis" aria-label="Article analysis">
+      <h2>Article analysis</h2>
+      <p><strong>Sentiment:</strong> {article.sentiment || 'Unavailable'} · <strong>Tone:</strong> {article.toneLabel || 'Unavailable'}</p>
+      <p><strong>Trust:</strong> {article.trustScore == null ? 'Awaiting analysis update' : `${article.trustScore}/100`} {article.trustLabel && `— ${article.trustLabel}`}</p>
+      <p className="analysis-disclaimer" role="status">
+        {loading ? 'Loading the full analysis and related reports...' : 'The full analysis could not be loaded. Please try again.'}
+      </p>
+    </section>;
+  }
   return <section className="article-analysis" aria-label="Article analysis">
     <h2>Article analysis</h2>
     <p><strong>Sentiment:</strong> {article.sentiment || 'Unavailable'} · <strong>Tone:</strong> {article.toneLabel || 'Unavailable'}</p>

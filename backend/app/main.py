@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, Request, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import asyncio
+import hashlib
+import json
+import time
+from fastapi.encoders import jsonable_encoder
 from uuid import uuid4
 from pymongo.errors import DuplicateKeyError
 from fastapi.middleware.cors import CORSMiddleware
@@ -440,7 +444,7 @@ def _clean_display_text(value) -> str:
     text = _repair_mojibake(text)
     return re.sub(r"[\s\u00a0\u2007\u202f]+", " ", text).strip()
 
-def _article_to_feed_dict(article) -> dict:
+def _article_to_feed_dict(article, detail: bool = True) -> dict:
     """Convert a stored ArticleInDB into the shape the frontend expects."""
     published = article.published_date
     if published.tzinfo is None:
@@ -470,21 +474,61 @@ def _article_to_feed_dict(article) -> dict:
         "relatedReports": article.trust_evidence,
         "trustVersion": article.trust_version,
         "trustScoredAt": article.trust_scored_at.isoformat() + "Z" if article.trust_scored_at else None
-    }
+    } if detail else _list_fields(article)
+
+
+# Fields a news card, search result or ranking needs. The detailed trust
+# evidence is left out of lists (it made the feed about 1 MB) and is loaded
+# with the article page instead (GET /api/articles/{id}).
+_DETAIL_ONLY = ("trustExplanation", "trustComponents", "trustWeights", "relatedReports", "trustVersion",
+                "trustScoredAt", "sentimentScore")
+
+
+def _list_fields(article) -> dict:
+    full = _article_to_feed_dict(article, detail=True)
+    for key in _DETAIL_ONLY:
+        full.pop(key, None)
+    return full
+
+
+# The feed only changes when the news worker saves or rescores articles, so the
+# prepared response is kept until then. Browsers revalidate with the ETag and
+# receive "304 Not Modified" (no body) when nothing has changed.
+_feed_cache = {}
+
+
+def _feed_response(request: Request, body: bytes, etag: str) -> Response:
+    headers = {"ETag": etag, "Cache-Control": "private, no-cache"}
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers=headers)
+    return Response(content=body, media_type="application/json", headers=headers)
 
 
 @app.get("/api/articles/feed")
-async def get_feed(user=Depends(get_current_user), topic: str = None, limit: int = Query(50, ge=1, le=1000)):
+async def get_feed(request: Request, user=Depends(get_current_user), topic: str = None,
+                   limit: int = Query(50, ge=1, le=1000)):
     """Get the latest news feed, sourced from the MongoDB-backed article
-    store that the background news worker keeps up to date (configured Malaysia English RSS feeds)."""
-    articles = await storage_service.get_latest_articles(limit=limit, topic=topic)
-    total = await storage_service.count_articles()
-
-    return {
-        "articles": [_article_to_feed_dict(a) for a in articles],
-        "total_articles_in_db": total,
-        "last_fetch_run": news_worker.last_run_stats or None
-    }
+    store that the background news worker keeps up to date (configured Malaysia English RSS feeds).
+    The response is the same for every reader, so it is prepared once per
+    change of the article store and served from memory."""
+    key = (topic or "all", limit)
+    # which database, how many changes so far, and a 5-minute safety limit
+    version = (id(storage_service.articles), storage_service.articles_version, int(time.monotonic() // 300))
+    cached = _feed_cache.get(key)
+    if not cached or cached[0] != version:
+        articles = await storage_service.get_latest_articles(limit=limit, topic=topic)
+        total = await storage_service.count_articles()
+        payload = {
+            "articles": [_article_to_feed_dict(a, detail=False) for a in articles],
+            "total_articles_in_db": total,
+            "last_fetch_run": news_worker.last_run_stats or None,
+        }
+        body = json.dumps(jsonable_encoder(payload), separators=(",", ":")).encode()
+        etag = '"' + hashlib.sha1(body).hexdigest()[:20] + '"'
+        if len(_feed_cache) > 20:
+            _feed_cache.clear()
+        cached = _feed_cache[key] = (version, body, etag)
+    return _feed_response(request, cached[1], cached[2])
 
 
 @app.get("/api/articles/search")
@@ -494,7 +538,7 @@ async def search_articles(q: str = Query(..., min_length=2, max_length=100), lim
     summary or publisher, newest first."""
     articles = await storage_service.search_articles(q, limit=limit, publishers=_followed_names(user))
     total = await storage_service.count_search(q, _followed_names(user))
-    return {"articles": [_article_to_feed_dict(a) for a in articles], "query": q, "total": total}
+    return {"articles": [_article_to_feed_dict(a, detail=False) for a in articles], "query": q, "total": total}
 
 
 @app.get("/api/articles/suggest")

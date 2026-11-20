@@ -72,8 +72,11 @@ async def test_feed_and_direct_detail_expose_analysis(client, auth):
     saved=await storage_service.create_article(ArticleCreate(**data))
     feed=(await client.get('/api/articles/feed',headers=auth)).json()['articles'][0]
     detail=(await client.get('/api/articles/'+saved.id,headers=auth)).json()
-    for key in ['sentiment','trustScore','trustExplanation','trustComponents','trustWeights','relatedReports','trustVersion']:
+    for key in ['sentiment','trustScore','trustLabel']:
         assert detail[key] == feed[key]
+    # the full analysis comes with the article page; the feed list stays light
+    for key in ['trustExplanation','trustComponents','trustWeights','relatedReports','trustVersion']:
+        assert key in detail and key not in feed
     assert detail['trustVersion']==SCORE_VERSION and detail['date'].endswith('+00:00')
     assert (await client.get('/api/articles/not-an-id',headers=auth)).status_code==404
     assert (await client.get('/api/articles/feed?limit=-1',headers=auth)).status_code==422

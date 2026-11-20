@@ -127,7 +127,7 @@ const ArticleDetailPage = () => {
             </div>
           )}
 
-          <ArticleAnalysis article={article} />
+          <ArticleAnalysis article={article} loading={loading} />
 
           <div className="article-actions">
             <button

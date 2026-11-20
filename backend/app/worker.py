@@ -274,15 +274,21 @@ class NewsWorker:
         stats["finished_at"] = datetime.utcnow().isoformat()
         self.last_run_at = stats["finished_at"]
         self.last_run_stats = stats
+        storage_service.bump_articles_version()      # image copies and run stats changed too
         return stats
 
     async def rescore_recent_articles(self):
         """Refresh the latest 500 records after each batch, including older v1 scores."""
         articles = await storage_service.get_latest_articles(limit=500)
+        changed = 0
         for article in articles:
             candidates = await storage_service.find_articles_by_keywords(article.keywords, article.url)
             result = await self.trust_scorer.calculate_trust_score(article.dict(), [a.dict() for a in candidates])
-            await storage_service.update_article_fields(article.id, result)
+            # Only write when the score or its evidence changed (the time stamp alone does not count).
+            if any(getattr(article, k, None) != v for k, v in result.items() if k != "trust_scored_at"):
+                await storage_service.update_article_fields(article.id, result)
+                changed += 1
+        self.last_rescore_changed = changed
         return len(articles)
 
     def start(self):
