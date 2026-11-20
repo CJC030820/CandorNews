@@ -139,3 +139,40 @@
 .register-footer a:hover {
   color: var(--accent-hover);
 }
+
+/* Account already exists: a warning (amber), not an error */
+.register-warning {
+  background-color: rgba(217, 119, 6, 0.1);
+  color: var(--text-primary);
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  border-left: 4px solid var(--highlight-color);
+}
+
+.register-warning strong {
+  color: var(--highlight-color);
+}
+
+.register-warning-email {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.register-warning a {
+  color: var(--accent-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Account created (shown after registering) */
+.register-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  border-left: 4px solid var(--success-text);
+}

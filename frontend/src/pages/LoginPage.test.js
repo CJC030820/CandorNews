@@ -116,3 +116,14 @@ test('ignores saved paths that are not article pages', async () => {
   await loginAndLand();
   expect(await screen.findByText('Feed page')).toBeInTheDocument();
 });
+
+test('the email is filled in when coming from "Log in instead"', () => {
+  render(<MemoryRouter initialEntries={[{ pathname: '/login', state: { email: 'taken@example.com' } }]}><LoginPage /></MemoryRouter>);
+  expect(screen.getByLabelText(/email address/i)).toHaveValue('taken@example.com');
+});
+
+test('after registering, the login page confirms the account was created', () => {
+  render(<MemoryRouter initialEntries={[{ pathname: '/login', state: { email: 'new@example.com', registered: true } }]}><LoginPage /></MemoryRouter>);
+  expect(screen.getByRole('status')).toHaveTextContent('Your account has been created');
+  expect(screen.getByLabelText(/email address/i)).toHaveValue('new@example.com');
+});

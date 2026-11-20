@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
 import './LoginPage.css';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  // Filled in when the user came from "Log in instead" on the register page.
+  const [email, setEmail] = useState(location.state?.email || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,6 +49,11 @@ const LoginPage = () => {
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">
+          {location.state?.registered && !error && (
+            <div className="login-success" role="status">
+              Your account has been created. Log in with your new password.
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <input
