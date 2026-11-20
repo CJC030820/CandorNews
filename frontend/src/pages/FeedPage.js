@@ -294,7 +294,7 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
       )}
       <div className="feed-wrapper">
         <div className="sidebar">
-          <div className="sidebar-section">
+          <div className="sidebar-section" data-guide="categories">
             <h3>Categories</h3>
             <div className="sidebar-items">
               <button
@@ -315,7 +315,7 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
             </div>
           </div>
 
-          <div className="sidebar-section">
+          <div className="sidebar-section" data-guide="platforms">
             <div className="sidebar-section-header">
               <h3>Trusted Platforms</h3>
               <button
@@ -378,7 +378,7 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
         <div className="main-content">
           <SuggestionPanel onSaved={handleInterestsSaved} />
 
-          <div className="feed-toolbar">
+          <div className="feed-toolbar" data-guide="toolbar">
             <div className="refresh-controls">
               <div className="refresh-button-group">
                 <button
@@ -431,7 +431,7 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
                             <p>Fetching the latest news...</p>
             </div>
           ) : (
-            <div className="articles-grid">
+            <div className="articles-grid" data-guide="articles">
               {displayArticles.length > 0 ? (
                 displayArticles.map(article => (
                   <ArticleCard key={article.id} article={article} />

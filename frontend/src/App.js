@@ -17,6 +17,7 @@ import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
 import HelpPage from './pages/HelpPage';
 import NavBar from './components/NavBar';
+import FirstTimeGuide from './components/FirstTimeGuide';
 
 
 export const RETURN_PATH_KEY = 'returnAfterLogin';
@@ -100,6 +101,7 @@ function AppShell() {
       <PageTransition>
         <AppRoutes searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       </PageTransition>
+      {user && <FirstTimeGuide />}
     </div>
   );
 }

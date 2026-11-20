@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import PageWrapper from '../components/PageWrapper';
+import { markGuidePending } from '../utils/firstTimeGuide';
 import './RegisterPage.css';
 
 const SUCCESS_DELAY_MS = 1500;
@@ -50,6 +51,8 @@ const RegisterPage = () => {
       const success = await register(formData.name, formData.email, formData.password);
       if (success) {
         const email = formData.email.trim();
+        // Show the first-time guide after this account's first login.
+        markGuidePending(email);
         setRegistered(true);
         redirectTimer.current = setTimeout(() => navigate('/login', { state: { email, registered: true } }), SUCCESS_DELAY_MS);
       } else {

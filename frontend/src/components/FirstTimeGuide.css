@@ -1,0 +1,155 @@
+.guide-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+.guide-backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+/* Without a highlighted element the backdrop itself dims the page. */
+.guide-backdrop-dim {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+/* The highlight: a clear box whose huge shadow dims everything else. */
+.guide-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.6);
+  outline: 2px solid var(--accent-color);
+  outline-offset: 0;
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.guide-card {
+  position: fixed;
+  width: min(340px, calc(100vw - 24px));
+  padding: 18px 18px 14px;
+  border-radius: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.3);
+  transition: top 0.25s ease, left 0.25s ease;
+}
+
+.guide-card:focus {
+  outline: none;
+}
+
+.guide-card-centred {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.guide-progress {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-color);
+}
+
+.guide-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.guide-card p#guide-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.guide-dots {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 12px;
+}
+
+.guide-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-color);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.guide-dots span.active {
+  width: 18px;
+  border-radius: 3px;
+  background: var(--accent-color);
+}
+
+.guide-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guide-spacer {
+  flex: 1;
+}
+
+.guide-actions button {
+  font: inherit;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 8px 14px;
+  min-height: 36px;
+}
+
+.guide-skip {
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  padding-left: 0 !important;
+}
+
+.guide-skip:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.guide-back {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.guide-next {
+  border: none;
+  background: var(--accent-color);
+  color: #fff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .guide-next {
+  color: #0F172A;
+}
+
+.guide-next:hover {
+  background: var(--accent-hover);
+}
+
+.guide-actions button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-spotlight,
+  .guide-card,
+  .guide-dots span {
+    transition: none;
+  }
+}

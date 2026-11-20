@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './HelpPage.css';
 import { EditIcon, EmailIcon, WhatsAppIcon } from '../components/Icons';
+import { startGuide } from '../utils/firstTimeGuide';
 
 const HelpPage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
@@ -176,6 +177,9 @@ const HelpPage = () => {
         <div className="help-header-content">
           <h1>Help Center</h1>
           <p>Find answers to common questions about News Intelligence</p>
+          <button type="button" className="help-tour-btn" onClick={startGuide}>
+            Take the tour
+          </button>
         </div>
       </div>
 

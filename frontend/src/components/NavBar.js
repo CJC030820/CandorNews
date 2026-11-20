@@ -32,19 +32,19 @@ const NavBar = ({ searchQuery, onSearchChange }) => {
         <div className="navbar-actions">
           {user && (
             <>
-              <Link to="/bookmarks" className="nav-button" aria-label="Bookmarks" title="Bookmarks">
+              <Link to="/bookmarks" className="nav-button" data-guide="library" aria-label="Bookmarks" title="Bookmarks">
                 <span className="nav-icon" aria-hidden="true"><BookmarkIcon /></span>
                 <span className="nav-label">Bookmarks</span>
               </Link>
-              <Link to="/history" className="nav-button" aria-label="History" title="History">
+              <Link to="/history" className="nav-button" data-guide="library" aria-label="History" title="History">
                 <span className="nav-icon" aria-hidden="true"><HistoryIcon /></span>
                 <span className="nav-label">History</span>
               </Link>
-              <Link to="/help" className="nav-button" aria-label="Help" title="Help">
+              <Link to="/help" className="nav-button" data-guide="help" aria-label="Help" title="Help">
                 <span className="nav-icon" aria-hidden="true"><HelpIcon /></span>
                 <span className="nav-label">Help</span>
               </Link>
-              <Link to="/profile" className="nav-button" aria-label="Profile" title="Profile">
+              <Link to="/profile" className="nav-button" data-guide="profile" aria-label="Profile" title="Profile">
                 <span className="nav-icon" aria-hidden="true"><UserIcon /></span>
                 <span className="nav-label">Profile</span>
               </Link>

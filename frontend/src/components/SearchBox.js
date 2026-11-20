@@ -74,7 +74,7 @@ const SearchBox = ({ value, onChange }) => {
   const countText = (n) => (n === 0 ? 'no articles' : `${n} ${n === 1 ? 'article' : 'articles'}`);
 
   return (
-    <div className="search-bar-container search-box">
+    <div className="search-bar-container search-box" data-guide="search">
       <div className="search-bar">
         <input
           ref={inputRef}
