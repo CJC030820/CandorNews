@@ -12,7 +12,12 @@ const readSaved = () => {
   }
 };
 
+// Browser toolbar colour (Safari's bar, Android's status bar) follows the theme.
+const THEME_COLOR = { light: '#FFFFFF', dark: '#0F172A' };
+
 const applyTheme = (dark) => {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? THEME_COLOR.dark : THEME_COLOR.light);
   if (dark) {
     document.documentElement.setAttribute('data-theme', 'dark');
     document.body.setAttribute('data-theme', 'dark');

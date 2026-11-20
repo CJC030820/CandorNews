@@ -333,3 +333,22 @@
   padding: 3px 8px;
   font-size: 12px;
 }
+
+/* Glass look (browsers without blur keep the solid style above) */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .navbar {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-bottom-color: var(--glass-border);
+    box-shadow: var(--glass-highlight);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .navbar {
+    background: var(--bg-primary);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

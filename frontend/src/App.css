@@ -57,6 +57,15 @@
   --error-text: #DC2626;
   --success-bg: #d5f4e6;
   --success-text: #27ae60;
+  /* Glass surfaces (navbar, menus, floating buttons): see-through, blurred, with a light edge */
+  --glass-bg: rgba(255, 255, 255, 0.64);
+  --glass-bg-strong: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --glass-blur: blur(20px) saturate(180%);
+  /* Blue tinted glass for floating buttons (white text stays readable in both themes) */
+  --glass-tint: rgba(37, 99, 235, 0.74);
 }
 
 /* Dark mode - CandorNews UI Color System v2 */
@@ -93,6 +102,12 @@
   --error-text: #F87171;
   --success-bg: #1a3a2f;
   --success-text: #51cf66;
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-bg-strong: rgba(30, 41, 59, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --glass-tint: rgba(37, 99, 235, 0.7);
 }
 
 * {
