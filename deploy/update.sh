@@ -5,8 +5,8 @@
 #
 # Building images is the heaviest job on this 1 GB server; the build cache and
 # old images it leaves behind fill the disk and push memory into swap, so they
-# are cleared after every update (cache from the last 3 days is kept so the
-# next build stays quick).
+# are cleared after every update (the newest 600 MB of build cache is kept so
+# the next build stays quick).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -19,7 +19,7 @@ echo "Code: $(git log --oneline -1)"
 # shellcheck disable=SC2086
 $COMPOSE up -d --build --no-deps $SERVICES
 
-docker builder prune -f --filter until=72h >/dev/null
+docker builder prune -f --max-used-space 600MB >/dev/null
 docker image prune -f >/dev/null
 echo "Cleaned old build cache and unused images:"
 docker system df | sed -n '1,5p'
