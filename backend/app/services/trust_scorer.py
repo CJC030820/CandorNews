@@ -89,8 +89,10 @@ class TrustScorerService:
         return reports
 
     def calculate_metadata_completeness(self, article):
-        return sum(weight for key, weight in {"author": .25, "published_date": .25,
-                   "source": .15, "description": .20, "url": .15}.items() if article.get(key) and not (key == "published_date" and article.get("publication_date_inferred")))
+        # Rounded so the result is the same on every Python version: before
+        # 3.12, sum() leaves float error (.25 + .15 + .20 + .15 = 0.7500000000000001).
+        return round(sum(weight for key, weight in {"author": .25, "published_date": .25,
+                   "source": .15, "description": .20, "url": .15}.items() if article.get(key) and not (key == "published_date" and article.get("publication_date_inferred"))), 4)
 
     def calculate_sentiment_neutrality(self, article):
         tone = (article.get("tone_label") or "").lower()
