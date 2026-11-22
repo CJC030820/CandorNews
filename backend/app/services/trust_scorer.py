@@ -18,7 +18,7 @@ def publisher_domain(url):
         host = (urlparse(url or "").hostname or "").lower().removeprefix("www.")
     except ValueError:
         return ""
-    for domain in ("freemalaysiatoday.com", "nst.com.my", "bernama.com"):
+    for domain in ("freemalaysiatoday.com", "nst.com.my", "bernama.com", "malaymail.com", "thesun.my"):
         if host == domain or host.endswith("." + domain):
             return domain
     return host

@@ -42,11 +42,11 @@ const HelpPage = () => {
         },
         {
           question: 'How often is the news updated?',
-          answer: 'Our system fetches the latest news every 15 minutes from NewsAPI, GNews, and RSS feeds. You\'ll see the most recent articles at the top of your feed.'
+          answer: 'New articles are collected every 15 minutes from 6am to midnight (Malaysia time) from the news feeds of Bernama, New Straits Times, Free Malaysia Today, Malay Mail and The Sun. Automatic collection pauses overnight, from 12am to 6am. The most recent articles appear at the top of your feed.'
         },
         {
           question: 'Can I manually refresh the news?',
-          answer: 'Yes! Click the "Refresh News" button to fetch the latest articles immediately.'
+          answer: 'Yes! Click the "Refresh News" button to fetch the latest articles immediately. It works at any time, including overnight when automatic collection is paused.'
         }
       ]
     },

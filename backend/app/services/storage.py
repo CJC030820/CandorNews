@@ -319,6 +319,18 @@ class StorageService:
             sources.append(SourceCredibilityInDB(**doc))
         return sources
 
+    async def follow_new_platforms_once(self, migration_id: str, previous_ids: List[str], new_ids: List[str]) -> int:
+        """One time only: accounts that follow every previous publisher also
+        follow newly added ones. Accounts that chose fewer publishers keep
+        their choice. Returns how many accounts were updated."""
+        if await self.db.migrations.find_one({"_id": migration_id}):
+            return 0
+        query = {"followed_platforms": {"$all": previous_ids, "$size": len(previous_ids)}}
+        result = await self.users.update_many(query, {"$addToSet": {"followed_platforms": {"$each": new_ids}}})
+        await self.db.migrations.insert_one({"_id": migration_id, "updated_users": result.modified_count,
+                                             "applied_at": datetime.utcnow()})
+        return result.modified_count
+
     async def seed_source_credibility(self):
         """Populate known source credibility scores if the collection is
         empty. Without this, every article gets the flat 0.5 (50%) default
@@ -328,10 +340,6 @@ class StorageService:
         baseline scores, and known-corroborating cross-source matches can
         push well-evidenced stories up into the 80-95% range."""
         try:
-            existing_count = await self.source_credibility.count_documents({})
-            if existing_count > 0:
-                return
-
             known_sources = [
                 {"source_name": "Bernama", "domain": "www.bernama.com", "credibility_score": 92, "category": "news_agency"},
                 {"source_name": "Bernama", "domain": "bernama.com", "credibility_score": 92, "category": "news_agency"},
@@ -339,6 +347,10 @@ class StorageService:
                 {"source_name": "New Straits Times", "domain": "nst.com.my", "credibility_score": 87, "category": "newspaper"},
                 {"source_name": "Free Malaysia Today", "domain": "www.freemalaysiatoday.com", "credibility_score": 83, "category": "news_site"},
                 {"source_name": "Free Malaysia Today", "domain": "freemalaysiatoday.com", "credibility_score": 83, "category": "news_site"},
+                {"source_name": "Malay Mail", "domain": "www.malaymail.com", "credibility_score": 82, "category": "newspaper"},
+                {"source_name": "Malay Mail", "domain": "malaymail.com", "credibility_score": 82, "category": "newspaper"},
+                {"source_name": "The Sun", "domain": "thesun.my", "credibility_score": 78, "category": "newspaper"},
+                {"source_name": "The Sun", "domain": "www.thesun.my", "credibility_score": 78, "category": "newspaper"},
                 {"source_name": "The Edge Markets", "domain": "www.theedgemarkets.com", "credibility_score": 86, "category": "business_news"},
                 {"source_name": "Astro AWANI", "domain": "www.astroawani.com", "credibility_score": 81, "category": "broadcast_news"},
                 {"source_name": "Focus Malaysia", "domain": "focusmalaysia.my", "credibility_score": 74, "category": "news_site"},
@@ -348,7 +360,9 @@ class StorageService:
                 {"source_name": "Channel News Asia", "domain": "www.channelnewsasia.com", "credibility_score": 88, "category": "broadcast_news"},
             ]
 
-            docs = [SourceCredibilityCreate(**s).dict() for s in known_sources]
+            # Add sources that are not stored yet; scores already stored are kept as they are.
+            existing = {doc["domain"] async for doc in self.source_credibility.find({}, {"domain": 1})}
+            docs = [SourceCredibilityCreate(**s).dict() for s in known_sources if s["domain"] not in existing]
             if docs:
                 await self.source_credibility.insert_many(docs)
                 logger.info(f"Seeded {len(docs)} known source credibility records.")

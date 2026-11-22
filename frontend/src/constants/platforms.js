@@ -5,7 +5,9 @@
 export const DEFAULT_TRUSTED_PLATFORMS = [
   { id: 'bernama', name: 'Bernama', url: 'https://www.bernama.com/en/' },
   { id: 'nst', name: 'New Straits Times', url: 'https://www.nst.com.my' },
-  { id: 'fmt', name: 'Free Malaysia Today', url: 'https://www.freemalaysiatoday.com' }
+  { id: 'fmt', name: 'Free Malaysia Today', url: 'https://www.freemalaysiatoday.com' },
+  { id: 'malaymail', name: 'Malay Mail', url: 'https://www.malaymail.com' },
+  { id: 'thesun', name: 'The Sun', url: 'https://thesun.my' }
 ];
 
 // Platforms followed by default for first-time users.

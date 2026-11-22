@@ -44,12 +44,16 @@ class Settings(BaseSettings):
     GNEWS_API_KEY: str = ""
 
     # RSS feeds - Malaysia English news sources only
-    RSS_FEEDS: str = "https://www.freemalaysiatoday.com/feed/,https://www.freemalaysiatoday.com/category/nation/feed/,https://www.freemalaysiatoday.com/category/business/feed/,https://www.freemalaysiatoday.com/category/world/feed/,https://www.nst.com.my/feed,https://www.bernama.com/en/rssfeed.php"
+    RSS_FEEDS: str = "https://www.freemalaysiatoday.com/feed/,https://www.freemalaysiatoday.com/category/nation/feed/,https://www.freemalaysiatoday.com/category/business/feed/,https://www.freemalaysiatoday.com/category/world/feed/,https://www.nst.com.my/feed,https://www.bernama.com/en/rssfeed.php,https://www.malaymail.com/feed/rss/malaysia,https://thesun.my/news/feed/"
 
     # The versioned heuristic weights are defined in services/trust_scorer.py.
 
     # Worker interval in minutes
     WORKER_INTERVAL_MINUTES: int = 15
+    # Automatic news collection pauses overnight (hours in EMAIL_TIMEZONE, Malaysia time).
+    # The "Refresh News" button still works during these hours.
+    NEWS_QUIET_START_HOUR: int = 0
+    NEWS_QUIET_END_HOUR: int = 6
 
     class Config:
         env_file = str(_ENV_FILE)

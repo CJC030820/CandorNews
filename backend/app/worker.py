@@ -80,6 +80,18 @@ def is_english_article(title: str, description: str = "", content: str = "") -> 
     return True
 
 
+def in_quiet_hours(now: datetime = None) -> bool:
+    """True overnight (12am-6am Malaysia time by default), when automatic
+    news collection is paused. Manual refreshes are not affected."""
+    from zoneinfo import ZoneInfo
+    start, end = settings.NEWS_QUIET_START_HOUR, settings.NEWS_QUIET_END_HOUR
+    if start == end:
+        return False
+    local = (now or datetime.now(timezone.utc)).astimezone(ZoneInfo(settings.EMAIL_TIMEZONE))
+    hour = local.hour
+    return start <= hour < end if start < end else hour >= start or hour < end
+
+
 def _parse_published_date(raw_value, fallback_now=True):
     """Normalize aware feed dates to naive UTC for MongoDB storage."""
     parsed = raw_value if isinstance(raw_value, datetime) else None
@@ -282,6 +294,13 @@ class NewsWorker:
         storage_service.bump_articles_version()      # image copies and run stats changed too
         return stats
 
+    async def scheduled_fetch(self):
+        """The automatic run every WORKER_INTERVAL_MINUTES; skipped overnight."""
+        if in_quiet_hours():
+            logger.info("Overnight pause: automatic news collection skipped.")
+            return None
+        return await self.fetch_and_process_news()
+
     async def rescore_recent_articles(self):
         """Refresh the latest 500 records after each batch, plus up to 500 older
         records still scored with a previous formula (so every article moves to
@@ -306,7 +325,7 @@ class NewsWorker:
         recurring interval (WORKER_INTERVAL_MINUTES)."""
         if not self.running:
             self.scheduler.add_job(
-                self.fetch_and_process_news,
+                self.scheduled_fetch,
                 IntervalTrigger(minutes=settings.WORKER_INTERVAL_MINUTES),
                 id='news_fetch_job',
                 replace_existing=True,

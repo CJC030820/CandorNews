@@ -203,20 +203,8 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  transition: all 0.3s;
-  cursor: pointer;
   text-decoration: none;
   text-align: center;
-}
-
-.following-item:hover {
-  background: var(--accent-color);
-  color: white;
-  transform: translateX(4px);
-}
-
-.following-item:visited {
-  color: var(--text-primary);
 }
 
 .sidebar-section-header {

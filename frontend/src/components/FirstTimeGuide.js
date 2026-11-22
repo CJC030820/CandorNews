@@ -24,7 +24,7 @@ export const GUIDE_STEPS = [
   {
     target: 'toolbar',
     title: 'Get the latest news',
-    body: 'News is collected every 15 minutes. Press "Refresh News" to fetch it now, or switch the order to "Newest first".',
+    body: 'News is collected every 15 minutes from 6am to midnight. Press "Refresh News" to fetch it now at any time, or switch the order to "Newest first".',
   },
   {
     target: 'articles',

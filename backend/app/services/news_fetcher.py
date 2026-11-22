@@ -9,6 +9,20 @@ from typing import List, Dict, Optional
 from app.core.config import settings
 import logging
 
+# Publisher names for feeds whose own feed title is untidy
+# ("Malay Mail  -  Malaysia", "News – The Sun Malaysia").
+FEED_SOURCE_NAMES = {"malaymail.com": "Malay Mail", "thesun.my": "The Sun"}
+# Feeds served from a cache that can be hours old; a changing query value
+# (every 5 minutes) asks for an up-to-date copy.
+CACHE_BUSTED_HOSTS = {"malaymail.com"}
+
+
+def _feed_host(feed_url: str) -> str:
+    try:
+        return (urlparse(feed_url).hostname or "").lower().removeprefix("www.")
+    except ValueError:
+        return ""
+
 logger = logging.getLogger(__name__)
 
 _SECRET_PARAM = re.compile(r"((?:api[_-]?key|apikey|token|key|secret|password)=)[^&\s'\"]+", re.I)
@@ -167,13 +181,17 @@ class NewsFetcherService:
 
     def fetch_from_rss(self, feed_url: str, known_urls: Optional[set] = None) -> List[Dict]:
         try:
+            host = _feed_host(feed_url)
+            params = {"t": int(time.time() // 300)} if host in CACHE_BUSTED_HOSTS else None
             response = requests.get(
                 feed_url,
+                params=params,
                 timeout=8,
                 headers={"User-Agent": "Mozilla/5.0 (compatible; CandorNewsBot/1.0)"}
             )
             response.raise_for_status()
             feed = feedparser.parse(response.content)
+            source_name = FEED_SOURCE_NAMES.get(host) or feed.feed.get("title", "Unknown")
             articles = []
             for entry in feed.entries:
                 content = entry.get("content", [{}])[0].get("value") if entry.get("content") else None
@@ -187,7 +205,7 @@ class NewsFetcherService:
                 articles.append({
                     "title": _strip_html(entry.get("title")),
                     "author": entry.get("author", None),
-                    "source": feed.feed.get("title", "Unknown"),
+                    "source": source_name,
                     "url": link,
                     "published_at": entry.get("published"),
                     "description": _strip_html(raw_description),
@@ -304,6 +322,8 @@ class NewsFetcherService:
             "bernama": ("bernama",),
             "new straits times": ("nst",),
             "free malaysia today": ("freemalaysiatoday",),
+            "malay mail": ("malaymail",),
+            "the sun": ("thesun",),
         }
         if selected:
             for feed_url in settings.RSS_FEEDS.split(","):

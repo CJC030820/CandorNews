@@ -80,6 +80,14 @@ async def on_startup():
         print(f"Warning: could not seed source credibility: {exc}")
 
     try:
+        added = await storage_service.follow_new_platforms_once(
+            "follow-malaymail-thesun", ["bernama", "nst", "fmt"], ["malaymail", "thesun"])
+        if added:
+            print(f"Malay Mail and The Sun added for {added} account(s) that followed every publisher.")
+    except Exception as exc:
+        print(f"Warning: could not add new platforms to followed lists: {exc}")
+
+    try:
         start_email_scheduler()
         print("Email notification scheduler started (checks custom delivery times every minute).")
     except Exception as exc:
@@ -147,7 +155,8 @@ class UserResponse(BaseModel):
     followed_platforms: Optional[List[str]] = None
 
 # Publishers users can follow: id -> name used in article sources.
-PLATFORMS = {"bernama": "Bernama", "nst": "New Straits Times", "fmt": "Free Malaysia Today"}
+PLATFORMS = {"bernama": "Bernama", "nst": "New Straits Times", "fmt": "Free Malaysia Today",
+             "malaymail": "Malay Mail", "thesun": "The Sun"}
 
 
 def _followed_names(user):
@@ -806,7 +815,11 @@ FRESH_NEWS_MAX_AGE = timedelta(minutes=10)
 
 
 async def _refresh_news_if_stale():
-    """Fetch the latest articles before a digest unless a run just finished."""
+    """Fetch the latest articles before a digest unless a run just finished.
+    Overnight (automatic collection paused) digests use the stored articles."""
+    from app.worker import in_quiet_hours
+    if in_quiet_hours():
+        return
     last = news_worker.last_run_at
     try:
         if last and datetime.utcnow() - datetime.fromisoformat(last) < FRESH_NEWS_MAX_AGE:

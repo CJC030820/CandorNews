@@ -343,14 +343,9 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
                         </button>
                       </>
                     ) : following ? (
-                      <a
-                        href={platform.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="following-item"
-                      >
+                      <span className="following-item">
                         {platform.name}
-                      </a>
+                      </span>
                     ) : null}
                   </div>
                 );
