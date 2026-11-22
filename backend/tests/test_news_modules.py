@@ -278,7 +278,7 @@ async def test_missing_author_reduces_score_by_metadata_weight():
     assert complete["trust_components"]["metadata_completeness"] == 1.0
     assert incomplete["trust_components"]["metadata_completeness"] == .75
     assert complete["trust_score"] - incomplete["trust_score"] == pytest.approx(3.75)
-    for key in ("source_reputation", "corroboration", "sentiment_neutrality"):
+    for key in ("source_reputation", "content_quality", "corroboration", "sentiment_neutrality"):
         assert incomplete["trust_components"][key] == complete["trust_components"][key]
 
 
@@ -320,7 +320,9 @@ async def test_worker_saves_long_article_summary_and_bounded_excerpt(monkeypatch
     assert await worker.process_article(raw)
     saved = await storage_service.get_article_by_url(raw["url"])
     assert saved.summary == lead
-    assert saved.content_excerpt == body[:500]
+    # Up to 2,000 characters are kept, and the trust score's content checks read exactly that text.
+    assert saved.content_excerpt == body[:2000]
+    assert saved.trust_content_checks and saved.trust_components["content_quality"] > 0
     assert saved.processing_status == "completed"
     assert saved.published_date == datetime(2026, 11, 12)
 

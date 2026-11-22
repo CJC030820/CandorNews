@@ -149,6 +149,16 @@ class StorageService:
             articles.append(ArticleInDB(**doc))
         return articles
 
+    async def get_articles_with_old_score(self, score_version: str, limit: int = 500) -> List[ArticleInDB]:
+        """Newest completed articles whose trust score was made by an older formula."""
+        query = {"processing_status": "completed", "trust_version": {"$ne": score_version}}
+        cursor = self.articles.find(query).sort("published_date", -1).limit(limit)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
     async def get_latest_articles_for_topics(self, topics: List[str], limit: int = 10) -> List[ArticleInDB]:
         """Return the most recent completed articles matching any of the
         given topics, checking both the primary `topic` field and the

@@ -24,8 +24,8 @@ def cache_dir(tmp_path, monkeypatch):
     return tmp_path
 
 
-def test_weights_give_other_publishers_twenty_percent():
-    assert WEIGHTS == {"source_reputation": .50, "corroboration": .20,
+def test_weights_give_reputation_thirty_and_content_twenty_percent():
+    assert WEIGHTS == {"source_reputation": .30, "content_quality": .20, "corroboration": .20,
                        "metadata_completeness": .15, "sentiment_neutrality": .15}
     assert sum(WEIGHTS.values()) == pytest.approx(1)
 

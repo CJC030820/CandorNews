@@ -117,6 +117,8 @@ def test_publisher_aliases():
 async def test_score_cap_and_components(monkeypatch):
     scorer=TrustScorerService()
     monkeypatch.setattr(scorer,'calculate_source_reputation_async',AsyncMock(return_value=1.))
+    import app.services.trust_scorer as trust_module
+    monkeypatch.setattr(trust_module,'analyze_content',lambda article:{'score':1.,'checks':[]})
     article=sample()
     result=await scorer.calculate_trust_score(article,[{**article,'url':f'https://outlet{i}.com/report'} for i in range(4)])
     assert result['trust_score']==95

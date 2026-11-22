@@ -22,3 +22,15 @@ test('while the full article loads it says so instead of "no related reports"',(
  rerender(<ArticleAnalysis article={{sentiment:'Neutral',trustScore:70}} loading={false}/>);
  expect(screen.getByText(/could not be loaded/)).toBeInTheDocument();
 });
+
+test('lists the content quality checks with their reasons',()=>{
+ render(<ArticleAnalysis article={{trustScore:80,relatedReports:[],
+ trustComponents:{source_reputation:.92,content_quality:.85},trustWeights:{source_reputation:.3,content_quality:.2},
+ contentChecks:[{key:'attribution',label:'Attribution',score:.85,reason:'Sources shown: a direct quote.'},
+  {key:'verified_language',label:'Verified language',score:1,reason:'No rumour or unverified wording.'}]}}/>);
+ expect(screen.getByText('Content quality')).toBeInTheDocument();
+ expect(screen.getByText('Content quality checks')).toBeInTheDocument();
+ expect(screen.getByText('Sources shown: a direct quote.')).toBeInTheDocument();
+ expect(screen.getByText('85%')).toBeInTheDocument();
+ expect(screen.getByText(/does not check whether the claims are true/)).toBeInTheDocument();
+});

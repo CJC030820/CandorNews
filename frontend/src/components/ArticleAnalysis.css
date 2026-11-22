@@ -10,3 +10,10 @@
 .related-report { border: 1px solid #9996; border-radius: .6rem; padding: 1rem; margin: 1rem 0; }
 .related-report h3 { margin-top: 0; }
 .related-report a { color: inherit; text-decoration: underline; }
+.content-checks { margin-top: 1.25rem; }
+.content-checks h3 { font-size: 1.05rem; margin: 0 0 .25rem; }
+.content-checks ul { list-style: none; padding: 0; margin: .75rem 0 0; display: grid; gap: .6rem; }
+.content-checks li { border: 1px solid var(--border-color); border-radius: .6rem; padding: .7rem .9rem; background: var(--bg-secondary); }
+.content-check-head { display: flex; justify-content: space-between; gap: 1rem; }
+.content-check-score { font-weight: 700; color: var(--accent-color); }
+.content-check-reason { display: block; margin-top: .2rem; color: var(--text-secondary); font-size: .92rem; }

@@ -472,6 +472,7 @@ def _article_to_feed_dict(article, detail: bool = True) -> dict:
         "trustComponents": article.trust_components,
         "trustWeights": article.trust_weights,
         "relatedReports": article.trust_evidence,
+        "contentChecks": article.trust_content_checks,
         "trustVersion": article.trust_version,
         "trustScoredAt": article.trust_scored_at.isoformat() + "Z" if article.trust_scored_at else None
     } if detail else _list_fields(article)
@@ -480,7 +481,7 @@ def _article_to_feed_dict(article, detail: bool = True) -> dict:
 # Fields a news card, search result or ranking needs. The detailed trust
 # evidence is left out of lists (it made the feed about 1 MB) and is loaded
 # with the article page instead (GET /api/articles/{id}).
-_DETAIL_ONLY = ("trustExplanation", "trustComponents", "trustWeights", "relatedReports", "trustVersion",
+_DETAIL_ONLY = ("trustExplanation", "trustComponents", "trustWeights", "relatedReports", "contentChecks", "trustVersion",
                 "trustScoredAt", "sentimentScore")
 
 

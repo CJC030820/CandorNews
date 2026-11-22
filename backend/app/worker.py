@@ -11,13 +11,16 @@ from app.services.deduplicator import DeduplicatorService
 from app.services.topic_classifier import TopicClassifierService
 from app.services.summarizer import SummarizerService
 from app.services.sentiment_analyzer import SentimentAnalyzerService
-from app.services.trust_scorer import TrustScorerService
+from app.services.trust_scorer import TrustScorerService, SCORE_VERSION
 from app.services import image_cache
 from app.services.keyword_extractor import KeywordExtractorService
 from app.services.storage import storage_service
 from app.core.config import settings
 import asyncio
 from typing import Dict, List
+
+# Characters of article text kept per article (read by the content checks of the trust score).
+CONTENT_EXCERPT_CHARS = 2000
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +176,9 @@ class NewsWorker:
             )
             original_date = _parse_published_date(raw_article.get("published_at"), fallback_now=False)
             published_date = original_date or datetime.utcnow()
-            score_input = {**raw_article, **sentiment_result,
+            # Score from exactly the text that is stored, so later re-scoring gives the same result.
+            content_excerpt = content[:CONTENT_EXCERPT_CHARS] if content else None
+            score_input = {**raw_article, **sentiment_result, "content_excerpt": content_excerpt,
                            "published_date": original_date}
             trust_result = await self.trust_scorer.calculate_trust_score(
                 score_input, [a.dict() for a in candidate_articles])
@@ -187,7 +192,7 @@ class NewsWorker:
                 "published_date": published_date,
                 "publication_date_inferred": original_date is None,
                 "description": description or None,
-                "content_excerpt": content[:500] if content else None,
+                "content_excerpt": content_excerpt,
                 "image_url": raw_article.get("urlToImage") or raw_article.get("image"),
                 "topic": primary_topic,
                 "topics": topics,
@@ -278,8 +283,13 @@ class NewsWorker:
         return stats
 
     async def rescore_recent_articles(self):
-        """Refresh the latest 500 records after each batch, including older v1 scores."""
+        """Refresh the latest 500 records after each batch, plus up to 500 older
+        records still scored with a previous formula (so every article moves to
+        the current formula within a few runs)."""
         articles = await storage_service.get_latest_articles(limit=500)
+        seen = {a.id for a in articles}
+        articles += [a for a in await storage_service.get_articles_with_old_score(SCORE_VERSION, limit=500)
+                     if a.id not in seen]
         changed = 0
         for article in articles:
             candidates = await storage_service.find_articles_by_keywords(article.keywords, article.url)

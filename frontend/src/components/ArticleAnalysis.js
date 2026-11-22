@@ -1,7 +1,7 @@
 import React from 'react';
 import './ArticleAnalysis.css';
 
-const labels = {source_reputation:'Configured source reputation',corroboration:'Other-publisher coverage',
+const labels = {source_reputation:'Configured source reputation',content_quality:'Content quality',corroboration:'Other-publisher coverage',
   metadata_completeness:'Metadata completeness',sentiment_neutrality:'Sentiment neutrality'};
 export default function ArticleAnalysis({article, loading = false}) {
   const components = article.trustComponents || {};
@@ -31,6 +31,15 @@ export default function ArticleAnalysis({article, loading = false}) {
         <td>{((weights[key] || 0) * 100).toFixed(0)}%</td><td>{(value * (weights[key] || 0) * 100).toFixed(2)}</td>
       </tr>)}</tbody>
     </table><p className="analysis-disclaimer">The weighted total is capped at 95. This is not a probability that an article is true.</p></div>}
+    {article.contentChecks?.length > 0 && <div className="content-checks">
+      <h3>Content quality checks</h3>
+      <p className="analysis-disclaimer">How this article is reported, judged from its headline and text. It does not check whether the claims are true.</p>
+      <ul>{article.contentChecks.map(check => <li key={check.key}>
+        <span className="content-check-head"><strong>{check.label}</strong>
+          <span className="content-check-score">{Math.round(check.score * 100)}%</span></span>
+        <span className="content-check-reason">{check.reason}</span>
+      </li>)}</ul>
+    </div>}
     {article.trustScoredAt && <p>Last analyzed: {new Date(article.trustScoredAt).toLocaleString()}</p>}
     <h2>Compare related reports</h2>
     <p className="analysis-disclaimer">Similar headlines from distinct other publishers. Compare the claims yourself; matching coverage may repeat a common source.</p>

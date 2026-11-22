@@ -3,11 +3,13 @@ from datetime import datetime
 from urllib.parse import urlparse
 import re
 from app.services.storage import storage_service
+from app.services.content_analyzer import analyze_content
 
-SCORE_VERSION = "independent-publishers-v3"
-# Other-publisher coverage is a supporting signal only (20%); most of the
-# score comes from the publisher's own reputation and the article itself.
-WEIGHTS = {"source_reputation": .50, "corroboration": .20,
+SCORE_VERSION = "content-analysis-v4"
+# The publisher's reputation counts for 30%; 20% comes from checking how the
+# article itself is reported (content_analyzer); other-publisher coverage is
+# a supporting signal (20%).
+WEIGHTS = {"source_reputation": .30, "content_quality": .20, "corroboration": .20,
            "metadata_completeness": .15, "sentiment_neutrality": .15}
 
 
@@ -68,7 +70,9 @@ class TrustScorerService:
         reputation = await self.calculate_source_reputation_async(publisher_domain(article.get("url")))
         reputations = [await self.calculate_source_reputation_async(domain) for domain in reports]
         corroboration = (.7 * sum(reputations) / len(reputations) + .3 * min(len(reputations), 4) / 4) if reputations else 0.
-        components = {"source_reputation": reputation, "corroboration": corroboration,
+        content = analyze_content(article)
+        components = {"source_reputation": reputation, "content_quality": content["score"],
+                      "corroboration": corroboration,
                       "metadata_completeness": self.calculate_metadata_completeness(article),
                       "sentiment_neutrality": self.calculate_sentiment_neutrality(article)}
         score = round(min(95., 100 * sum(self.weights[key] * value for key, value in components.items())), 2)
@@ -79,11 +83,14 @@ class TrustScorerService:
                      "sentiment": item.get("sentiment"), "toneLabel": item.get("tone_label")}
                     for domain, item in reports.items()]
         explanation = (f"{len(evidence)} distinct other publisher(s) with a similar headline. "
+                       "Content quality checks how the article is reported (sources, concrete details, "
+                       "headline and wording), not whether it is true. "
                        "Reputation values are configured priors; matching reports may repeat the same original source. "
                        "This heuristic is not a fact check or a probability of truth.")
         return {"trust_score": score, "trust_label": label, "trust_explanation": explanation,
                 "trust_components": components, "trust_weights": self.weights.copy(),
-                "trust_evidence": evidence, "trust_version": SCORE_VERSION,
+                "trust_evidence": evidence, "trust_content_checks": content["checks"],
+                "trust_version": SCORE_VERSION,
                 "trust_scored_at": datetime.utcnow()}
 
     async def cold_start_fallback(self, article):
