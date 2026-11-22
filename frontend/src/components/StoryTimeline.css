@@ -1,0 +1,112 @@
+.story-timeline {
+  margin-top: 2rem;
+  padding-top: 1.75rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.story-timeline h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.story-timeline-intro {
+  margin: .4rem 0 1.1rem;
+  color: var(--text-muted);
+  font-size: .9rem;
+}
+
+.story-timeline ol {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.4rem;
+  position: relative;
+}
+
+/* The vertical line joining the updates */
+.story-timeline ol::before {
+  content: "";
+  position: absolute;
+  left: .42rem;
+  top: .45rem;
+  bottom: .45rem;
+  width: 2px;
+  background: var(--border-color);
+}
+
+.story-timeline li {
+  position: relative;
+  padding: 0 0 1.1rem .4rem;
+}
+
+.story-timeline li:last-child {
+  padding-bottom: 0;
+}
+
+.story-timeline-dot {
+  position: absolute;
+  left: -1.3rem;
+  top: .3rem;
+  width: .75rem;
+  height: .75rem;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 2px solid var(--accent-color);
+}
+
+.story-timeline li.current .story-timeline-dot {
+  background: var(--accent-color);
+}
+
+.story-timeline p {
+  margin: 0;
+}
+
+.story-timeline-when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.story-timeline-tag {
+  padding: .05rem .45rem;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 700;
+  background: rgba(var(--alert-r), var(--alert-g), var(--alert-b), .12);
+  color: var(--alert-color);
+}
+
+.story-timeline-tag.current {
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), .14);
+  color: var(--accent-color);
+}
+
+.story-timeline-title {
+  display: block;
+  margin: .15rem 0 .1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+a.story-timeline-title {
+  text-decoration: none;
+}
+
+a.story-timeline-title:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.story-timeline li.current .story-timeline-title {
+  color: var(--accent-color);
+}
+
+.story-timeline-sources {
+  font-size: .82rem;
+  color: var(--text-muted);
+}

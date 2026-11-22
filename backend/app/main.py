@@ -21,7 +21,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 from fastapi.responses import FileResponse
-from app.services import email_service, email_verification, image_cache, library, story_grouper, suggest
+from app.services import email_service, email_verification, image_cache, library, story_grouper, story_threads, suggest
 from app.services.trust_scorer import SCORE_VERSION
 from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
@@ -97,6 +97,7 @@ async def on_startup():
         try:
             async with news_worker._fetch_lock:     # never at the same time as a collection run
                 await story_grouper.backfill_once()
+                await story_threads.backfill_once()
         except Exception as exc:
             logger.error(f"Could not group stored articles into stories: {exc}", exc_info=True)
     asyncio.create_task(group_stored_articles())
@@ -491,6 +492,7 @@ def _article_to_feed_dict(article, detail: bool = True) -> dict:
         "relatedReports": article.trust_evidence,
         "contentChecks": article.trust_content_checks,
         "storyId": article.story_id or article.id,
+        "threadId": article.thread_id or article.story_id or article.id,
         "trustVersion": article.trust_version,
         "trustScoredAt": article.trust_scored_at.isoformat() + "Z" if article.trust_scored_at else None
     } if detail else _list_fields(article)
@@ -501,6 +503,20 @@ def _article_to_feed_dict(article, detail: bool = True) -> dict:
 # with the article page instead (GET /api/articles/{id}).
 _DETAIL_ONLY = ("trustExplanation", "trustComponents", "trustWeights", "relatedReports", "contentChecks", "trustVersion",
                 "trustScoredAt", "sentimentScore")
+
+
+async def _list_with_updates(articles) -> list:
+    """News-card fields, plus how many updates each article's developing story
+    has in total (the feed only holds the latest articles, so it cannot count
+    older updates itself)."""
+    counts = await storage_service.count_thread_updates({a.thread_id for a in articles if a.thread_id})
+    items = []
+    for article in articles:
+        item = _article_to_feed_dict(article, detail=False)
+        if counts.get(article.thread_id, 0) > 1:
+            item["threadUpdates"] = counts[article.thread_id]
+        items.append(item)
+    return items
 
 
 def _list_fields(article) -> dict:
@@ -538,7 +554,7 @@ async def get_feed(request: Request, user=Depends(get_current_user), topic: str 
         articles = await storage_service.get_latest_articles(limit=limit, topic=topic)
         total = await storage_service.count_articles()
         payload = {
-            "articles": [_article_to_feed_dict(a, detail=False) for a in articles],
+            "articles": await _list_with_updates(articles),
             "total_articles_in_db": total,
             "last_fetch_run": news_worker.last_run_stats or None,
         }
@@ -557,7 +573,7 @@ async def search_articles(q: str = Query(..., min_length=2, max_length=100), lim
     summary or publisher, newest first."""
     articles = await storage_service.search_articles(q, limit=limit, publishers=_followed_names(user))
     total = await storage_service.count_search(q, _followed_names(user))
-    return {"articles": [_article_to_feed_dict(a, detail=False) for a in articles], "query": q, "total": total}
+    return {"articles": await _list_with_updates(articles), "query": q, "total": total}
 
 
 @app.get("/api/articles/suggest")
@@ -619,7 +635,34 @@ async def article_detail(article_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Article not found")
     detail = _article_to_feed_dict(article)
     detail.update(await _story_comparison(article))
+    detail["timeline"] = await _story_timeline(article)
     return detail
+
+
+async def _story_timeline(article) -> list:
+    """A developing story's updates, oldest first: one entry per story with its
+    time, headline (best-scored version) and the publishers that reported it."""
+    if not article.thread_id:
+        return []
+    members = await storage_service.get_articles_by_thread(article.thread_id)
+    stories = {}
+    for member in members:
+        stories.setdefault(member.story_id or member.id, []).append(member)
+    if len(stories) < 2:
+        return []
+    timeline = []
+    for story_id, versions in stories.items():
+        lead = max(versions, key=lambda v: (v.trust_score or 0, -v.published_date.timestamp()))
+        first = min(versions, key=lambda v: v.published_date)
+        sources = []
+        for v in sorted(versions, key=lambda v: v.published_date):
+            name = _clean_display_text(v.source)
+            if name not in sources:
+                sources.append(name)
+        timeline.append({"storyId": story_id, "id": lead.id, "title": _clean_display_text(lead.title),
+                         "date": _article_to_feed_dict(first, detail=False)["date"], "sources": sources,
+                         "current": any(v.id == article.id for v in versions)})
+    return sorted(timeline, key=lambda entry: entry["date"])
 
 
 async def _story_comparison(article) -> dict:
@@ -797,7 +840,7 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
     
     # Slots are counted in stories (one story's versions share one entry).
     def stories_in(items):
-        return len({a.story_id or a.id for a in items})
+        return len({a.thread_id or a.story_id or a.id for a in items})
 
     # If not enough articles from preferred topics, fall back to all latest articles
     if stories_in(articles) < MAX_DIGEST_ARTICLES:
@@ -821,6 +864,7 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
     for story in story_grouper.combine_by_story(articles)[:MAX_DIGEST_ARTICLES]:
         entry = _article_to_feed_dict(story["article"])
         entry["alsoReportedBy"] = [_clean_display_text(name) for name in story["also_reported_by"]]
+        entry["updates"] = story["updates"]
         digest_articles.append(entry)
     logger.info(f"Sending email digest with {len(digest_articles)} articles to {user.email}")
 

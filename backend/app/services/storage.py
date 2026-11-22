@@ -45,6 +45,7 @@ class StorageService:
             # Related-report lookup during trust scoring (shared keywords, last 72 h).
             await self.articles.create_index([("keywords", 1), ("published_date", -1)])
             await self.articles.create_index("story_id")
+            await self.articles.create_index("thread_id")
         except Exception as exc:
             logger.warning(f"Could not ensure article query indexes: {exc}")
 
@@ -283,6 +284,48 @@ class StorageService:
             return
         await self.articles.update_many({"$or": conditions}, {"$set": {"story_id": story_id}})
         self.bump_articles_version()
+
+    async def set_thread(self, thread_id: str, article_ids: List[str]):
+        from bson import ObjectId
+        if not article_ids:
+            return
+        await self.articles.update_many({"_id": {"$in": [ObjectId(i) for i in article_ids]}},
+                                        {"$set": {"thread_id": thread_id}})
+        self.bump_articles_version()
+
+    async def get_articles_by_thread(self, thread_id: str) -> List[ArticleInDB]:
+        cursor = self.articles.find({"thread_id": thread_id, "processing_status": "completed"}).sort("published_date", 1)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def count_thread_updates(self, thread_ids) -> dict:
+        """Number of stories (updates) in each given thread."""
+        thread_ids = [t for t in thread_ids if t]
+        if not thread_ids:
+            return {}
+        pipeline = [{"$match": {"thread_id": {"$in": thread_ids}, "processing_status": "completed"}},
+                    {"$group": {"_id": "$thread_id", "stories": {"$addToSet": "$story_id"}}}]
+        return {doc["_id"]: len(doc["stories"]) async for doc in self.articles.aggregate(pipeline)}
+
+    async def get_articles_since(self, since: datetime) -> List[ArticleInDB]:
+        cursor = self.articles.find({"processing_status": "completed", "published_date": {"$gte": since}}).sort("published_date", 1)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def count_articles_in_developing_stories(self) -> int:
+        """Articles in threads that span more than one story."""
+        pipeline = [{"$match": {"thread_id": {"$ne": None}}},
+                    {"$group": {"_id": "$thread_id", "stories": {"$addToSet": "$story_id"}, "n": {"$sum": 1}}},
+                    {"$match": {"stories.1": {"$exists": True}}},
+                    {"$group": {"_id": None, "total": {"$sum": "$n"}}}]
+        result = [doc async for doc in self.articles.aggregate(pipeline)]
+        return result[0]["total"] if result else 0
 
     async def get_articles_by_story(self, story_id: str) -> List[ArticleInDB]:
         cursor = self.articles.find({"story_id": story_id, "processing_status": "completed"}).sort("published_date", 1)

@@ -30,3 +30,17 @@ test('a search match still names every followed version of its story', () => {
   expect(cards[0].id).toBe('1');
   expect(cards[0].otherVersions.map((v) => v.source)).toEqual(['Bernama']);
 });
+
+test('a developing story shows one card: its latest update, with the number of updates', () => {
+  const t = (id, storyId, source, trustScore, rawDate) => ({ id, storyId, threadId: 'thread', source, trustScore, rawDate });
+  const cards = combineStories([
+    t('1', 'found', 'NST', 80, '2026-11-18T12:30:00Z'),
+    t('2', 'probe', 'NST', 70, '2026-11-18T15:24:00Z'),
+    t('3', 'probe', 'FMT', 75, '2026-11-18T15:56:00Z'),
+    { id: '9', source: 'Bernama', trustScore: 60, rawDate: '2026-11-18T14:00:00Z' },
+  ]);
+  expect(cards.map((c) => c.id)).toEqual(['3', '9']);
+  expect(cards[0].updateCount).toBe(2);
+  expect(cards[0].otherVersions.map((v) => v.source)).toEqual(['NST']);
+  expect(cards[0].versionIds).toEqual(['1', '2', '3']);
+});

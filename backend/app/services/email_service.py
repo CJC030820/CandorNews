@@ -132,6 +132,7 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             description = article.get("description", "")
             date = article.get("date", "")
             also = ", ".join(article.get("alsoReportedBy") or [])
+            updates = article.get("updates") or 1
 
             # Build text version with detailed description
             text_line = f"{idx}. {title}"
@@ -139,6 +140,8 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             text_lines.append(f"   Source: {source}")
             if also:
                 text_lines.append(f"   Also reported by: {also}")
+            if updates > 1:
+                text_lines.append(f"   Developing story: {updates} updates (see the timeline on CandorNews)")
             if trust_score is not None:
                 text_lines.append(f"   Trust: {trust_score}/100 (not a truth probability)")
             if date:
@@ -167,6 +170,8 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             meta = source + (f" &middot; {date}" if date else "")
             if also:
                 meta += f"<br>Also reported by {also}"
+            if updates > 1:
+                meta += f"<br>Developing story &middot; {updates} updates"
             html_articles.append(f"""
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
               <td class="{layout.BORDER_CLASS if idx > 1 else ''}" style="padding:18px 0;{divider}">

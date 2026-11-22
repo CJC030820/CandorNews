@@ -26,12 +26,16 @@ const ArticleCard = ({ article }) => {
 
   const otherVersions = article.otherVersions || [];
 
-  // Open the article page at its "Compare coverage" section.
-  const handleCompareClick = (e) => {
+  const updateCount = article.updateCount || 0;
+
+  // Open the article page at one of its sections ("compare" or "timeline").
+  const openSection = (section) => (e) => {
     e.stopPropagation();
     sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
-    navigate(`/article/${article.id}#compare`, { state: { article } });
+    navigate(`/article/${article.id}#${section}`, { state: { article } });
   };
+  const handleCompareClick = openSection('compare');
+  const handleTimelineClick = openSection('timeline');
 
   const handleBookmarkClick = (e) => {
     e.stopPropagation();
@@ -90,6 +94,12 @@ const ArticleCard = ({ article }) => {
           <span className="source">{article.source}</span>
           <span className="date">{article.date}</span>
         </p>
+        {updateCount > 1 && (
+          <p className="developing-story">
+            <span className="developing-dot" aria-hidden="true" />
+            Developing story · {updateCount} updates
+          </p>
+        )}
         {otherVersions.length > 0 && (
           <p className="also-reported">
             Also reported by {otherVersions.map((v) => v.source).join(' · ')}
@@ -108,6 +118,12 @@ const ArticleCard = ({ article }) => {
             </button>
           )}
           <button className="read-more">Read More</button>
+          {updateCount > 1 && (
+            <button className="compare-versions" onClick={handleTimelineClick}
+              title="See how this story developed">
+              See timeline
+            </button>
+          )}
           {otherVersions.length > 0 && (
             <button className="compare-versions" onClick={handleCompareClick}
               title="See how each publisher reported this story">

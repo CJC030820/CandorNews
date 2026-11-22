@@ -4,6 +4,7 @@ import { useBookmarks } from '../context/BookmarkContext';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import { useAuth } from '../context/AuthContext';
 import ArticleAnalysis from '../components/ArticleAnalysis';
+import StoryTimeline from '../components/StoryTimeline';
 import ShareMenu from '../components/ShareMenu';
 import { useArticleImage } from '../utils/articleImage';
 import { ImagePlaceholder } from '../components/ArticleImage';
@@ -56,8 +57,9 @@ const ArticleDetailPage = () => {
 
   // "Compare N versions" on a feed card opens the page at the comparison.
   useEffect(() => {
-    if (!loading && location.hash === '#compare') {
-      document.getElementById('compare')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    const section = location.hash.slice(1);
+    if (!loading && (section === 'compare' || section === 'timeline')) {
+      document.getElementById(section)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
     }
   }, [loading, location.hash, id]);
 
@@ -134,6 +136,7 @@ const ArticleDetailPage = () => {
             </div>
           )}
 
+          <StoryTimeline timeline={article.timeline} />
           <ArticleAnalysis article={article} loading={loading} />
 
           <div className="article-actions">

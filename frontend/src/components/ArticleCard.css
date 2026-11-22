@@ -646,3 +646,22 @@
 .compare-versions:hover {
   background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.12);
 }
+
+/* Developing story (one card for a story's updates over time) */
+.developing-story {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--alert-color);
+}
+
+.developing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--alert-color);
+  flex: 0 0 auto;
+}

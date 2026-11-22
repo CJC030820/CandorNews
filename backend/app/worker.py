@@ -13,7 +13,7 @@ from app.services.summarizer import SummarizerService
 from app.services.sentiment_analyzer import SentimentAnalyzerService
 from app.services.trust_scorer import TrustScorerService, SCORE_VERSION
 from app.services import image_cache
-from app.services import story_grouper
+from app.services import story_grouper, story_threads
 from app.services.keyword_extractor import KeywordExtractorService
 from app.services.storage import storage_service
 from app.core.config import settings
@@ -113,6 +113,7 @@ class NewsWorker:
     def __init__(self):
         """Initialize the news worker with all required services."""
         self.scheduler = AsyncIOScheduler()
+        self._thread_index = None           # recent articles for linking updates (story_threads)
         self.news_fetcher = NewsFetcherService()
         self.deduplicator = DeduplicatorService()
         self.topic_classifier = TopicClassifierService()
@@ -231,6 +232,10 @@ class NewsWorker:
             logger.info(f"Saved new article: {title}")
             try:
                 await story_grouper.assign_story(created)
+                created = await storage_service.get_article_by_id(created.id)
+                if self._thread_index is None:
+                    self._thread_index = await story_threads.build_index()
+                await story_threads.assign_thread(created, self._thread_index)
             except Exception as exc:   # grouping is extra; the article itself is saved
                 logger.error(f"Could not group article into a story {url}: {exc}", exc_info=True)
             return True
@@ -271,6 +276,7 @@ class NewsWorker:
             logger.info(f"After deduplication: {len(unique_articles)} articles")
 
             # Process each article (skips ones already stored from prior runs)
+            self._thread_index = await story_threads.build_index()   # recent articles, to find updates
             saved_count = 0
             saved_images = []
             for article in unique_articles:

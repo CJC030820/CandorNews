@@ -97,20 +97,27 @@ async def backfill_once() -> int:
 
 
 def combine_by_story(articles: Iterable) -> List[Dict]:
-    """One entry per story, in the order stories first appear. The entry is
-    the version with the highest trust score (earliest on a tie), with the
-    other versions' publishers in `also_reported_by`."""
+    """One entry per story (or per developing story), in the order they first
+    appear. For a developing story the entry is its latest update. The entry
+    is that story's version with the highest trust score (earliest on a tie),
+    with the other versions' publishers in `also_reported_by` and the number
+    of updates in `updates`."""
     groups: Dict[str, List] = {}
     for article in articles:
-        groups.setdefault(article.story_id or article.id, []).append(article)
+        key = getattr(article, "thread_id", None) or article.story_id or article.id
+        groups.setdefault(key, []).append(article)
     combined = []
-    for versions in groups.values():
-        lead = max(versions, key=lambda a: (a.trust_score or 0, -a.published_date.timestamp()))
+    for members in groups.values():
+        stories: Dict[str, List] = {}
+        for member in members:
+            stories.setdefault(member.story_id or member.id, []).append(member)
+        latest = max(stories.values(), key=lambda versions: min(v.published_date for v in versions))
+        lead = max(latest, key=lambda a: (a.trust_score or 0, -a.published_date.timestamp()))
         others = []
-        for version in versions:
+        for version in latest:
             if version is not lead and version.source not in others and version.source != lead.source:
                 others.append(version.source)
-        combined.append({"article": lead, "also_reported_by": others})
+        combined.append({"article": lead, "also_reported_by": others, "updates": len(stories)})
     return combined
 
 
