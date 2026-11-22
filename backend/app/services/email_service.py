@@ -164,18 +164,18 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             meta = source + (f" &middot; {date}" if date else "")
             html_articles.append(f"""
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-              <td style="padding:18px 0;{divider}">
+              <td class="{layout.BORDER_CLASS if idx > 1 else ''}" style="padding:18px 0;{divider}">
                 {layout.badge(score_label)}
-                <h3 style="margin:10px 0 6px 0;font-size:17px;line-height:1.4;color:{layout.TEXT};font-weight:700;">{title}</h3>
-                <p style="margin:0 0 10px 0;color:{layout.TEXT_SECONDARY};font-size:13px;">{meta}</p>
-                {f'<p style="margin:0 0 14px 0;color:{layout.TEXT};font-size:14px;line-height:1.6;">{description}</p>' if description else ''}
+                <h3 class="{layout.TEXT_CLASS}" style="margin:10px 0 6px 0;font-size:17px;line-height:1.4;color:{layout.TEXT};font-weight:700;">{title}</h3>
+                <p class="{layout.MUTED_CLASS}" style="margin:0 0 10px 0;color:{layout.TEXT_SECONDARY};font-size:13px;">{meta}</p>
+                {f'<p class="{layout.TEXT_CLASS}" style="margin:0 0 14px 0;color:{layout.TEXT};font-size:14px;line-height:1.6;">{description}</p>' if description else ''}
                 {layout.button(url, "Read on CandorNews") if url else ''}
               </td>
             </tr></table>"""
             )
     else:
         text_lines.append("No new articles right now - check the app for the latest news!")
-        html_articles.append(f'<p style="text-align:center;padding:20px 0;color:{layout.TEXT_SECONDARY};">No new articles right now - check the app for the latest news!</p>')
+        html_articles.append(f'<p class="{layout.MUTED_CLASS}" style="text-align:center;padding:20px 0;color:{layout.TEXT_SECONDARY};">No new articles right now - check the app for the latest news!</p>')
 
     text_lines.append("")
     text_lines.append("")
@@ -187,11 +187,11 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
     count = len(articles)
     content = (
         f'<p style="margin:0 0 8px 0;">Hi {user_name},</p>'
-        f'<p style="margin:0 0 8px 0;color:{layout.TEXT_SECONDARY};font-size:14px;">'
+        f'<p class="{layout.MUTED_CLASS}" style="margin:0 0 8px 0;color:{layout.TEXT_SECONDARY};font-size:14px;">'
         f'Here are {count} recent news articles, with your interests first. Each has a short summary for quick reading.</p>'
         + "".join(html_articles))
     profile = f"{site_url.rstrip('/')}/profile" if site_url else ""
-    manage = (f'<a href="{escape(profile, quote=True)}" style="color:{layout.ACCENT};text-decoration:none;">Profile settings</a>'
+    manage = (f'<a href="{escape(profile, quote=True)}" class="{layout.LINK_CLASS}" style="color:{layout.ACCENT};text-decoration:none;">Profile settings</a>'
               if profile else "Profile settings")
     footer = ("You're receiving this because you turned on email notifications in CandorNews.<br>"
               f"Change delivery times or turn them off anytime in your {manage}.")

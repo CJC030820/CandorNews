@@ -84,11 +84,11 @@ def build_code_email(name: str, code: str, site_url: str = "") -> dict:
     safe_name = html.escape(name or "")
     content = (f'<p style="margin:0 0 12px 0;">Hi {safe_name},</p>'
                '<p style="margin:0 0 12px 0;">Your CandorNews verification code is:</p>'
-               f'<p style="margin:0 0 16px 0;text-align:center;"><span style="display:inline-block;padding:12px 20px;'
+               f'<p style="margin:0 0 16px 0;text-align:center;"><span class="{layout.BOX_CLASS}" style="display:inline-block;padding:12px 20px;'
                f'background-color:{layout.BG};border:1px solid {layout.BORDER};border-radius:10px;color:{layout.ACCENT};'
                f'font-size:30px;font-weight:700;letter-spacing:8px;">{code}</span></p>'
                f'<p style="margin:0 0 12px 0;">Enter it on your Profile page within {minutes} minutes to start receiving news digests.</p>'
-               f'<p style="margin:0;color:{layout.TEXT_SECONDARY};font-size:13px;">If you did not request this, you can ignore this email.</p>')
+               f'<p class="{layout.MUTED_CLASS}" style="margin:0;color:{layout.TEXT_SECONDARY};font-size:13px;">If you did not request this, you can ignore this email.</p>')
     body = layout.page("Verify your email", "One step before your news digests start", content,
                        "This code was requested from your CandorNews Profile page.", site_url,
                        preheader=f"Your code is {code}")
