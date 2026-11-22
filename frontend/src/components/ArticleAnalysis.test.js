@@ -34,3 +34,19 @@ test('lists the content quality checks with their reasons',()=>{
  expect(screen.getByText('85%')).toBeInTheDocument();
  expect(screen.getByText(/does not check whether the claims are true/)).toBeInTheDocument();
 });
+
+test('compares every publisher version of the story',()=>{
+ const {MemoryRouter}=require('react-router-dom');
+ render(<MemoryRouter><ArticleAnalysis article={{id:'a',source:'Bernama',title:'Malaysia respects ICJ judgment',
+  date:'2026-11-20T09:00:00Z',trustScore:82,toneLabel:'Neutral / Objective',sentiment:'Neutral',relatedReports:[],
+  reportedFirst:true,uniqueDetails:['RM50 million'],
+  storyVersions:[{id:'b',source:'New Straits Times',title:'ICJ judgment respected',date:'2026-11-20T10:00:00Z',
+   trustScore:80,toneLabel:'Neutral / Objective',sentiment:'Neutral',uniqueDetails:[],first:false}]}}/></MemoryRouter>);
+ expect(screen.getByRole('heading',{name:'Compare coverage'})).toBeInTheDocument();
+ expect(screen.getByText(/2 publishers reported this story/)).toBeInTheDocument();
+ expect(screen.getAllByText('Reported first').length).toBeGreaterThan(0);
+ expect(screen.getAllByText('RM50 million').length).toBeGreaterThan(0);
+ expect(screen.getByText('Nothing the others do not mention')).toBeInTheDocument();
+ screen.getAllByRole('link',{name:'Read this version'}).forEach(link=>expect(link).toHaveAttribute('href','/article/b'));
+ expect(screen.queryByText(/Compare related reports/)).not.toBeInTheDocument();
+});

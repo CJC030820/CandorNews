@@ -9,6 +9,7 @@ import { useTrustedPlatforms } from '../context/TrustedPlatformsContext';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useReadArticles } from '../context/ReadArticlesContext';
 import { rankForYou } from '../utils/personalRanking';
+import { combineStories } from '../utils/stories';
 import './FeedPage.css';
 import { RefreshIcon } from '../components/Icons';
 
@@ -237,16 +238,20 @@ const FeedPage = ({ searchQuery = '', onSearchChange }) => {
     });
   }, [filteredArticles, query, serverMatches]);
 
+  // One card per story when several followed publishers report it.
+  const storyArticles = useMemo(() => combineStories(searchedArticles, filteredArticles),
+    [searchedArticles, filteredArticles]);
+
   // News For You: personal order from reading history and bookmarks
   // (falls back to newest first). Other views and searches: newest first.
   const personalOn = filter === 'all' && !searchActive && sortMode === 'foryou';
   const { sortedArticles, personalised } = useMemo(() => {
     if (personalOn) {
-      const ranked = rankForYou(searchedArticles, history, bookmarks);
+      const ranked = rankForYou(storyArticles, history, bookmarks);
       return { sortedArticles: ranked.articles, personalised: ranked.personalised };
     }
-    return { sortedArticles: [...searchedArticles].sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate)), personalised: false };
-  }, [searchedArticles, personalOn, history, bookmarks]);
+    return { sortedArticles: [...storyArticles].sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate)), personalised: false };
+  }, [storyArticles, personalOn, history, bookmarks]);
 
   // Compute the live, ticking "X minutes ago" label at render time so it
   // stays accurate without needing to re-fetch the feed.

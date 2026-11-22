@@ -81,7 +81,9 @@ export const scoreArticle = (article, profile, now = Date.now(), feed = {}) => {
   const keywordMatch = Math.min(1, matched.reduce((sum, w) => sum + profile.words.get(w) / profile.topWord, 0));
   const affinity = WEIGHTS.category * categoryMatch + WEIGHTS.publisher * publisherMatch + WEIGHTS.keywords * keywordMatch;
   let score = FRESHNESS_SHARE * freshness(article, now) + (1 - FRESHNESS_SHARE) * affinity;
-  if (profile.readIds.has(String(article.id))) score *= READ_PENALTY;
+  // A story counts as read when any publisher's version of it was read.
+  const ids = article.versionIds && article.versionIds.length ? article.versionIds : [article.id];
+  if (ids.some((id) => profile.readIds.has(String(id)))) score *= READ_PENALTY;
 
   let reason = null;
   if (matched.length && keywordMatch >= 0.3) reason = `Similar to stories you read about "${matched[0]}"`;

@@ -131,11 +131,14 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             url = article_page_url(site_url, article.get("id"))
             description = article.get("description", "")
             date = article.get("date", "")
+            also = ", ".join(article.get("alsoReportedBy") or [])
 
             # Build text version with detailed description
             text_line = f"{idx}. {title}"
             text_lines.append(text_line)
             text_lines.append(f"   Source: {source}")
+            if also:
+                text_lines.append(f"   Also reported by: {also}")
             if trust_score is not None:
                 text_lines.append(f"   Trust: {trust_score}/100 (not a truth probability)")
             if date:
@@ -158,10 +161,12 @@ def build_news_digest_email(user_name: str, articles: list, period_label: str = 
             text_lines.append("")
 
             score_label = f'{trust_score}/100 trust' if trust_score is not None else 'Analysis pending'
-            title, source, description, date = [escape(str(value)) for value in (title, source, description, date)]
+            title, source, description, date, also = [escape(str(value)) for value in (title, source, description, date, also)]
             url = escape(url, quote=True) if urlparse(url).scheme in {'http', 'https'} else ''
             divider = f"border-top:1px solid {layout.BORDER};" if idx > 1 else ""
             meta = source + (f" &middot; {date}" if date else "")
+            if also:
+                meta += f"<br>Also reported by {also}"
             html_articles.append(f"""
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
               <td class="{layout.BORDER_CLASS if idx > 1 else ''}" style="padding:18px 0;{divider}">

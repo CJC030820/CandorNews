@@ -623,3 +623,26 @@
   font-weight: 600;
   color: var(--accent-color);
 }
+
+/* Same story from several publishers (one card per story) */
+.also-reported {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.compare-versions {
+  background: transparent;
+  color: var(--accent-color);
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5);
+  padding: 9px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compare-versions:hover {
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.12);
+}

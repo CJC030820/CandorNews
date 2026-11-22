@@ -21,7 +21,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 from fastapi.responses import FileResponse
-from app.services import email_service, email_verification, image_cache, library, suggest
+from app.services import email_service, email_verification, image_cache, library, story_grouper, suggest
 from app.services.trust_scorer import SCORE_VERSION
 from app.services.notification_times import LEGACY_PRESETS, MAX_TIMES, due_times, normalize_times, user_times
 from app.services.storage import storage_service
@@ -92,6 +92,14 @@ async def on_startup():
         print("Email notification scheduler started (checks custom delivery times every minute).")
     except Exception as exc:
         print(f"Warning: could not start email scheduler: {exc}")
+
+    async def group_stored_articles():
+        try:
+            async with news_worker._fetch_lock:     # never at the same time as a collection run
+                await story_grouper.backfill_once()
+        except Exception as exc:
+            logger.error(f"Could not group stored articles into stories: {exc}", exc_info=True)
+    asyncio.create_task(group_stored_articles())
 
     try:
         news_worker.start()
@@ -482,6 +490,7 @@ def _article_to_feed_dict(article, detail: bool = True) -> dict:
         "trustWeights": article.trust_weights,
         "relatedReports": article.trust_evidence,
         "contentChecks": article.trust_content_checks,
+        "storyId": article.story_id or article.id,
         "trustVersion": article.trust_version,
         "trustScoredAt": article.trust_scored_at.isoformat() + "Z" if article.trust_scored_at else None
     } if detail else _list_fields(article)
@@ -608,7 +617,29 @@ async def article_detail(article_id: str, user=Depends(get_current_user)):
     article = await storage_service.get_article_by_id(article_id)
     if not article or article.processing_status != "completed":
         raise HTTPException(status_code=404, detail="Article not found")
-    return _article_to_feed_dict(article)
+    detail = _article_to_feed_dict(article)
+    detail.update(await _story_comparison(article))
+    return detail
+
+
+async def _story_comparison(article) -> dict:
+    """The other publishers' versions of this story, and what each version
+    mentions that the others do not (numbers, quotes, names)."""
+    versions = await storage_service.get_articles_by_story(article.story_id) if article.story_id else []
+    if not any(v.id == article.id for v in versions):
+        versions.append(article)
+    if len(versions) < 2:
+        return {"storyVersions": [], "uniqueDetails": []}
+    details = story_grouper.distinctive_details({v.id: story_grouper.version_text(v) for v in versions})
+    first = min(versions, key=lambda v: v.published_date).id
+    def summary(v):
+        return {"id": v.id, "title": _clean_display_text(v.title), "source": _clean_display_text(v.source),
+                "date": _article_to_feed_dict(v, detail=False)["date"], "url": v.url,
+                "trustScore": v.trust_score if v.trust_version == SCORE_VERSION else None,
+                "trustLabel": v.trust_label, "sentiment": v.sentiment, "toneLabel": v.tone_label,
+                "uniqueDetails": details.get(v.id, []), "first": v.id == first}
+    return {"storyVersions": [summary(v) for v in versions if v.id != article.id],
+            "uniqueDetails": details.get(article.id, []), "reportedFirst": article.id == first}
 
 
 @app.get("/api/articles/{article_id}/image")
@@ -764,8 +795,12 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
         ), getattr(user, "followed_platforms", None))
         logger.info(f"Found {len(articles)} articles from preferred topics for {user.email}")
     
+    # Slots are counted in stories (one story's versions share one entry).
+    def stories_in(items):
+        return len({a.story_id or a.id for a in items})
+
     # If not enough articles from preferred topics, fall back to all latest articles
-    if len(articles) < MAX_DIGEST_ARTICLES:
+    if stories_in(articles) < MAX_DIGEST_ARTICLES:
         all_articles = from_followed(await storage_service.get_latest_articles(limit=MAX_DIGEST_ARTICLES * 4),
                                      getattr(user, "followed_platforms", None))
         # Prioritize articles from user's topics if they exist
@@ -774,14 +809,19 @@ async def _send_digest_email_to_user(user, period_label: str = "", custom_messag
             for article in all_articles:
                 if article not in articles:
                     articles.append(article)
-                    if len(articles) >= MAX_DIGEST_ARTICLES:
+                    if stories_in(articles) >= MAX_DIGEST_ARTICLES:
                         break
         else:
             articles = all_articles
         logger.info(f"After fallback: {len(articles)} articles for {user.email}")
     
     # At most ten articles, depending on availability
-    digest_articles = [_article_to_feed_dict(a) for a in articles[:MAX_DIGEST_ARTICLES]]
+    # One entry per story: the best-scored version, naming the other publishers.
+    digest_articles = []
+    for story in story_grouper.combine_by_story(articles)[:MAX_DIGEST_ARTICLES]:
+        entry = _article_to_feed_dict(story["article"])
+        entry["alsoReportedBy"] = [_clean_display_text(name) for name in story["also_reported_by"]]
+        digest_articles.append(entry)
     logger.info(f"Sending email digest with {len(digest_articles)} articles to {user.email}")
 
     digest = email_service.build_news_digest_email(

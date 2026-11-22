@@ -54,6 +54,13 @@ const ArticleDetailPage = () => {
     // eslint-disable-next-line
   }, [article.id]);
 
+  // "Compare N versions" on a feed card opens the page at the comparison.
+  useEffect(() => {
+    if (!loading && location.hash === '#compare') {
+      document.getElementById('compare')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    }
+  }, [loading, location.hash, id]);
+
   const handleBookmarkClick = () => {
     if (article.id !== undefined) {
       toggleBookmark(article);

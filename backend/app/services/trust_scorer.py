@@ -24,12 +24,46 @@ def publisher_domain(url):
     return host
 
 
+_CATEGORY_PREFIX = re.compile(r"^[A-Za-z &]{3,25}\s:\s")   # Bernama: "Sport : ..."
+_TITLE_STOP = set(("a an the and or of in on at to for with from by as is are was were be been that this "
+                   "these its it his her their says said say over after amid into will has have had not new "
+                   "more than").split())
+
+
+def _title_words(title):
+    words = set()
+    for word in re.findall(r"[a-z0-9]+", _CATEGORY_PREFIX.sub("", title or "").lower()):
+        if word in _TITLE_STOP:
+            continue
+        if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+            word = word[:-1]          # "storms" and "storm" count as the same word
+        words.add(word)
+    return words
+
+
+def _stages(title):
+    """Tournament stage named in a headline (different stages are different stories)."""
+    text, found = (title or "").lower(), set()
+    if re.search(r"quarter|last eight|last 8", text):
+        found.add("quarter")
+    if re.search(r"semi|last four|last 4", text):
+        found.add("semi")
+    if re.search(r"\bfinals?\b", text) and not re.search(r"(semi|quarter)-?\s?finals?", text):
+        found.add("final")
+    return found
+
+
 def related_title(first, second):
-    """Candidate matching only; similar headlines do not establish agreement."""
-    words = lambda s: set(re.findall(r"[a-z0-9]+", (s or "").lower())) - {
-        "the", "and", "for", "with", "from", "that", "this", "says", "after", "into"}
-    a, b = words(first), words(second)
-    return bool(a and b and len(a & b) >= 3 and len(a & b) / max(len(a), len(b)) >= .6)
+    """Same-story check on headlines: at least 3 shared meaningful words making up
+    60% of the longer headline, ignoring category prefixes and plural endings,
+    and not naming different tournament stages. Used for related coverage and
+    for grouping one story's versions; similar headlines do not establish agreement."""
+    a, b = _title_words(first), _title_words(second)
+    shared = len(a & b)
+    if not (a and b and shared >= 3 and shared / max(len(a), len(b)) >= .6):
+        return False
+    stages_a, stages_b = _stages(first), _stages(second)
+    return not (stages_a and stages_b and stages_a != stages_b)
 
 
 class TrustScorerService:

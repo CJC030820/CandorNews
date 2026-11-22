@@ -44,6 +44,7 @@ class StorageService:
             await self.articles.create_index([("processing_status", 1), ("published_date", -1)])
             # Related-report lookup during trust scoring (shared keywords, last 72 h).
             await self.articles.create_index([("keywords", 1), ("published_date", -1)])
+            await self.articles.create_index("story_id")
         except Exception as exc:
             logger.warning(f"Could not ensure article query indexes: {exc}")
 
@@ -252,6 +253,67 @@ class StorageService:
             doc["_id"] = str(doc["_id"])
             articles.append(ArticleInDB(**doc))
         return articles
+
+    # --- story groups (one story reported by several publishers) ---------------
+
+    async def find_story_candidates(self, keywords: List[str], exclude_url: str, published: datetime,
+                                    window, limit: int = 200) -> List[ArticleInDB]:
+        """Articles sharing a keyword and published within `window` of `published`."""
+        if not keywords:
+            return []
+        query = {"keywords": {"$in": keywords}, "url": {"$ne": exclude_url},
+                 "published_date": {"$gte": published - window, "$lte": published + window},
+                 "processing_status": "completed"}
+        cursor = self.articles.find(query).sort("published_date", 1).limit(limit)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def merge_story(self, story_id: str, article_ids: List[str], story_ids: List[str]):
+        """Put the given articles, and every article of the given stories, into `story_id`."""
+        from bson import ObjectId
+        conditions = []
+        if article_ids:
+            conditions.append({"_id": {"$in": [ObjectId(i) for i in article_ids]}})
+        if story_ids:
+            conditions.append({"story_id": {"$in": story_ids}})
+        if not conditions:
+            return
+        await self.articles.update_many({"$or": conditions}, {"$set": {"story_id": story_id}})
+        self.bump_articles_version()
+
+    async def get_articles_by_story(self, story_id: str) -> List[ArticleInDB]:
+        cursor = self.articles.find({"story_id": story_id, "processing_status": "completed"}).sort("published_date", 1)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def get_all_articles_oldest_first(self) -> List[ArticleInDB]:
+        cursor = self.articles.find({"processing_status": "completed"}).sort("published_date", 1)
+        articles = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            articles.append(ArticleInDB(**doc))
+        return articles
+
+    async def count_articles_in_shared_stories(self) -> int:
+        pipeline = [{"$match": {"story_id": {"$ne": None}}},
+                    {"$group": {"_id": "$story_id", "n": {"$sum": 1}}},
+                    {"$match": {"n": {"$gt": 1}}},
+                    {"$group": {"_id": None, "total": {"$sum": "$n"}}}]
+        result = [doc async for doc in self.articles.aggregate(pipeline)]
+        return result[0]["total"] if result else 0
+
+    async def migration_done(self, migration_id: str) -> bool:
+        return bool(await self.db.migrations.find_one({"_id": migration_id}))
+
+    async def mark_migration_done(self, migration_id: str, info: Optional[dict] = None):
+        await self.db.migrations.update_one(
+            {"_id": migration_id}, {"$set": {**(info or {}), "applied_at": datetime.utcnow()}}, upsert=True)
 
     async def update_article_status(self, article_id: str, status: str, processed_at: Optional[datetime] = None):
         from bson import ObjectId

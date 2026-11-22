@@ -26,6 +26,7 @@ class ArticleBase(BaseModel):
     trust_weights: Dict[str, float] = Field(default_factory=dict)
     trust_evidence: List[Dict[str, Any]] = Field(default_factory=list)
     trust_content_checks: List[Dict[str, Any]] = Field(default_factory=list)  # content_analyzer results
+    story_id: Optional[str] = None  # shared by one story's versions from different publishers (story_grouper)
     trust_version: Optional[str] = None
     trust_scored_at: Optional[datetime] = None
     processing_status: str = "pending"  # pending, completed, failed

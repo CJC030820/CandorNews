@@ -24,6 +24,15 @@ const ArticleCard = ({ article }) => {
     navigate(`/article/${article.id}`, { state: { article } });
   };
 
+  const otherVersions = article.otherVersions || [];
+
+  // Open the article page at its "Compare coverage" section.
+  const handleCompareClick = (e) => {
+    e.stopPropagation();
+    sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+    navigate(`/article/${article.id}#compare`, { state: { article } });
+  };
+
   const handleBookmarkClick = (e) => {
     e.stopPropagation();
     toggleBookmark(article);
@@ -81,6 +90,11 @@ const ArticleCard = ({ article }) => {
           <span className="source">{article.source}</span>
           <span className="date">{article.date}</span>
         </p>
+        {otherVersions.length > 0 && (
+          <p className="also-reported">
+            Also reported by {otherVersions.map((v) => v.source).join(' · ')}
+          </p>
+        )}
         {article.forYouReason && <p className="for-you-reason">{article.forYouReason}</p>}
         <p className="article-description">{article.description}</p>
         <div className="article-actions">
@@ -94,6 +108,12 @@ const ArticleCard = ({ article }) => {
             </button>
           )}
           <button className="read-more">Read More</button>
+          {otherVersions.length > 0 && (
+            <button className="compare-versions" onClick={handleCompareClick}
+              title="See how each publisher reported this story">
+              Compare {otherVersions.length + 1} versions
+            </button>
+          )}
         </div>
       </div>
 

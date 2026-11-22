@@ -17,3 +17,26 @@
 .content-check-head { display: flex; justify-content: space-between; gap: 1rem; }
 .content-check-score { font-weight: 700; color: var(--accent-color); }
 .content-check-reason { display: block; margin-top: .2rem; color: var(--text-secondary); font-size: .92rem; }
+.compare-coverage { margin-top: .5rem; }
+.compare-table { min-width: 560px; table-layout: fixed; }
+.compare-table th[scope="col"] { font-size: .95rem; vertical-align: bottom; }
+.compare-table th[scope="row"] { width: 9.5rem; color: var(--text-secondary); font-weight: 600; font-size: .88rem; vertical-align: top; }
+.compare-table td { vertical-align: top; font-size: .92rem; overflow-wrap: anywhere; }
+.compare-tag { display: inline-block; margin-left: .4rem; padding: .05rem .45rem; border-radius: 999px; font-size: .72rem; font-weight: 700;
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), .14); color: var(--accent-color); vertical-align: middle; }
+.compare-tag.first { margin: .25rem 0 0; display: table; }
+.compare-details { margin: 0; padding-left: 1.1rem; }
+.compare-details li { margin: .15rem 0; }
+.compare-table a { color: var(--accent-color); font-weight: 600; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.compare-cards { display: none; list-style: none; padding: 0; margin: .75rem 0 0; }
+.compare-cards > li { border: 1px solid var(--border-color); border-radius: .6rem; padding: .75rem .9rem; margin-bottom: .6rem; background: var(--bg-secondary); }
+.compare-cards p { margin: .15rem 0; }
+.compare-card-head .compare-tag { margin-left: .35rem; }
+.compare-card-title { font-weight: 600; }
+.compare-card-label { margin-top: .5rem !important; font-size: .85rem; font-weight: 600; color: var(--text-secondary); }
+.compare-cards a { color: var(--accent-color); font-weight: 600; display: inline-block; margin-top: .35rem; }
+@media (max-width: 640px) {
+  .compare-coverage .analysis-table-scroll { display: none; }
+  .compare-cards { display: block; }
+}
