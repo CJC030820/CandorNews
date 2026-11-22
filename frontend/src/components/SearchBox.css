@@ -75,22 +75,3 @@
 .search-suggestion.empty .search-suggestion-count {
   color: var(--alert-color);
 }
-
-/* Glass look (browsers without blur keep the solid style above) */
-@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .search-suggestions {
-    background: var(--glass-bg-strong);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow), var(--glass-highlight);
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .search-suggestions {
-    background: var(--bg-primary);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}

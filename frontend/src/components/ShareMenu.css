@@ -136,22 +136,3 @@
   background: var(--border-color, #e0e0e0);
   margin: 4px 2px;
 }
-
-/* Glass look (browsers without blur keep the solid style above) */
-@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .share-dropdown {
-    background: var(--glass-bg-strong);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow), var(--glass-highlight);
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .share-dropdown {
-    background: var(--bg-secondary, #fff);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}

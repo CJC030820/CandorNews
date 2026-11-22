@@ -62,22 +62,3 @@
 .back-to-top-btn .app-icon {
   vertical-align: middle;
 }
-
-/* Glass look (browsers without blur keep the solid style above) */
-@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .back-to-top-btn {
-    background: var(--glass-tint);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .back-to-top-btn {
-    background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 100%);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
