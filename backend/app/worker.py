@@ -162,7 +162,10 @@ class NewsWorker:
                 return False
 
             # Topic classification (up to 3 categories, ranked by relevance)
-            topics = self.topic_classifier.classify_topics(title, description, content)
+            # Same text as is stored (so re-tagging later gives the same result),
+            # plus the publisher's section from the link or headline.
+            topics = self.topic_classifier.classify_topics(
+                title, description, content[:CONTENT_EXCERPT_CHARS], url=url)
             primary_topic = topics[0]
 
             # Summarization
@@ -304,6 +307,22 @@ class NewsWorker:
         self.last_run_stats = stats
         storage_service.bump_articles_version()      # image copies and run stats changed too
         return stats
+
+    async def retag_topics_once(self, migration_id: str = "topics-v2") -> int:
+        """One time: classify every stored article again with the current topic
+        rules (from its stored text and link). Returns how many changed."""
+        if await storage_service.migration_done(migration_id):
+            return 0
+        changed = 0
+        for article in await storage_service.get_all_articles_oldest_first():
+            topics = self.topic_classifier.classify_topics(
+                article.title, article.description or "", article.content_excerpt or "", url=article.url)
+            if topics != list(article.topics or []):
+                await storage_service.update_article_fields(article.id, {"topic": topics[0], "topics": topics})
+                changed += 1
+        await storage_service.mark_migration_done(migration_id, {"changed": changed})
+        logger.info(f"Re-tagged topics: {changed} article(s) changed.")
+        return changed
 
     async def scheduled_fetch(self):
         """The automatic run every WORKER_INTERVAL_MINUTES; skipped overnight."""

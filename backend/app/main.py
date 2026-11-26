@@ -98,6 +98,7 @@ async def on_startup():
             async with news_worker._fetch_lock:     # never at the same time as a collection run
                 await story_grouper.backfill_once()
                 await story_threads.backfill_once()
+                await news_worker.retag_topics_once()
         except Exception as exc:
             logger.error(f"Could not group stored articles into stories: {exc}", exc_info=True)
     asyncio.create_task(group_stored_articles())
