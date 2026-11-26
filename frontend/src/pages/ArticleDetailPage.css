@@ -228,3 +228,39 @@
     height: 220px;
   }
 }
+
+/* Bookmark and Share, top right of the article (same row and height as Back) */
+.article-top-actions {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  margin: 0;             /* the feed card's .article-actions adds a top margin */
+  padding-top: 0;
+  gap: 8px;
+  align-items: center;
+}
+
+.article-top-actions .bookmark-btn,
+.article-top-actions .share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  min-height: 36px;      /* same height as the Back button */
+  border-radius: 20px;
+  line-height: 1.2;
+}
+
+@media (max-width: 600px) {
+  .article-top-actions {
+    top: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+
+  .article-top-actions .bookmark-btn,
+  .article-top-actions .share-btn {
+    padding: 8px 12px;
+  }
+}

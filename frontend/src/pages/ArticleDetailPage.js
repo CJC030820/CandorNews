@@ -89,6 +89,17 @@ const ArticleDetailPage = () => {
                     <BackIcon size={20} />
                     <span className="back-button-label">Back</span>
         </button>
+        {/* Bookmark and share sit in the top row, so they are reachable without scrolling. */}
+        <div className="article-actions article-top-actions">
+          <button
+            className={`bookmark-btn ${bookmarked ? 'active' : ''}`}
+            onClick={handleBookmarkClick}
+            aria-pressed={bookmarked}
+          >
+            <BookmarkIcon filled={bookmarked} size={18} /> {bookmarked ? 'Bookmarked' : 'Bookmark'}
+          </button>
+          {article.id !== undefined && <ShareMenu article={article} variant="button" />}
+        </div>
         <article className="article-detail">
           <h1>{article.title}</h1>
           {loadError && <p role="alert">{loadError} Showing the saved copy.</p>}
@@ -139,15 +150,6 @@ const ArticleDetailPage = () => {
           <StoryTimeline timeline={article.timeline} />
           <ArticleAnalysis article={article} loading={loading} />
 
-          <div className="article-actions">
-            <button
-              className={`bookmark-btn ${bookmarked ? 'active' : ''}`}
-              onClick={handleBookmarkClick}
-            >
-              <BookmarkIcon filled={bookmarked} size={18} /> {bookmarked ? 'Bookmarked' : 'Bookmark'}
-            </button>
-            {article.id !== undefined && <ShareMenu article={article} variant="button" />}
-          </div>
         </article>
       </div>
     </div>
