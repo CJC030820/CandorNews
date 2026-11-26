@@ -48,6 +48,10 @@ export const AuthProvider = ({ children }) => {
     } catch { return false; }
   };
   const register = async (name, email, password) => (await api.post('/api/auth/register', {name,email,password})).data;
+  // Forgot password: email a 6-digit code, then set a new password with it.
+  const requestPasswordReset = async email => (await api.post('/api/auth/password-reset/request', {email})).data;
+  const confirmPasswordReset = async (email, code, newPassword) =>
+    (await api.post('/api/auth/password-reset/confirm', {email, code, new_password: newPassword})).data;
   const updatePreferences = async preferred_topics => {
     const {data} = await api.put('/api/users/preferences', {preferred_topics}); setUser(data); return data;
   };
@@ -98,7 +102,7 @@ export const AuthProvider = ({ children }) => {
     (await api.get('/api/articles/suggest', {params: {q}})).data, [api]);
   const selectedTopics = user?.preferred_topics || [];
   return <AuthContext.Provider value={{token,user,loading,topicsCompleted:selectedTopics.length > 0,selectedTopics,
-    login,logout,register,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
+    login,logout,register,requestPasswordReset,confirmPasswordReset,updatePreferences,updateProfile,completeTopicSelection:updatePreferences,
     getSelectedTopics:() => selectedTopics,getEmailStatus,updateEmailSettings,sendEmailTest,requestEmailVerification,confirmEmailVerification,deleteAccount,
     getFeed,getArticle,refreshFeed,getRefreshStatus,getLibrary,importLibrary,saveLibraryItem,removeLibraryItem,clearLibrary,updateFollowedPlatforms,searchArticles,suggestKeywords}}>{!loading && children}</AuthContext.Provider>;
 };

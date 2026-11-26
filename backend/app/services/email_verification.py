@@ -93,3 +93,32 @@ def build_code_email(name: str, code: str, site_url: str = "") -> dict:
                        "This code was requested from your CandorNews Profile page.", site_url,
                        preheader=f"Your code is {code}")
     return {"subject": "Your CandorNews verification code", "text": text, "html": body}
+
+
+# --- password reset ------------------------------------------------------------
+# The same limits as verification codes (one code a minute, five a day, five
+# attempts, 15 minutes), kept in a separate state with a separate hash, so a
+# verification code can never be used to reset a password.
+
+def reset_key(email: str) -> str:
+    return f"password-reset:{email.lower()}"
+
+
+def build_reset_email(name: str, code: str, site_url: str = "") -> dict:
+    minutes = int(CODE_TTL.total_seconds() // 60)
+    text = (f"Hi {name},\n\nYour CandorNews password reset code is: {code}\n\n"
+            f"Enter it on the Forgot password page within {minutes} minutes to choose a new password.\n"
+            "If you did not ask to reset your password, you can ignore this email; your password stays the same.")
+    safe_name = html.escape(name or "")
+    content = (f'<p style="margin:0 0 12px 0;">Hi {safe_name},</p>'
+               '<p style="margin:0 0 12px 0;">Your CandorNews password reset code is:</p>'
+               f'<p style="margin:0 0 16px 0;text-align:center;"><span class="{layout.BOX_CLASS}" style="display:inline-block;padding:12px 20px;'
+               f'background-color:{layout.BG};border:1px solid {layout.BORDER};border-radius:10px;color:{layout.ACCENT};'
+               f'font-size:30px;font-weight:700;letter-spacing:8px;">{code}</span></p>'
+               f'<p style="margin:0 0 12px 0;">Enter it on the Forgot password page within {minutes} minutes to choose a new password.</p>'
+               f'<p class="{layout.MUTED_CLASS}" style="margin:0;color:{layout.TEXT_SECONDARY};font-size:13px;">If you did not ask to '
+               'reset your password, you can ignore this email; your password stays the same.</p>')
+    body = layout.page("Reset your password", "Use this code to choose a new password", content,
+                       "This code was requested from the CandorNews Forgot password page.", site_url,
+                       preheader=f"Your password reset code is {code}")
+    return {"subject": "Your CandorNews password reset code", "text": text, "html": body}

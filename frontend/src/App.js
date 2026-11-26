@@ -9,6 +9,7 @@ import { TrustedPlatformsProvider } from './context/TrustedPlatformsContext';
 import PageTransition from './components/PageTransition';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import TopicSelectionPage from './pages/TopicSelectionPage';
 import FeedPage from './pages/FeedPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
@@ -59,6 +60,7 @@ function AppRoutes({ searchQuery, onSearchChange }) {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="*" element={<LoginRedirect />} />
       </Routes>
     );

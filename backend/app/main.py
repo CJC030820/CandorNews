@@ -225,6 +225,16 @@ class EmailVerificationConfirm(BaseModel):
     code: str = Field(min_length=1, max_length=12)
 
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=1, max_length=12)
+    new_password: str = Field(min_length=8, max_length=72)
+
+
 def _user_to_response(user) -> UserResponse:
     """Convert a UserInDB (MongoDB-backed) model into the API UserResponse."""
     return UserResponse(
@@ -261,6 +271,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
         raise HTTPException(status_code=401, detail="User not found")
     if issued_before_account(payload, user.created_at):
         raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+    changed = getattr(user, "password_changed_at", None)
+    if changed and issued_before_account(payload, changed):
+        raise HTTPException(status_code=401, detail="Your password was changed. Please log in again.")
     return user
 
 # Routes
@@ -322,6 +335,68 @@ async def login(user: UserLogin):
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+RESET_SENT = ("If an account exists for this email, we have sent a 6-digit code to it. "
+              "The code expires in 15 minutes.")
+
+
+async def _find_user(email: str):
+    return await storage_service.get_user_by_email(email) or await storage_service.get_user_by_email(email.lower())
+
+
+@app.post("/api/auth/password-reset/request")
+async def request_password_reset(payload: PasswordResetRequest):
+    """Email a 6-digit reset code. The reply is the same whether or not the
+    email has an account, so the page cannot be used to find out who is registered."""
+    user = await _find_user(payload.email)
+    if user:
+        now = datetime.utcnow()
+        state = dict(getattr(user, "password_reset", None) or {})
+        allowed, reason = email_verification.can_send_code(state, now)
+        if allowed:
+            code = email_verification.new_code()
+            message = email_verification.build_reset_email(user.name, code, site_url=settings.site_url)
+            result = await asyncio.to_thread(
+                email_service.send_email, user.email, message["subject"], message["text"], message["html"])
+            if result["success"]:
+                await storage_service.update_user_by_email(user.email, {"password_reset": email_verification.record_code(
+                    state, email_verification.reset_key(user.email), code, now)})
+            else:
+                logger.error(f"Password reset email could not be sent: {result['message']}")
+        else:
+            logger.info(f"Password reset code not sent (limit): {reason}")
+    return {"status": "sent", "detail": RESET_SENT}
+
+
+@app.post("/api/auth/password-reset/confirm")
+async def confirm_password_reset(payload: PasswordResetConfirm):
+    """Check the emailed code and set the new password. Every session that
+    was logged in before the change is signed out."""
+    user = await _find_user(payload.email)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect or expired code. Request a new one.")
+    state = dict(getattr(user, "password_reset", None) or {})
+    now = datetime.utcnow()
+    result, new_state = email_verification.check_code(
+        state, email_verification.reset_key(user.email), payload.code, now)
+    if result == "ok":
+        await storage_service.update_user_by_email(user.email, {
+            "hashed_password": get_password_hash(payload.new_password),
+            "password_changed_at": now,
+            "password_reset": new_state,
+            "email_verified": True,          # receiving the code proves the address is theirs
+        })
+        return {"status": "ok", "detail": "Your password has been changed. Log in with your new password."}
+    if result == "wrong":
+        await storage_service.update_user_by_email(user.email, {"password_reset": new_state})
+    detail = {
+        "missing": "Incorrect or expired code. Request a new one.",
+        "expired": "This code has expired. Request a new one.",
+        "locked": "Too many incorrect attempts. Request a new code.",
+        "wrong": "Incorrect code. Please check the email and try again.",
+    }[result]
+    raise HTTPException(status_code=429 if result == "locked" else 400, detail=detail)
+
 
 @app.get("/api/auth/me", response_model=UserResponse)
 async def get_current_user_info(user=Depends(get_current_user)):

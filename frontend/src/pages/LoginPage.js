@@ -49,6 +49,11 @@ const LoginPage = () => {
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">
+          {location.state?.passwordReset && !error && (
+            <div className="login-success" role="status">
+              Your password has been changed. Log in with your new password.
+            </div>
+          )}
           {location.state?.registered && !error && (
             <div className="login-success" role="status">
               Your account has been created. Log in with your new password.
@@ -79,6 +84,10 @@ const LoginPage = () => {
               disabled={loading}
             />
           </div>
+
+          <p className="forgot-password-link">
+            <Link to="/forgot-password" state={{ email }}>Forgot password?</Link>
+          </p>
 
           {error && <div className="error-message">{error}</div>}
 

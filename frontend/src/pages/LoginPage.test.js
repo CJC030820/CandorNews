@@ -127,3 +127,14 @@ test('after registering, the login page confirms the account was created', () =>
   expect(screen.getByRole('status')).toHaveTextContent('Your account has been created');
   expect(screen.getByLabelText(/email address/i)).toHaveValue('new@example.com');
 });
+
+test('links to Forgot password and confirms a changed password', () => {
+  render(
+    <MemoryRouter initialEntries={[{ pathname: '/login', state: { email: 'a@example.com', passwordReset: true } }]}>
+      <LoginPage />
+    </MemoryRouter>
+  );
+  expect(screen.getByRole('link', { name: /forgot password/i })).toHaveAttribute('href', '/forgot-password');
+  expect(screen.getByText(/your password has been changed/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/email address/i)).toHaveValue('a@example.com');
+});

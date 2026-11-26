@@ -44,6 +44,10 @@ class UserInDB(UserBase):
     email_verified: bool = False
     email_verification: dict = {}
     last_on_demand_email_at: Optional[datetime] = None
+    # Forgot-password code state (same shape as email_verification).
+    password_reset: dict = {}
+    # Sessions issued before this time are signed out (set when the password changes).
+    password_changed_at: Optional[datetime] = None
     # Publishers the user follows (ids from PLATFORMS); None = not chosen yet.
     followed_platforms: Optional[List[str]] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
